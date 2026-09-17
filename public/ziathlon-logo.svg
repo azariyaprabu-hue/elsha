@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 260" width="100%" height="100%">
+  <defs>
+    <!-- Brand Purple Color definition -->
+    <linearGradient id="ziathlonPurple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#7E1FA8" />
+      <stop offset="100%" stopColor="#681292" />
+    </linearGradient>
+  </defs>
+
+  <!-- SHIELD EMBLEM -->
+  <g transform="translate(195, 10)">
+    <!-- Top Shield Segment -->
+    <path
+      d="M 5,20 
+         L 85,20 
+         L 83,28 
+         L 6.5,53 
+         C 5.8,42 5.3,31 5,20 Z"
+      fill="url(#ziathlonPurple)"
+    />
+
+    <!-- Middle Shield Segment (Dynamic Z-Slash) -->
+    <path
+      d="M 8.5,63 
+         L 81,37 
+         L 75,70 
+         L 13,95 
+         C 11,84 9.5,73 8.5,63 Z"
+      fill="url(#ziathlonPurple)"
+    />
+
+    <!-- Bottom Shield Segment (Pointed Tip) -->
+    <path
+      d="M 16,104 
+         L 70,80 
+         C 63,105 52,125 45,138 
+         C 38,125 24,116 16,104 Z"
+      fill="url(#ziathlonPurple)"
+    />
+
+    <!-- Top-Right Cross (+) -->
+    <g transform="translate(86, 2) scale(0.85)">
+      <!-- Vertical bar with beveled ends -->
+      <path
+        d="M 9,-6 
+           L 15,-6 
+           L 18,-3 
+           L 18,27 
+           L 15,30 
+           L 9,30 
+           L 6,27 
+           L 6,-3 Z"
+        fill="#000000"
+      />
+      <!-- Horizontal bar with beveled ends -->
+      <path
+        d="M -6,9 
+           L -6,15 
+           L -3,18 
+           L 27,18 
+           L 30,15 
+           L 30,9 
+           L 27,6 
+           L -3,6 Z"
+        fill="#000000"
+      />
+    </g>
+  </g>
+
+  <!-- WORDMARK: ŽIΛTHLON -->
+  <g transform="translate(250, 182)" text-anchor="middle">
+    <!-- Purple Caron / Chevron accent over Ž -->
+    <path
+      d="M -168,-36 L -162,-26 L -156,-36 L -159,-36 L -162,-30 L -165,-36 Z"
+      fill="#7E1FA8"
+    />
+
+    <!-- Custom styled typography for ŽIΛTHLON with stylized inverted-V Lambda (Λ) -->
+    <text
+      x="0"
+      y="0"
+      font-family="'Playfair Display', 'Didot', 'Bodoni MT', 'Cinzel', 'Cormorant Garamond', serif"
+      font-size="44"
+      font-weight="900"
+      letter-spacing="0.16em"
+      fill="#000000"
+    >
+      ŽI<tspan dx="-2" font-family="'Cinzel', 'Playfair Display', serif">Λ</tspan><tspan dx="-2">THLON</tspan>
+    </text>
+
+    <!-- SUBTITLE: SPORTS MEDICINE CLINIC in brand purple -->
+    <text
+      x="0"
+      y="24"
+      font-family="'Montserrat', 'Plus Jakarta Sans', sans-serif"
+      font-size="11"
+      font-weight="700"
+      letter-spacing="0.42em"
+      fill="#7E1FA8"
+    >
+      SPORTS MEDICINE CLINIC
+    </text>
+  </g>
+</svg>

@@ -1,0 +1,6 @@
+{
+  "name": "ELSHA Nutrition",
+  "description": "ŽIATHLON Sports Medicine Clinic personal nutrition AI and clinical dietetics platform with real-time patient AI consultation, smart plate scanning, diabetic-safe meal swaps, end-to-end encrypted health records, and metabolic prescriptions.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
