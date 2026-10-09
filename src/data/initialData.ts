@@ -22,13 +22,17 @@ import {
 } from '../types';
 
 export const initialGeneralInfo: GeneralInfo = {
-  name: 'Kiruthika',
-  age: 32,
+  name: '',
+  age: '',
   sex: 'Female',
-  height: 162,
-  weight: 61.5,
+  height: '',
+  weight: '',
   activityLevel: 'moderately_active',
   phone: '',
+  dateOfBirth: '',
+  place: '',
+  tag: '',
+  maritalStatus: '',
 };
 
 export const majorDomainsList: MajorDomain[] = [
@@ -100,18 +104,7 @@ export const majorDomainsList: MajorDomain[] = [
   },
 ];
 
-export const initialSymptomsAssessment: SymptomAssessmentItem[] = [
-  { id: 's1', symptom: 'Frequent Urination', duration: '3 weeks', severity: 'Moderate' },
-  { id: 's2', symptom: 'Excessive Thirst (Polydipsia)', duration: '1 month', severity: 'Severe' },
-  { id: 's3', symptom: 'Excessive Hunger (Polyphagia)', duration: '2 weeks', severity: 'Moderate' },
-  { id: 's4', symptom: 'Unexplained Weight Loss', duration: '2 months', severity: 'Mild' },
-  { id: 's5', symptom: 'FatigueTiredness', duration: '6 weeks', severity: 'Moderate' },
-  { id: 's6', symptom: 'Blurred Vision', duration: 'Intermittent', severity: 'Mild' },
-  { id: 's7', symptom: 'Slow-Healing Wounds', duration: '1 month', severity: 'Mild' },
-  { id: 's8', symptom: 'TinglingNumbness', duration: '2 weeks (Feet)', severity: 'Mild' },
-  { id: 's9', symptom: 'DryItchy Skin', duration: '1 month', severity: 'Moderate' },
-  { id: 's10', symptom: 'Recurrent Infections', duration: 'Past 3 months', severity: 'Mild' },
-];
+export const initialSymptomsAssessment: SymptomAssessmentItem[] = [];
 
 export const initialLifestyleAssessment: LifestyleAssessmentItem[] = [
   {
@@ -624,9 +617,9 @@ export const initialCalculations = {
 };
 
 export const initialMedicalHistory = {
-  surgeries: initialSurgeries,
-  medications: initialMedications,
-  familyHistory: initialFamilyHistory,
+  surgeries: [],
+  medications: [],
+  familyHistory: [],
 };
 
 export const initialReports: UploadedReport[] = sampleUploadedReports;

@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { GeneralInfo, Calculations, DietDayPlan, DiabetesGuidelines } from '../types';
-import { ElshaLogo } from './ElshaLogo';
-import { DrBharathkumarSportsMedicineLogo } from './DrBharathkumarSportsMedicineLogo';
+import { ZiathlonLogo } from './ZiathlonLogo';
 import {
   Printer,
   Calendar,
   Clock,
-  Sparkles,
   HeartPulse,
   Dumbbell,
   Check,
@@ -21,6 +19,10 @@ import {
   Layers,
   FileSpreadsheet,
   Save,
+  CheckCircle,
+  FileDown,
+  Sparkles,
+  ChevronDown,
 } from 'lucide-react';
 import {
   CustomDayPlan,
@@ -31,11 +33,18 @@ import {
   ExerciseDayItem,
 } from '../utils/aiDomainDietExerciseGenerator';
 import { Unified7DayClinicalDietTable } from './Unified7DayClinicalDietTable';
+import { ZiathlonLetterheadHeader } from './ZiathlonLetterheadHeader';
+import { OfficialClinicalPrescriptionTable } from './OfficialClinicalPrescriptionTable';
 import {
   generateConditionSpecificIngredientGuidelines,
   ConditionIngredientGuidelines,
 } from '../data/conditionAdaptiveIngredientsEngine';
-import { downloadHtmlAsPdf, generateComplete2PagePlanPdf, Complete2PagePlanPdfData } from '../utils/pdfGenerator';
+import {
+  downloadHtmlAsPdf,
+  generateComplete2PagePlanPdf,
+  generateGoldAndBlackPrescriptionPdf,
+  Complete2PagePlanPdfData,
+} from '../utils/pdfGenerator';
 
 interface NutritionPrescriptionModalProps {
   isOpen: boolean;
@@ -61,21 +70,21 @@ export const NutritionPrescriptionModal: React.FC<NutritionPrescriptionModalProp
   // Active View Tab in Modal: 'page1' | 'page2' | 'both' | 'guidelines'
   const [activePageView, setActivePageView] = useState<'page1' | 'page2' | 'both' | 'guidelines'>('both');
   const [selectedDayIdx, setSelectedDayIdx] = useState<number>(0);
-  const [showMatrixView, setShowMatrixView] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
-
+  const [prescriptionTheme, setPrescriptionTheme] = useState<'purple-white' | 'gold-black'>('purple-white');
+  const [showExportMenu, setShowExportMenu] = useState<boolean>(false);
 
   // Patient / Clinical Details
-  const [patientName, setPatientName] = useState(generalInfo.name || 'Kiruthika');
-  const [patientAge, setPatientAge] = useState(generalInfo.age ? String(generalInfo.age) : '22');
+  const [patientName, setPatientName] = useState(generalInfo.name || 'Patient');
+  const [patientAge, setPatientAge] = useState(generalInfo.age ? String(generalInfo.age) : '28');
   const [patientGender, setPatientGender] = useState(generalInfo.sex || 'Female');
   const [conditionDomain, setConditionDomain] = useState(() => {
     try {
-      const savedCat = localStorage.getItem('ELSHA_SELECTED_CATEGORY');
+      const savedCat = localStorage.getItem('CLINICAL_SELECTED_CATEGORY') || localStorage.getItem('ELSHA_SELECTED_CATEGORY');
       if (savedCat) return savedCat;
     } catch {}
-    return 'Weight Management';
+    return condition || 'Weight Management';
   });
 
   // Unique 90 Condition Ingredients
@@ -86,8 +95,137 @@ export const NutritionPrescriptionModal: React.FC<NutritionPrescriptionModalProp
   // Manual 7-Day Plans from Custom7DayPlanStudio
   const [customPlans, setCustomPlans] = useState<CustomDayPlan[]>(INITIAL_7_DAY_STUDIO_PLAN);
 
-  // 7-Day Exercise Plans
-  const [exercisePlans, setExercisePlans] = useState<ExerciseDayItem[]>([]);
+  // 7-Day Exercise Plans loaded dynamically from Exercise folder guidelines in localStorage
+  const DEFAULT_EXERCISE_SCHEDULE: ExerciseDayItem[] = useMemo(() => {
+    try {
+      const saved = localStorage.getItem('ELSHA_7DAY_EXERCISE_GUIDELINES');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((item: any, idx: number) => ({
+            dayNumber: item.dayNumber || idx + 1,
+            dayName: item.dayName || `Day ${idx + 1}`,
+            protocolTitle: item.protocolFocus || 'Clinical Exercise Protocol',
+            focusArea: item.exercises || 'General conditioning',
+            durationMins: 45,
+            intensityLevel: item.hrZoneIntensity || 'Zone 2',
+            targetHeartRate: '115 - 130 bpm',
+            movements: [
+              { name: item.exercises || 'Custom Movement', setsAndReps: item.setsReps || '3 sets x 12 reps', clinicalRationale: item.protocolFocus || 'Glycemic regulation' }
+            ],
+            postWorkoutRecovery: item.recoveryNote || 'Hydrate post workout.',
+          }));
+        }
+      }
+    } catch {}
+    return [
+    {
+      dayNumber: 1,
+      dayName: 'Monday',
+      protocolTitle: 'Push & Upper Body Hypertrophy',
+      focusArea: 'Chest, Anterior Deltoids, Triceps',
+      durationMins: 50,
+      intensityLevel: 'Zone 3-4 (Metabolic Threshold)',
+      targetHeartRate: '125 - 140 bpm',
+      movements: [
+        { name: 'Barbell / Dumbbell Bench Press', setsAndReps: '4 sets x 8-10 reps', clinicalRationale: 'Upper body anterior push.' },
+        { name: 'Incline Dumbbell Flyes', setsAndReps: '3 sets x 12 reps', clinicalRationale: 'Pectoral stretch and muscle fiber recruitment.' },
+        { name: 'Incline Brisk Walk', setsAndReps: '20 mins @ Zone 2', clinicalRationale: 'Cardiovascular glycemic clearance.' },
+      ],
+      postWorkoutRecovery: 'Hydrate with 500ml water and electrolytes.',
+    },
+    {
+      dayNumber: 2,
+      dayName: 'Tuesday',
+      protocolTitle: 'Pull & Posterior Kinetic Chain',
+      focusArea: 'Latissimus Dorsi, Rhomboids, Biceps',
+      durationMins: 50,
+      intensityLevel: 'Zone 3-4 (Metabolic Threshold)',
+      targetHeartRate: '125 - 140 bpm',
+      movements: [
+        { name: 'Lat Pulldowns / Cable Rows', setsAndReps: '4 sets x 10 reps', clinicalRationale: 'Scapular retraction.' },
+        { name: 'Face Pulls with Resistance Band', setsAndReps: '3 sets x 15 reps', clinicalRationale: 'Rotator cuff stabilization.' },
+        { name: 'Brisk Walk', setsAndReps: '20 mins continuous', clinicalRationale: 'Zone 2 aerobic base.' },
+      ],
+      postWorkoutRecovery: 'Foam roll thoracic spine and rehydrate.',
+    },
+    {
+      dayNumber: 3,
+      dayName: 'Wednesday',
+      protocolTitle: 'Cardiovascular Aerobic Base & Mobility',
+      focusArea: 'Zone 2 Endurance, Spinal Flow',
+      durationMins: 40,
+      intensityLevel: 'Zone 1-2 (Light-Moderate)',
+      targetHeartRate: '105 - 120 bpm',
+      movements: [
+        { name: 'Zone 2 Steady State Cycling / Walk', setsAndReps: '25 mins steady pace', clinicalRationale: 'Mitochondrial biogenesis.' },
+        { name: 'Cat-Cow & Thoracic Thread-the-Needle', setsAndReps: '10 slow cycles', clinicalRationale: 'Intervertebral disc hydration.' },
+        { name: '90/90 Hip Flow', setsAndReps: '3 sets x 45s each', clinicalRationale: 'Pelvic alignment.' },
+      ],
+      postWorkoutRecovery: '15 mins diaphragmatic breathing.',
+    },
+    {
+      dayNumber: 4,
+      dayName: 'Thursday',
+      protocolTitle: 'Lower Body & Compound Leg Strength',
+      focusArea: 'Quadriceps, Hamstrings, Glutes',
+      durationMins: 55,
+      intensityLevel: 'Zone 4-5 (Peak Performance)',
+      targetHeartRate: '135 - 150 bpm',
+      movements: [
+        { name: 'Goblet Squats / Barbell Squats', setsAndReps: '4 sets x 10 reps', clinicalRationale: 'GLUT4 translocation in major muscle mass.' },
+        { name: 'Romanian Deadlifts (RDL)', setsAndReps: '3 sets x 10-12 reps', clinicalRationale: 'Posterior chain eccentric loading.' },
+        { name: 'Stationary Cycling Cool-Down', setsAndReps: '15 mins low cadence', clinicalRationale: 'Lactic clearance.' },
+      ],
+      postWorkoutRecovery: 'Post-workout protein hydration.',
+    },
+    {
+      dayNumber: 5,
+      dayName: 'Friday',
+      protocolTitle: 'Functional Core & Kinetic Strength',
+      focusArea: 'Transverse Abdominis, Glute Medius',
+      durationMins: 45,
+      intensityLevel: 'Zone 2-3 (Aerobic Base)',
+      targetHeartRate: '120 - 135 bpm',
+      movements: [
+        { name: 'Farmer Carries with Kettlebells', setsAndReps: '3 sets x 40m', clinicalRationale: 'Postural and core endurance.' },
+        { name: 'Plank Holds & Bird-Dog', setsAndReps: '3 sets x 35s', clinicalRationale: 'Core stability.' },
+        { name: 'Incline Treadmill Walk', setsAndReps: '20 mins @ Zone 2', clinicalRationale: 'Aerobic recovery.' },
+      ],
+      postWorkoutRecovery: 'Epsom salt warm soak.',
+    },
+    {
+      dayNumber: 6,
+      dayName: 'Saturday',
+      protocolTitle: 'Aerobic Glycemic Flush & Outdoor Flow',
+      focusArea: 'Cardiorespiratory Endurance',
+      durationMins: 45,
+      intensityLevel: 'Zone 2-3 (Aerobic Base)',
+      targetHeartRate: '115 - 130 bpm',
+      movements: [
+        { name: 'Brisk Walk or Nature Hike', setsAndReps: '30 mins continuous', clinicalRationale: 'Insulin-independent glucose clearance.' },
+        { name: 'Bodyweight Step-Ups', setsAndReps: '3 sets x 12 per leg', clinicalRationale: 'Unilateral joint balance.' },
+      ],
+      postWorkoutRecovery: 'Light myofascial release.',
+    },
+    {
+      dayNumber: 7,
+      dayName: 'Sunday',
+      protocolTitle: 'Active Recovery & Parasympathetic Restoration',
+      focusArea: 'Rest & Cellular Repair',
+      durationMins: 30,
+      intensityLevel: 'Restorative',
+      targetHeartRate: '< 70 bpm baseline',
+      movements: [
+        { name: 'Diaphragmatic 4-7-8 Breathing', setsAndReps: '15 mins', clinicalRationale: 'Vagus nerve tone optimization.' },
+        { name: 'Gentle Stroll & Foam Rolling', setsAndReps: '15 mins relaxed', clinicalRationale: 'Fascial hydration.' },
+      ],
+      postWorkoutRecovery: 'Restorative sleep and hydration.',
+    },
+    ];
+  }, []);
+
+  const [exercisePlans, setExercisePlans] = useState<ExerciseDayItem[]>(DEFAULT_EXERCISE_SCHEDULE);
   const [domainDos, setDomainDos] = useState<string[]>([
     'Stay hydrated (2.5 - 3.0 L water daily)',
     'Include fibre rich foods (vegetables, salads, whole millets)',
@@ -103,11 +241,10 @@ export const NutritionPrescriptionModal: React.FC<NutritionPrescriptionModalProp
     'Avoid late night eating past 8:30 PM',
   ]);
 
-  // Load manual 7-day plan from localStorage (what was done in Custom7DayPlanStudio)
+  // Load manual 7-day plan from localStorage
   useEffect(() => {
     if (isOpen) {
       try {
-        // 1. Load manual 7-day diet plan from studio
         const savedDiet = localStorage.getItem('ELSHA_CUSTOM_7DAY_PLANS');
         if (savedDiet) {
           const parsed = JSON.parse(savedDiet);
@@ -118,36 +255,38 @@ export const NutritionPrescriptionModal: React.FC<NutritionPrescriptionModalProp
             });
           }
         } else if (plans && plans.length >= 7) {
-          setCustomPlans((prev) => {
-            if (JSON.stringify(prev) !== JSON.stringify(plans)) return plans;
-            return prev;
-          });
+          setCustomPlans(plans);
         }
 
-        // 2. Load domain and condition
-        const savedCat = localStorage.getItem('ELSHA_SELECTED_CATEGORY');
-        if (savedCat) {
+        const savedCat = localStorage.getItem('CLINICAL_SELECTED_CATEGORY') || localStorage.getItem('ELSHA_SELECTED_CATEGORY');
+        if (savedCat && savedCat !== conditionDomain) {
           setConditionDomain(savedCat);
         }
-
-        // 3. Generate exercise guidelines based on domain & patient data
-        const domainPkg = generateDomainDietAndExercisePlan(
-          'diabetes',
-          generalInfo,
-          calculations
-        );
-        if (domainPkg) {
-          setExercisePlans(domainPkg.exercisePlans);
-          if (domainPkg.dos.length > 0) setDomainDos(domainPkg.dos);
-          if (domainPkg.donts.length > 0) setDomainDonts(domainPkg.donts);
-        }
       } catch (e) {
-        console.error('Could not load prescription data:', e);
+        console.error('Error loading 7-day plan in modal:', e);
       }
     }
-  }, [isOpen, generalInfo, calculations, plans]);
+  }, [isOpen, plans, conditionDomain]);
 
-  // Real-time synchronization whenever 7-Day Studio saves plans
+  // Generate 7-day exercise plans for the condition
+  useEffect(() => {
+    try {
+      const generated = generateDomainDietAndExercisePlan(conditionDomain, generalInfo, calculations);
+      if (generated && generated.exercisePlans) {
+        setExercisePlans(generated.exercisePlans);
+      }
+      if (generated && generated.dos) {
+        setDomainDos(generated.dos);
+      }
+      if (generated && generated.donts) {
+        setDomainDonts(generated.donts);
+      }
+    } catch (e) {
+      console.error('Failed to generate exercise plan:', e);
+    }
+  }, [conditionDomain, generalInfo, calculations]);
+
+  // Listen for storage events
   useEffect(() => {
     const handleSync = () => {
       try {
@@ -155,75 +294,84 @@ export const NutritionPrescriptionModal: React.FC<NutritionPrescriptionModalProp
         if (savedDiet) {
           const parsed = JSON.parse(savedDiet);
           if (Array.isArray(parsed) && parsed.length >= 7) {
-            setCustomPlans((prev) => {
-              if (JSON.stringify(prev) !== savedDiet) return parsed;
-              return prev;
-            });
+            setCustomPlans(parsed);
           }
         }
-      } catch (e) {
-        console.error('Could not sync updated plans:', e);
-      }
+      } catch {}
     };
     window.addEventListener('elsha-plan-updated', handleSync);
     return () => window.removeEventListener('elsha-plan-updated', handleSync);
   }, []);
 
-  useEffect(() => {
-    if (plans && Array.isArray(plans) && plans.length >= 7) {
-      setCustomPlans((prev) => {
-        if (JSON.stringify(prev) !== JSON.stringify(plans)) return plans;
-        return prev;
-      });
-    }
-  }, [plans]);
+  // Calculate totals
+  const currentPlan = customPlans[selectedDayIdx] || customPlans[0] || INITIAL_7_DAY_STUDIO_PLAN[0];
 
-  if (!isOpen) return null;
+  const totalDayCalories = useMemo(() => {
+    if (!currentPlan?.slots) return 1650;
+    return currentPlan.slots.reduce((acc, slot) => {
+      return (
+        acc +
+        slot.items.reduce((sAcc, it) => sAcc + (it.calories || 0), 0)
+      );
+    }, 0);
+  }, [currentPlan]);
 
-  const handleDownloadPdf = async () => {
-    setActivePageView('both');
-    
-    // Allow DOM to update to 'both' view before capturing
-    setTimeout(async () => {
-      const element = document.querySelector('.print-area') as HTMLElement;
-      if (!element) return;
-      
-      setIsGeneratingPdf(true);
-      setStatusMessage('Generating PDF... Please wait');
-      
-      try {
-        const originalClasses = element.className;
-        element.classList.remove('overflow-y-auto', 'max-h-[96vh]');
-        
-        await downloadHtmlAsPdf(element, `Ziathlon_Rx_${patientName.replace(/\s+/g, '_')}.pdf`);
-        
-        element.className = originalClasses;
-        setStatusMessage('PDF downloaded successfully!');
-      } catch (err: any) {
-        console.error('PDF generation error:', err);
-        setStatusMessage(`PDF Error: ${err.message}`);
-      } finally {
-        setIsGeneratingPdf(false);
-        setTimeout(() => setStatusMessage(null), 5000);
-      }
-    }, 1000); // Increased timeout to ensure React finishes rendering both pages
+  const totalDayProtein = useMemo(() => {
+    if (!currentPlan?.slots) return 72;
+    return Math.round(
+      currentPlan.slots.reduce((acc, slot) => {
+        return acc + slot.items.reduce((sAcc, it) => sAcc + (it.protein || 0), 0);
+      }, 0)
+    );
+  }, [currentPlan]);
+
+  const totalDayFat = useMemo(() => {
+    if (!currentPlan?.slots) return 42;
+    return Math.round(
+      currentPlan.slots.reduce((acc, slot) => {
+        return acc + slot.items.reduce((sAcc, it) => sAcc + (it.fat || 0), 0);
+      }, 0)
+    );
+  }, [currentPlan]);
+
+  const totalDayCarbs = useMemo(() => {
+    if (!currentPlan?.slots) return 195;
+    return Math.round(
+      currentPlan.slots.reduce((acc, slot) => {
+        return acc + slot.items.reduce((sAcc, it) => sAcc + (it.carbs || 0), 0);
+      }, 0)
+    );
+  }, [currentPlan]);
+
+  const totalDayFiber = useMemo(() => {
+    if (!currentPlan?.slots) return 32;
+    return Math.round(
+      currentPlan.slots.reduce((acc, slot) => {
+        return acc + slot.items.reduce((sAcc, it) => sAcc + (it.fiber || 0), 0);
+      }, 0)
+    );
+  }, [currentPlan]);
+
+  const handlePrint = () => {
+    window.print();
   };
 
-  const handleDownloadVectorPdf = () => {
+  const handleDownloadGoldBlackPdf = async (includeFormulary = false) => {
+    setIsGeneratingPdf(true);
+    setStatusMessage('Generating High-Resolution Gold & Black Clinical Prescription PDF...');
+    setShowExportMenu(false);
+
     try {
       const pdfData: Complete2PagePlanPdfData = {
         patient: {
           name: patientName,
           age: patientAge,
           gender: patientGender,
-          weight: generalInfo.weight,
-          height: generalInfo.height,
-          bmi: calculations.bmi,
           targetCalories: totalDayCalories,
-          patientId: `ZT-${Date.now().toString().slice(-6)}`,
+          patientId: `ZT-RX-${Date.now().toString().slice(-6)}`,
         },
-        conditionDomain: conditionDomain,
-        dietDomain: 'Therapeutic Glycemic Reset Protocol',
+        conditionDomain,
+        dietDomain: `${conditionDomain} Clinical Diet Protocol`,
         macros: {
           protein: `${totalDayProtein}g`,
           carbs: `${totalDayCarbs}g`,
@@ -231,236 +379,473 @@ export const NutritionPrescriptionModal: React.FC<NutritionPrescriptionModalProp
           fiber: `${totalDayFiber}g`,
         },
         dietGuidelines: {
-          clinicalRationale: 'Therapeutic diet calibrated to glycemic and metabolic recovery.',
-          dos: domainDos.length > 0 ? domainDos : [
-            'Maintain regular meal timings to promote circadian metabolic stability.',
-            'Start each meal with high-fiber salad or greens before carbs.',
-            'Hydrate with minimum 2.8 liters of filtered water throughout the day.',
-            'Include lean protein in all 3 major meals.',
-            'Complete dinner at least 2.5 hours before sleeping.',
-          ],
-          donts: domainDonts.length > 0 ? domainDonts : [
-            'Avoid refined carbohydrates, table sugars, and sweetened juices.',
-            'Do not skip meals or engage in unplanned fasts without supervision.',
-            'Avoid trans fats, deep-fried snacks, and processed bakery items.',
-            'Refrain from late-night carbohydrate snacking.',
-            'Avoid eating within 2 hours of bedtime.',
-          ],
-          hydrationTarget: '2.8 - 3.0 Liters daily',
-          timingGuidance: 'Circadian 12-hour fasting window (8:00 PM to 8:00 AM)',
+          clinicalRationale: `Therapeutic clinical nutrition calibrated for ${conditionDomain}.`,
+          dos: domainDos,
+          donts: domainDonts,
+          hydrationTarget: '2.5 - 3.0 Litres water daily',
+          timingGuidance: 'Circadian rhythm: 6:00 AM, 8:00 AM, 1:00 PM, 8:00 PM',
         },
         dietPlans: customPlans,
         exerciseGuidelines: {
-          sportsMedicineRationale: 'Sports Medicine exercise protocol designed to optimize GLUT-4 glucose clearance.',
-          weeklyTarget: '250 Mins / Week • Zone 2 Cardio & Strength',
-          dos: [
-            'Perform a 15-minute gentle walk within 30 minutes after main meals.',
-            'Warm up for 8 minutes with dynamic joint mobilization before any workout.',
-            'Maintain rhythmic breathing during exertion; avoid breath-holding.',
-            'Wear supportive footwear with good arch support.',
-            'Hydrate with water and pinch of rock salt 20 minutes before exercise.',
-          ],
-          donts: [
-            'Do not train vigorously when fasting blood glucose is <70 mg/dL or >250 mg/dL.',
-            'Avoid high-impact loading if experiencing joint effusion or inflammation.',
-            'Do not continue training through sharp joint pain or dizziness.',
-            'Avoid sudden cessation of high-intensity intervals without active cooldown.',
-            'Never skip post-workout stretching and mobility recovery.',
-          ],
-          drBharathkumarSignOff: 'Prescribed by Dr. Bharathkumar, Sports Medicine Specialist (Reg: KMC-74829)',
+          sportsMedicineRationale: 'Zone 2 aerobic training & compound resistance stimulate GLUT4 glucose uptake.',
+          weeklyTarget: '150 mins aerobic + 2-3 resistance sessions',
+          dos: domainDos,
+          donts: domainDonts,
+          drBharathkumarSignOff: 'Dr. Bharathkumar (MBBS, MD Sports Medicine Specialist)',
         },
-        exercisePlans: exercisePlans,
+        exercisePlans,
+        conditionIngredients,
       };
 
-      generateComplete2PagePlanPdf(pdfData, `Ziathlon_2Page_Rx_${patientName.replace(/\s+/g, '_')}.pdf`);
-      setStatusMessage('✓ 2-Page Vector PDF Downloaded!');
+      const safeName = (patientName || 'Patient').replace(/\s+/g, '_');
+      const suffix = includeFormulary ? 'Complete_Rx_90Foods' : '2Page_Rx';
+      const filename = `Ziathlon_Prescription_${safeName}_${conditionDomain.replace(/\s+/g, '_')}_Gold_Black_${suffix}.pdf`;
+
+      generateGoldAndBlackPrescriptionPdf(pdfData, filename, { includeFormulary });
+      setStatusMessage(`✓ Gold & Black Prescription Exported: ${filename}`);
       setTimeout(() => setStatusMessage(null), 4000);
-    } catch (err: any) {
-      console.error('Vector PDF error:', err);
-      handleDownloadPdf();
+    } catch (e: any) {
+      console.error('Gold & Black PDF generation failed:', e);
+      setStatusMessage('Vector PDF export failed. Triggering browser print view...');
+      setTimeout(() => {
+        window.print();
+        setStatusMessage(null);
+      }, 1000);
+    } finally {
+      setIsGeneratingPdf(false);
     }
   };
 
-  // Helper to format slot meal text
-  const currentActivePlan = customPlans[selectedDayIdx] || customPlans[0] || INITIAL_7_DAY_STUDIO_PLAN[0];
+  const handleDownloadVectorPdf = async () => {
+    if (prescriptionTheme === 'gold-black') {
+      return handleDownloadGoldBlackPdf(false);
+    }
+    setIsGeneratingPdf(true);
+    setStatusMessage('Generating High-Resolution Clinical PDF...');
 
-  // Calculate day macros
-  const totalDayCalories = currentActivePlan.slots.reduce((acc, s) => {
-    const slotKcal = s.items.reduce((sum, it) => sum + (it.calories || 0), 0);
-    return acc + (slotKcal || s.targetKcal || 0);
-  }, 0) || currentActivePlan.targetCalories || 1600;
+    try {
+      const pdfData: Complete2PagePlanPdfData = {
+        patient: {
+          name: patientName,
+          age: patientAge,
+          gender: patientGender,
+          targetCalories: totalDayCalories,
+          patientId: `ZT-${Date.now().toString().slice(-6)}`,
+        },
+        conditionDomain,
+        dietDomain: `${conditionDomain} Clinical Diet Protocol`,
+        macros: {
+          protein: `${totalDayProtein}g`,
+          carbs: `${totalDayCarbs}g`,
+          fat: `${totalDayFat}g`,
+          fiber: `${totalDayFiber}g`,
+        },
+        dietGuidelines: {
+          clinicalRationale: `Therapeutic clinical nutrition calibrated for ${conditionDomain}.`,
+          dos: domainDos,
+          donts: domainDonts,
+          hydrationTarget: '2.5 - 3.0 Litres water daily',
+          timingGuidance: 'Circadian rhythm: 6:00 AM, 8:00 AM, 1:00 PM, 8:00 PM',
+        },
+        dietPlans: customPlans,
+        exerciseGuidelines: {
+          sportsMedicineRationale: 'Zone 2 aerobic training & compound resistance stimulate GLUT4 glucose uptake.',
+          weeklyTarget: '150 mins aerobic + 2-3 resistance sessions',
+          dos: domainDos,
+          donts: domainDonts,
+          drBharathkumarSignOff: 'Dr. Bharathkumar (MBBS, MD Sports Medicine Specialist)',
+        },
+        exercisePlans,
+        conditionIngredients,
+      };
 
-  const totalDayProtein = currentActivePlan.slots.reduce((acc, s) => {
-    return acc + s.items.reduce((sum, it) => sum + (it.protein || 0), 0);
-  }, 0) || 61;
+      const safeName = patientName.replace(/\s+/g, '_') || 'Patient';
+      generateComplete2PagePlanPdf(pdfData, `Clinical_Nutrition_Prescription_${safeName}.pdf`);
+      setStatusMessage('Prescription PDF Downloaded Successfully!');
+      setTimeout(() => setStatusMessage(null), 3000);
+    } catch (e: any) {
+      console.error('Vector PDF failed, fallback to print view', e);
+      try {
+        const safeName = patientName.replace(/\s+/g, '_') || 'Patient';
+        await downloadHtmlAsPdf('print-area-wrapper', `Clinical_Nutrition_Prescription_${safeName}.pdf`);
+        setStatusMessage('Prescription PDF Exported!');
+        setTimeout(() => setStatusMessage(null), 3000);
+      } catch (err) {
+        setStatusMessage('Triggering print dialog for PDF export...');
+        window.print();
+        setTimeout(() => setStatusMessage(null), 3000);
+      }
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
 
-  const totalDayFat = currentActivePlan.slots.reduce((acc, s) => {
-    return acc + s.items.reduce((sum, it) => sum + (it.fat || 0), 0);
-  }, 0) || 32;
-
-  const totalDayCarbs = currentActivePlan.slots.reduce((acc, s) => {
-    return acc + s.items.reduce((sum, it) => sum + (it.carbs || 0), 0);
-  }, 0) || 212;
-
-  const totalDayFiber = currentActivePlan.slots.reduce((acc, s) => {
-    return acc + s.items.reduce((sum, it) => sum + (it.fiber || 0), 0);
-  }, 0) || 32;
+  if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-md p-2 sm:p-4 overflow-y-auto">
-      <div className="relative w-full max-w-6xl bg-[#060c1d] border-2 border-yellow-500/60 rounded-2xl p-3 sm:p-6 shadow-[0_0_50px_rgba(202,138,4,0.35)] text-white max-h-[96vh] flex flex-col my-auto font-sans">
-        
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/85 backdrop-blur-md flex justify-center p-2 sm:p-4 md:p-6">
+      <div
+        id="print-area-wrapper"
+        className={`relative w-full max-w-5xl rounded-2xl shadow-2xl p-4 sm:p-6 flex flex-col max-h-[96vh] transition-colors ${
+          prescriptionTheme === 'gold-black'
+            ? 'bg-[#0A0A0A] border-2 border-[#D4AF37] text-white shadow-[0_0_50px_rgba(212,175,55,0.22)]'
+            : 'bg-white border-2 border-[#7E22CE] text-gray-900'
+        }`}
+      >
         {/* Top Control Bar (Hidden on print) */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b-2 border-yellow-500/50 no-print">
-          {/* Page Switcher Tabs */}
-          <div className="flex items-center gap-1 sm:gap-2">
+        <div
+          className={`flex flex-wrap items-center justify-between pb-4 gap-3 no-print border-b ${
+            prescriptionTheme === 'gold-black' ? 'border-[#D4AF37]/30' : 'border-purple-200'
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className={`w-10 h-10 rounded-xl flex items-center justify-center font-serif font-black text-xl shadow-md ${
+                prescriptionTheme === 'gold-black'
+                  ? 'bg-gradient-to-br from-[#D4AF37] via-[#F5D76E] to-[#996515] text-black border border-[#D4AF37]'
+                  : 'bg-[#7E22CE] text-white'
+              }`}
+            >
+              ℞
+            </div>
+            <div>
+              <span
+                className={`text-[10px] font-mono uppercase tracking-widest font-bold ${
+                  prescriptionTheme === 'gold-black' ? 'text-[#D4AF37]' : 'text-purple-700'
+                }`}
+              >
+                Clinical Nutrition Prescription
+              </span>
+              <h2
+                className={`text-base sm:text-lg font-black tracking-tight flex items-center gap-2 ${
+                  prescriptionTheme === 'gold-black' ? 'text-white' : 'text-black'
+                }`}
+              >
+                <span>Prescription Document</span>
+                <span
+                  className={`text-xs py-0.5 px-2.5 rounded-full font-mono font-bold ${
+                    prescriptionTheme === 'gold-black'
+                      ? 'bg-[#181610] text-[#F5D76E] border border-[#D4AF37]/50'
+                      : 'bg-purple-50 text-[#7E22CE] border border-purple-300'
+                  }`}
+                >
+                  {conditionDomain}
+                </span>
+              </h2>
+            </div>
+          </div>
+
+          {/* Navigation View Switcher */}
+          <div
+            className={`flex items-center gap-1.5 p-1 rounded-xl text-xs border ${
+              prescriptionTheme === 'gold-black'
+                ? 'bg-[#141418] border-[#D4AF37]/30'
+                : 'bg-purple-50/80 border border-purple-200'
+            }`}
+          >
             <button
               type="button"
               onClick={() => setActivePageView('page1')}
-              className={`py-1.5 px-3 rounded text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
                 activePageView === 'page1'
-                  ? 'bg-yellow-600 text-white shadow-[0_0_12px_rgba(202,138,4,0.6)]'
-                  : 'bg-black/60 text-yellow-200 border border-yellow-500/40 hover:bg-yellow-950/40'
+                  ? prescriptionTheme === 'gold-black'
+                    ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-black font-black shadow-md'
+                    : 'bg-[#7E22CE] text-white shadow-sm'
+                  : prescriptionTheme === 'gold-black'
+                  ? 'text-gray-300 hover:text-white hover:bg-white/5'
+                  : 'text-gray-700 hover:text-black hover:bg-purple-100/60'
               }`}
             >
-              Page 1: 7-Day Diet Plan & Demographics
+              Page 1: 7-Day Diet
             </button>
             <button
               type="button"
               onClick={() => setActivePageView('page2')}
-              className={`py-1.5 px-3 rounded text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
                 activePageView === 'page2'
-                  ? 'bg-yellow-600 text-white shadow-[0_0_12px_rgba(202,138,4,0.6)]'
-                  : 'bg-black/60 text-yellow-200 border border-yellow-500/40 hover:bg-yellow-950/40'
+                  ? prescriptionTheme === 'gold-black'
+                    ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-black font-black shadow-md'
+                    : 'bg-[#7E22CE] text-white shadow-sm'
+                  : prescriptionTheme === 'gold-black'
+                  ? 'text-gray-300 hover:text-white hover:bg-white/5'
+                  : 'text-gray-700 hover:text-black hover:bg-purple-100/60'
               }`}
             >
-              Page 2: 7-Day Exercise Guidelines & Dr. Bharathkumar
-            </button>
-            <button
-              type="button"
-              onClick={() => setActivePageView('guidelines')}
-              className={`py-1.5 px-3 rounded text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
-                activePageView === 'guidelines'
-                  ? 'bg-purple-600 text-white shadow-[0_0_12px_rgba(168,85,247,0.6)]'
-                  : 'bg-black/60 text-purple-300 border border-purple-500/40 hover:bg-purple-950/40'
-              }`}
-            >
-              90 Condition Ingredients
+              Page 2: Exercise Protocol
             </button>
             <button
               type="button"
               onClick={() => setActivePageView('both')}
-              className={`py-1.5 px-3 rounded text-xs font-black uppercase tracking-wider transition-all cursor-pointer hidden md:inline-flex ${
+              className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
                 activePageView === 'both'
-                  ? 'bg-indigo-600 text-white shadow-[0_0_12px_rgba(99,102,241,0.6)]'
-                  : 'bg-black/60 text-indigo-300 border border-indigo-500/40 hover:bg-indigo-950/40'
+                  ? prescriptionTheme === 'gold-black'
+                    ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-black font-black shadow-md'
+                    : 'bg-[#7E22CE] text-white shadow-sm'
+                  : prescriptionTheme === 'gold-black'
+                  ? 'text-gray-300 hover:text-white hover:bg-white/5'
+                  : 'text-gray-700 hover:text-black hover:bg-purple-100/60'
               }`}
             >
-              View Both Pages (Full 2-Page Print Layout)
+              Both Pages
+            </button>
+            <button
+              type="button"
+              onClick={() => setActivePageView('guidelines')}
+              className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                activePageView === 'guidelines'
+                  ? prescriptionTheme === 'gold-black'
+                    ? 'bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-black font-black shadow-md'
+                    : 'bg-[#7E22CE] text-white shadow-sm'
+                  : prescriptionTheme === 'gold-black'
+                  ? 'text-gray-300 hover:text-white hover:bg-white/5'
+                  : 'text-gray-700 hover:text-black hover:bg-purple-100/60'
+              }`}
+            >
+              90 Foods
             </button>
           </div>
 
-          {/* Print & Download Actions */}
+          {/* Actions & Theme Controls */}
           <div className="flex items-center gap-2">
-            {statusMessage && (
-              <span className="text-xs font-bold text-yellow-400 animate-pulse mr-2">
-                {statusMessage}
-              </span>
-            )}
+            {/* Theme Toggle Button */}
             <button
               type="button"
-              onClick={handleDownloadVectorPdf}
-              className="py-1.5 px-4 bg-yellow-600 hover:bg-yellow-500 text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 rounded transition-all cursor-pointer shadow-[0_0_15px_rgba(202,138,4,0.5)]"
+              onClick={() => setPrescriptionTheme(prescriptionTheme === 'gold-black' ? 'purple-white' : 'gold-black')}
+              className={`px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                prescriptionTheme === 'gold-black'
+                  ? 'bg-[#1C1810] border-[#D4AF37] text-[#F5D76E] shadow-[0_0_12px_rgba(212,175,55,0.25)]'
+                  : 'bg-purple-100/80 border-purple-300 text-purple-900'
+              }`}
+              title="Toggle between Clinical Gold & Black and Royal Purple & White theme"
             >
-              <Printer className="w-3.5 h-3.5" />
-              <span>Download PDF (2-Page)</span>
+              <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
+              <span>{prescriptionTheme === 'gold-black' ? 'Theme: Gold & Black' : 'Theme: Purple & White'}</span>
             </button>
+
+            {/* Print Button */}
+            <button
+              type="button"
+              onClick={handlePrint}
+              className={`px-3 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm border ${
+                prescriptionTheme === 'gold-black'
+                  ? 'bg-[#141418] hover:bg-[#1E1E24] text-gray-200 border-[#D4AF37]/40'
+                  : 'bg-purple-50 hover:bg-purple-100 text-purple-900 border-purple-300'
+              }`}
+            >
+              <Printer className="w-4 h-4 text-[#D4AF37]" />
+              <span>Print</span>
+            </button>
+
+            {/* Split PDF Export Button with Dropdown Options */}
+            <div className="relative">
+              <div className="flex items-center">
+                <button
+                  type="button"
+                  disabled={isGeneratingPdf}
+                  onClick={() => handleDownloadGoldBlackPdf(false)}
+                  className="px-3.5 py-2 bg-gradient-to-r from-[#D4AF37] via-[#F5D76E] to-[#B8860B] hover:brightness-110 text-black rounded-l-lg text-xs font-black transition-all flex items-center gap-1.5 shadow-[0_0_15px_rgba(212,175,55,0.35)] cursor-pointer disabled:opacity-50"
+                  title="Export High-Resolution 2-Page Gold & Black Prescription PDF"
+                >
+                  <FileDown className="w-4 h-4 text-black" />
+                  <span>{isGeneratingPdf ? 'Generating...' : 'Export Gold & Black PDF'}</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={isGeneratingPdf}
+                  onClick={() => setShowExportMenu(!showExportMenu)}
+                  className="px-2 py-2 bg-[#B8860B] hover:brightness-110 text-black rounded-r-lg text-xs font-black border-l border-black/20 transition-all cursor-pointer disabled:opacity-50"
+                  title="Export Options"
+                >
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Export Dropdown Menu */}
+              {showExportMenu && (
+                <div className="absolute right-0 top-full mt-1.5 w-64 bg-[#141418] border-2 border-[#D4AF37] rounded-xl shadow-2xl p-1.5 z-50 space-y-1 text-xs text-white">
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadGoldBlackPdf(false)}
+                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-[#252014] text-[#F5D76E] font-bold flex items-center gap-2 cursor-pointer"
+                  >
+                    <FileDown className="w-4 h-4 text-[#D4AF37]" />
+                    <div>
+                      <div className="text-white font-bold">2-Page Rx PDF (Gold & Black)</div>
+                      <div className="text-[10px] text-gray-400">Diet Plan + Exercise Protocol</div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadGoldBlackPdf(true)}
+                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-[#252014] text-[#F5D76E] font-bold flex items-center gap-2 cursor-pointer border-t border-[#D4AF37]/20 pt-2"
+                  >
+                    <Sparkles className="w-4 h-4 text-[#D4AF37]" />
+                    <div>
+                      <div className="text-white font-bold">Complete 3-Page Dossier (Gold & Black)</div>
+                      <div className="text-[10px] text-gray-400">Includes 90 Foods Clinical Formulary</div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowExportMenu(false);
+                      handleDownloadVectorPdf();
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-gray-300 font-bold flex items-center gap-2 cursor-pointer border-t border-zinc-800 pt-2"
+                  >
+                    <Save className="w-4 h-4 text-purple-400" />
+                    <div>
+                      <div className="text-gray-200">Classic Light PDF (Purple & White)</div>
+                      <div className="text-[10px] text-gray-400">Standard White Paper Format</div>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Close Button */}
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 text-gray-400 hover:text-white text-base rounded border border-white/20 hover:border-yellow-500 cursor-pointer"
+              className={`p-2 rounded-lg border cursor-pointer transition-colors ${
+                prescriptionTheme === 'gold-black'
+                  ? 'text-gray-400 hover:text-white hover:bg-white/10 border-zinc-700'
+                  : 'text-gray-500 hover:text-black hover:bg-gray-100 border-gray-200'
+              }`}
+              title="Close"
             >
-              ✕
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* Prescription Paper Content (Scrollable on screen, 2 pages printed) */}
-        <div
-          className="print-area overflow-y-auto pr-1.5 flex-1 space-y-8 pt-4 text-xs font-sans"
-        >
+        {/* Status Toast */}
+        {statusMessage && (
+          <div
+            className={`my-2 p-2.5 rounded-lg text-xs font-bold flex items-center gap-2 no-print border ${
+              prescriptionTheme === 'gold-black'
+                ? 'bg-[#1C1810] border-[#D4AF37] text-[#F5D76E]'
+                : 'bg-purple-50 border-purple-300 text-purple-900'
+            }`}
+          >
+            <CheckCircle className="w-4 h-4 text-[#D4AF37] shrink-0" />
+            <span>{statusMessage}</span>
+          </div>
+        )}
+
+        {/* Prescription Paper Content: Dynamic Gold & Black or Purple & White Theme */}
+        <div className="print-area overflow-y-auto pr-1.5 flex-1 space-y-8 pt-4 text-xs font-sans">
           {/* ========================================================================= */}
-          {/* PAGE 1: 7-DAY DIET PLAN PRESCRIPTION (EXACT LAYOUT AS ELSHADA.jpeg)       */}
+          {/* PAGE 1: 7-DAY DIET PLAN PRESCRIPTION                                      */}
           {/* ========================================================================= */}
           {(activePageView === 'page1' || activePageView === 'both') && (
-            <div className="prescription-page page-1 relative bg-black border-2 border-yellow-500/50 rounded-2xl p-4 sm:p-6 space-y-5 shadow-2xl">
-              
-              {/* Top Header matching ELSHADA.jpeg */}
-              <div className="flex items-center justify-between pb-3 border-b border-yellow-500/30">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="p-1 text-yellow-400 hover:text-white rounded-lg hover:bg-yellow-950/40 no-print"
-                  title="Back"
-                >
-                  <span className="text-lg font-bold">‹</span>
-                </button>
-
-                {/* Centered ELSHA Logo & Tagline */}
-                <div className="flex-1 flex justify-center">
-                  <ElshaLogo size="md" showSubtitle={true} />
-                </div>
-
-                {/* Right 7 Day Plan Pill Button */}
-                <div className="flex items-center gap-2">
-                  <span className="py-1 px-3 bg-yellow-950/80 border border-yellow-400/60 rounded-lg text-yellow-200 text-xs font-bold flex items-center gap-1.5 shadow-[0_0_10px_rgba(234,179,8,0.25)]">
-                    <Calendar className="w-3.5 h-3.5 text-yellow-400" />
-                    <span>7 Day Plan</span>
+            <div
+              className={`prescription-page page-1 relative rounded-2xl p-5 sm:p-7 space-y-5 shadow-2xl transition-colors ${
+                prescriptionTheme === 'gold-black'
+                  ? 'bg-[#0E0E12] border-2 border-[#D4AF37] text-white shadow-[0_0_40px_rgba(212,175,55,0.18)]'
+                  : 'bg-white border-2 border-[#7E22CE] text-gray-900'
+              }`}
+            >
+              {/* Official Letterhead Header matching Clinical Stationery */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between no-print">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="p-1 px-3 rounded-lg text-xs font-bold text-purple-700 hover:text-purple-950 hover:bg-purple-50 flex items-center gap-1 cursor-pointer"
+                  >
+                    ‹ Close Prescription
+                  </button>
+                  <span className="py-1 px-3 rounded-lg text-xs font-black bg-[#7E22CE] text-white flex items-center gap-1.5 shadow-sm">
+                    <Calendar className="w-3.5 h-3.5 text-white" />
+                    <span>7-Day Plan • Page 1 of 2</span>
                   </span>
                 </div>
+
+                <ZiathlonLetterheadHeader
+                  pageNumber="PAGE 1 OF 2"
+                  rxNumber={`Rx ID: ZIA-RX-${String(patientName).slice(0, 4).toUpperCase()}-2026`}
+                  date={new Date().toLocaleDateString('en-GB')}
+                />
               </div>
 
               {/* Title Banner with Patient Details (Name, Age, Gender, Condition) */}
-              <div className="bg-[#111] border border-yellow-500/40 rounded-xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div
+                className={`rounded-xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border ${
+                  prescriptionTheme === 'gold-black'
+                    ? 'bg-[#16161B] border-[#D4AF37]/40 text-white'
+                    : 'bg-purple-50/80 border border-purple-200'
+                }`}
+              >
                 <div className="flex items-center gap-3.5">
-                  <div className="w-12 h-12 rounded-xl bg-yellow-600/30 border border-yellow-400 flex items-center justify-center text-yellow-200 shadow-[0_0_15px_rgba(234,179,8,0.3)]">
+                  <div
+                    className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-md ${
+                      prescriptionTheme === 'gold-black'
+                        ? 'bg-gradient-to-br from-[#D4AF37] to-[#996515] text-black'
+                        : 'bg-[#7E22CE] text-white'
+                    }`}
+                  >
                     <Calendar className="w-6 h-6" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-black text-white tracking-tight">
+                    <h2
+                      className={`text-xl font-black tracking-tight ${
+                        prescriptionTheme === 'gold-black' ? 'text-white' : 'text-gray-900'
+                      }`}
+                    >
                       7 Day Diet Plan
                     </h2>
-                    <p className="text-xs text-yellow-200 font-medium">
+                    <p
+                      className={`text-xs font-semibold ${
+                        prescriptionTheme === 'gold-black' ? 'text-[#F5D76E]' : 'text-purple-800'
+                      }`}
+                    >
                       Personalized nutrition plan for your health goals
                     </p>
                   </div>
                 </div>
 
-                {/* Patient Information Table as in ELSHADA.jpeg */}
-                <div className="bg-black/50 border border-yellow-500/30 rounded-lg px-4 py-2.5 text-xs grid grid-cols-2 gap-x-6 gap-y-1 font-sans">
-                  <div className="text-gray-400 font-medium">
+                {/* Patient Information Table */}
+                <div
+                  className={`rounded-lg px-4 py-2.5 text-xs grid grid-cols-2 gap-x-6 gap-y-1 font-sans shadow-sm border ${
+                    prescriptionTheme === 'gold-black'
+                      ? 'bg-[#141418] border-[#D4AF37]/30 text-gray-300'
+                      : 'bg-white border border-purple-200'
+                  }`}
+                >
+                  <div className={prescriptionTheme === 'gold-black' ? 'text-[#D4AF37] font-bold' : 'text-gray-600 font-bold'}>
                     Name <span className="float-right text-gray-500 mr-2">:</span>
                   </div>
-                  <div className="text-white font-bold">{patientName}</div>
+                  <div className={`font-extrabold ${prescriptionTheme === 'gold-black' ? 'text-white' : 'text-black'}`}>
+                    {patientName}
+                  </div>
 
-                  <div className="text-gray-400 font-medium">
+                  <div className={prescriptionTheme === 'gold-black' ? 'text-[#D4AF37] font-bold' : 'text-gray-600 font-bold'}>
                     Age <span className="float-right text-gray-500 mr-2">:</span>
                   </div>
-                  <div className="text-white font-bold">{patientAge}</div>
+                  <div className={`font-extrabold ${prescriptionTheme === 'gold-black' ? 'text-white' : 'text-black'}`}>
+                    {patientAge}
+                  </div>
 
-                  <div className="text-gray-400 font-medium">
+                  <div className={prescriptionTheme === 'gold-black' ? 'text-[#D4AF37] font-bold' : 'text-gray-600 font-bold'}>
                     Gender <span className="float-right text-gray-500 mr-2">:</span>
                   </div>
-                  <div className="text-white font-bold">{patientGender}</div>
+                  <div className={`font-extrabold ${prescriptionTheme === 'gold-black' ? 'text-white' : 'text-black'}`}>
+                    {patientGender}
+                  </div>
 
-                  <div className="text-gray-400 font-medium">
+                  <div className={prescriptionTheme === 'gold-black' ? 'text-[#D4AF37] font-bold' : 'text-gray-600 font-bold'}>
                     Condition <span className="float-right text-gray-500 mr-2">:</span>
                   </div>
-                  <div className="text-yellow-400 font-black">{conditionDomain}</div>
+                  <div className={`font-black ${prescriptionTheme === 'gold-black' ? 'text-[#F5D76E]' : 'text-[#7E22CE]'}`}>
+                    {conditionDomain}
+                  </div>
                 </div>
               </div>
 
-              {/* THE CONSOLIDATED 7-DAY DIET PLAN TABLE (EXACT ONE-TABLE ALIGNMENT MATCHING CLINIC REFERENCE) */}
+              {/* CONSOLIDATED 7-DAY DIET PLAN TABLE */}
               <div className="space-y-2">
                 <Unified7DayClinicalDietTable
                   plans={customPlans}
@@ -474,99 +859,224 @@ export const NutritionPrescriptionModal: React.FC<NutritionPrescriptionModalProp
                   }}
                   clinicTitle="SPORTS MEDICINE CLINIC"
                   sourceBadge="CLINICAL 7-DAY DIET PLAN"
-                  categoryTag={`${conditionDomain.toUpperCase()} • LOW GLYCEMIC FOODS`}
+                  categoryTag={`${conditionDomain.toUpperCase()} • THERAPEUTIC NUTRITION`}
                   readOnly={false}
+                  variant={prescriptionTheme === 'gold-black' ? 'dark' : 'purple-white'}
                 />
               </div>
 
-              {/* Bottom 3 Summary Cards matching ELSHADA.jpeg */}
+              {/* Bottom 3 Summary Cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {/* 1. Nutrition Summary */}
-                <div className="bg-[#0a0a0a] border border-yellow-500/30 rounded-xl p-3.5 space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-black uppercase text-yellow-200 pb-1.5 border-b border-yellow-500/20">
-                    <PieChart className="w-4 h-4 text-yellow-400" />
+                <div
+                  className={`rounded-xl p-3.5 space-y-2 border-2 ${
+                    prescriptionTheme === 'gold-black'
+                      ? 'bg-[#141418] border-[#D4AF37]/50 text-white shadow-lg'
+                      : 'bg-white border-purple-200 shadow-sm'
+                  }`}
+                >
+                  <div
+                    className={`flex items-center gap-2 text-xs font-black uppercase pb-1.5 border-b ${
+                      prescriptionTheme === 'gold-black'
+                        ? 'text-[#D4AF37] border-[#D4AF37]/20'
+                        : 'text-[#601188] border-purple-100'
+                    }`}
+                  >
+                    <PieChart className="w-4 h-4 text-[#D4AF37]" />
                     <span>Nutrition Summary</span>
                   </div>
                   <div className="space-y-1 text-xs font-mono">
-                    <div className="flex justify-between py-0.5 border-b border-white/5">
-                      <span className="text-gray-400">Energy:</span>
-                      <span className="font-bold text-white">{totalDayCalories} kcal</span>
+                    <div
+                      className={`flex justify-between py-0.5 border-b ${
+                        prescriptionTheme === 'gold-black' ? 'border-zinc-800' : 'border-purple-50'
+                      }`}
+                    >
+                      <span className={prescriptionTheme === 'gold-black' ? 'text-gray-400' : 'text-gray-600'}>Energy:</span>
+                      <span className={`font-extrabold ${prescriptionTheme === 'gold-black' ? 'text-white' : 'text-black'}`}>
+                        {totalDayCalories} kcal
+                      </span>
                     </div>
-                    <div className="flex justify-between py-0.5 border-b border-white/5">
-                      <span className="text-gray-400">Protein:</span>
-                      <span className="font-bold text-yellow-200">{totalDayProtein} g</span>
+                    <div
+                      className={`flex justify-between py-0.5 border-b ${
+                        prescriptionTheme === 'gold-black' ? 'border-zinc-800' : 'border-purple-50'
+                      }`}
+                    >
+                      <span className={prescriptionTheme === 'gold-black' ? 'text-gray-400' : 'text-gray-600'}>Protein:</span>
+                      <span
+                        className={`font-extrabold ${
+                          prescriptionTheme === 'gold-black' ? 'text-[#F5D76E]' : 'text-[#601188]'
+                        }`}
+                      >
+                        {totalDayProtein} g
+                      </span>
                     </div>
-                    <div className="flex justify-between py-0.5 border-b border-white/5">
-                      <span className="text-gray-400">Fat:</span>
-                      <span className="font-bold text-amber-300">{totalDayFat} g</span>
+                    <div
+                      className={`flex justify-between py-0.5 border-b ${
+                        prescriptionTheme === 'gold-black' ? 'border-zinc-800' : 'border-purple-50'
+                      }`}
+                    >
+                      <span className={prescriptionTheme === 'gold-black' ? 'text-gray-400' : 'text-gray-600'}>Fat:</span>
+                      <span
+                        className={`font-extrabold ${
+                          prescriptionTheme === 'gold-black' ? 'text-amber-400' : 'text-amber-700'
+                        }`}
+                      >
+                        {totalDayFat} g
+                      </span>
                     </div>
-                    <div className="flex justify-between py-0.5 border-b border-white/5">
-                      <span className="text-gray-400">Carbohydrate:</span>
-                      <span className="font-bold text-white">{totalDayCarbs} g</span>
+                    <div
+                      className={`flex justify-between py-0.5 border-b ${
+                        prescriptionTheme === 'gold-black' ? 'border-zinc-800' : 'border-purple-50'
+                      }`}
+                    >
+                      <span className={prescriptionTheme === 'gold-black' ? 'text-gray-400' : 'text-gray-600'}>Carbohydrate:</span>
+                      <span className={`font-extrabold ${prescriptionTheme === 'gold-black' ? 'text-white' : 'text-black'}`}>
+                        {totalDayCarbs} g
+                      </span>
                     </div>
                     <div className="flex justify-between py-0.5">
-                      <span className="text-gray-400">Fibre:</span>
-                      <span className="font-bold text-emerald-400">{totalDayFiber} g</span>
+                      <span className={prescriptionTheme === 'gold-black' ? 'text-gray-400' : 'text-gray-600'}>Fibre:</span>
+                      <span
+                        className={`font-extrabold ${
+                          prescriptionTheme === 'gold-black' ? 'text-emerald-400' : 'text-emerald-700'
+                        }`}
+                      >
+                        {totalDayFiber} g
+                      </span>
                     </div>
                   </div>
                 </div>
 
                 {/* 2. Meal Timings */}
-                <div className="bg-[#0a0a0a] border border-yellow-500/30 rounded-xl p-3.5 space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-black uppercase text-yellow-200 pb-1.5 border-b border-yellow-500/20">
-                    <Clock className="w-4 h-4 text-yellow-400" />
+                <div
+                  className={`rounded-xl p-3.5 space-y-2 border-2 ${
+                    prescriptionTheme === 'gold-black'
+                      ? 'bg-[#141418] border-[#D4AF37]/50 text-white shadow-lg'
+                      : 'bg-white border-purple-200 shadow-sm'
+                  }`}
+                >
+                  <div
+                    className={`flex items-center gap-2 text-xs font-black uppercase pb-1.5 border-b ${
+                      prescriptionTheme === 'gold-black'
+                        ? 'text-[#D4AF37] border-[#D4AF37]/20'
+                        : 'text-[#601188] border-purple-100'
+                    }`}
+                  >
+                    <Clock className="w-4 h-4 text-[#D4AF37]" />
                     <span>Meal Timings</span>
                   </div>
                   <div className="space-y-1 text-xs font-mono">
-                    <div className="flex justify-between py-0.5 border-b border-white/5">
-                      <span className="text-gray-400">Early Morning:</span>
-                      <span className="font-bold text-yellow-200">6:00 AM</span>
+                    <div
+                      className={`flex justify-between py-0.5 border-b ${
+                        prescriptionTheme === 'gold-black' ? 'border-zinc-800' : 'border-purple-50'
+                      }`}
+                    >
+                      <span className={prescriptionTheme === 'gold-black' ? 'text-gray-400' : 'text-gray-600'}>Early Morning:</span>
+                      <span className={`font-bold ${prescriptionTheme === 'gold-black' ? 'text-[#F5D76E]' : 'text-[#601188]'}`}>
+                        6:00 AM
+                      </span>
                     </div>
-                    <div className="flex justify-between py-0.5 border-b border-white/5">
-                      <span className="text-gray-400">Breakfast:</span>
-                      <span className="font-bold text-yellow-200">8:00 AM</span>
+                    <div
+                      className={`flex justify-between py-0.5 border-b ${
+                        prescriptionTheme === 'gold-black' ? 'border-zinc-800' : 'border-purple-50'
+                      }`}
+                    >
+                      <span className={prescriptionTheme === 'gold-black' ? 'text-gray-400' : 'text-gray-600'}>Breakfast:</span>
+                      <span className={`font-bold ${prescriptionTheme === 'gold-black' ? 'text-[#F5D76E]' : 'text-[#601188]'}`}>
+                        8:00 AM
+                      </span>
                     </div>
-                    <div className="flex justify-between py-0.5 border-b border-white/5">
-                      <span className="text-gray-400">Mid-Morning:</span>
-                      <span className="font-bold text-yellow-200">10:30 AM</span>
+                    <div
+                      className={`flex justify-between py-0.5 border-b ${
+                        prescriptionTheme === 'gold-black' ? 'border-zinc-800' : 'border-purple-50'
+                      }`}
+                    >
+                      <span className={prescriptionTheme === 'gold-black' ? 'text-gray-400' : 'text-gray-600'}>Mid-Morning:</span>
+                      <span className={`font-bold ${prescriptionTheme === 'gold-black' ? 'text-[#F5D76E]' : 'text-[#601188]'}`}>
+                        10:30 AM
+                      </span>
                     </div>
-                    <div className="flex justify-between py-0.5 border-b border-white/5">
-                      <span className="text-gray-400">Lunch:</span>
-                      <span className="font-bold text-yellow-200">1:00 PM</span>
+                    <div
+                      className={`flex justify-between py-0.5 border-b ${
+                        prescriptionTheme === 'gold-black' ? 'border-zinc-800' : 'border-purple-50'
+                      }`}
+                    >
+                      <span className={prescriptionTheme === 'gold-black' ? 'text-gray-400' : 'text-gray-600'}>Lunch:</span>
+                      <span className={`font-bold ${prescriptionTheme === 'gold-black' ? 'text-[#F5D76E]' : 'text-[#601188]'}`}>
+                        1:00 PM
+                      </span>
                     </div>
-                    <div className="flex justify-between py-0.5 border-b border-white/5">
-                      <span className="text-gray-400">Evening:</span>
-                      <span className="font-bold text-yellow-200">5:00 PM</span>
+                    <div
+                      className={`flex justify-between py-0.5 border-b ${
+                        prescriptionTheme === 'gold-black' ? 'border-zinc-800' : 'border-purple-50'
+                      }`}
+                    >
+                      <span className={prescriptionTheme === 'gold-black' ? 'text-gray-400' : 'text-gray-600'}>Evening:</span>
+                      <span className={`font-bold ${prescriptionTheme === 'gold-black' ? 'text-[#F5D76E]' : 'text-[#601188]'}`}>
+                        5:00 PM
+                      </span>
                     </div>
                     <div className="flex justify-between py-0.5">
-                      <span className="text-gray-400">Dinner:</span>
-                      <span className="font-bold text-yellow-200">8:00 PM</span>
+                      <span className={prescriptionTheme === 'gold-black' ? 'text-gray-400' : 'text-gray-600'}>Dinner:</span>
+                      <span className={`font-bold ${prescriptionTheme === 'gold-black' ? 'text-[#F5D76E]' : 'text-[#601188]'}`}>
+                        8:00 PM
+                      </span>
                     </div>
                   </div>
                 </div>
 
                 {/* 3. Do's & Don'ts */}
-                <div className="bg-[#0a0a0a] border border-yellow-500/30 rounded-xl p-3.5 space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-black uppercase text-yellow-200 pb-1.5 border-b border-yellow-500/20">
+                <div
+                  className={`rounded-xl p-3.5 space-y-2 border-2 ${
+                    prescriptionTheme === 'gold-black'
+                      ? 'bg-[#141418] border-[#D4AF37]/50 text-white shadow-lg'
+                      : 'bg-white border-purple-200 shadow-sm'
+                  }`}
+                >
+                  <div
+                    className={`flex items-center gap-2 text-xs font-black uppercase pb-1.5 border-b ${
+                      prescriptionTheme === 'gold-black'
+                        ? 'text-[#D4AF37] border-[#D4AF37]/20'
+                        : 'text-[#601188] border-purple-100'
+                    }`}
+                  >
                     <Check className="w-4 h-4 text-emerald-400" />
                     <span>Do's & Don'ts</span>
                   </div>
                   <div className="space-y-1 text-[10.5px]">
-                    <div className="text-emerald-400 font-bold uppercase tracking-wider text-[9.5px]">
+                    <div
+                      className={`font-bold uppercase tracking-wider text-[9.5px] ${
+                        prescriptionTheme === 'gold-black' ? 'text-emerald-400' : 'text-emerald-700'
+                      }`}
+                    >
                       Do's
                     </div>
-                    {domainDos.slice(0, 3).map((d, i) => (
-                      <div key={i} className="flex items-start gap-1 text-gray-200">
+                    {(domainDos || []).slice(0, 3).map((d, i) => (
+                      <div
+                        key={i}
+                        className={`flex items-start gap-1 font-medium ${
+                          prescriptionTheme === 'gold-black' ? 'text-gray-200' : 'text-gray-800'
+                        }`}
+                      >
                         <span className="text-emerald-400 font-bold">✓</span>
                         <span>{d}</span>
                       </div>
                     ))}
 
-                    <div className="text-red-400 font-bold uppercase tracking-wider text-[9.5px] pt-1">
+                    <div
+                      className={`font-bold uppercase tracking-wider text-[9.5px] pt-1 ${
+                        prescriptionTheme === 'gold-black' ? 'text-red-400' : 'text-red-600'
+                      }`}
+                    >
                       Don'ts
                     </div>
-                    {domainDonts.slice(0, 3).map((d, i) => (
-                      <div key={i} className="flex items-start gap-1 text-gray-200">
+                    {(domainDonts || []).slice(0, 3).map((d, i) => (
+                      <div
+                        key={i}
+                        className={`flex items-start gap-1 font-medium ${
+                          prescriptionTheme === 'gold-black' ? 'text-gray-200' : 'text-gray-800'
+                        }`}
+                      >
                         <span className="text-red-400 font-bold">✕</span>
                         <span>{d}</span>
                       </div>
@@ -575,295 +1085,479 @@ export const NutritionPrescriptionModal: React.FC<NutritionPrescriptionModalProp
                 </div>
               </div>
 
-              {/* Bottom Nutrition Tip Card matching ELSHADA.jpeg */}
-              <div className="bg-[#091530] border border-yellow-500/30 rounded-xl p-3.5 flex items-center justify-between gap-4">
+              {/* Bottom Nutrition Tip Card */}
+              <div
+                className={`rounded-xl p-3.5 flex items-center justify-between gap-4 border ${
+                  prescriptionTheme === 'gold-black'
+                    ? 'bg-[#1B1812] border-[#D4AF37]/50 text-white'
+                    : 'bg-purple-50/90 border border-purple-200'
+                }`}
+              >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-yellow-500/20 border border-yellow-400 flex items-center justify-center text-yellow-200 flex-shrink-0">
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm ${
+                      prescriptionTheme === 'gold-black' ? 'bg-[#D4AF37] text-black' : 'bg-[#7E22CE] text-white'
+                    }`}
+                  >
                     <Lightbulb className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-black text-white uppercase tracking-wider">
+                    <h4
+                      className={`text-xs font-black uppercase tracking-wider ${
+                        prescriptionTheme === 'gold-black' ? 'text-[#D4AF37]' : 'text-gray-900'
+                      }`}
+                    >
                       Nutrition Tip
                     </h4>
-                    <p className="text-[11px] text-gray-300">
-                      Eat slowly and mindfully. This helps in better digestion and prevents overeating.
+                    <p
+                      className={`text-[11px] font-medium ${
+                        prescriptionTheme === 'gold-black' ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
+                      Eat slowly and mindfully. This helps in better digestion, enhances satiety, and prevents glycemic surges.
                     </p>
                   </div>
                 </div>
 
-                <div className="font-serif italic text-base sm:text-lg text-yellow-200 select-none text-right flex-shrink-0">
+                <div
+                  className={`font-serif italic text-base sm:text-lg font-bold select-none text-right flex-shrink-0 ${
+                    prescriptionTheme === 'gold-black' ? 'text-[#F5D76E]' : 'text-[#601188]'
+                  }`}
+                >
                   Healthy Choices Today...
                 </div>
               </div>
 
-              {/* Page 1 Footer stamp */}
-              <div className="pt-2 flex items-center justify-between text-[10px] text-gray-400 font-mono border-t border-yellow-500/20">
+              {/* Official Clinical Pharmacotherapy / Nutritional Prescription Table */}
+              <div className="pt-4 border-t-2 border-[#E5DECE] space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl font-serif font-black text-[#7E22CE]">℞</span>
+                    <h3 className="text-sm font-black uppercase tracking-wider text-[#0F172A]">
+                      Clinical Prescription Table (Medicines, Dose, Frequency, Duration)
+                    </h3>
+                  </div>
+                  <span className="text-[10px] font-mono font-bold text-purple-900 bg-[#F7F3EA] px-2.5 py-1 rounded border border-[#E5DECE]">
+                    Validated Medical Regimen
+                  </span>
+                </div>
+                <OfficialClinicalPrescriptionTable
+                  patientName={patientName}
+                />
+              </div>
+
+              {/* Page 1 Footer */}
+              <div
+                className={`pt-2 flex items-center justify-between text-[10px] font-mono border-t ${
+                  prescriptionTheme === 'gold-black'
+                    ? 'border-[#D4AF37]/30 text-gray-400'
+                    : 'border-purple-200 text-gray-600'
+                }`}
+              >
                 <span>Page 1 of 2 • Official Clinical Nutrition Prescription</span>
-                <span className="text-yellow-400 font-bold">Prescription ID: #ELSHA-2026-RX-982</span>
+                <span className={`font-bold ${prescriptionTheme === 'gold-black' ? 'text-[#D4AF37]' : 'text-[#601188]'}`}>
+                  Prescription ID: #RX-2026-NUTRITION-01
+                </span>
               </div>
             </div>
           )}
 
           {/* ========================================================================= */}
-          {/* PAGE 2: 7-DAY EXERCISE PROTOCOL & DR. BHARATHKUMAR SPORTS MEDICINE SIGN-OFF */}
+          {/* PAGE 2: 7-DAY EXERCISE PROTOCOL & CLINICAL SIGN-OFF                        */}
           {/* ========================================================================= */}
           {(activePageView === 'page2' || activePageView === 'both') && (
-            <div className="prescription-page page-2 relative bg-black border-2 border-yellow-500/50 rounded-2xl p-4 sm:p-6 space-y-5 shadow-2xl">
-              
-              {/* Page 2 Header */}
-              <div className="flex items-center justify-between pb-3 border-b border-yellow-500/30">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="p-1 text-yellow-400 hover:text-white rounded-lg hover:bg-yellow-950/40 no-print"
-                  title="Back"
-                >
-                  <span className="text-lg font-bold">‹</span>
-                </button>
-
-                <div className="flex-1 flex justify-center">
-                  <ElshaLogo size="md" showSubtitle={true} />
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span className="py-1 px-3 bg-yellow-950/80 border border-yellow-400/60 rounded-lg text-yellow-200 text-xs font-bold flex items-center gap-1.5">
-                    <Dumbbell className="w-3.5 h-3.5 text-yellow-400" />
-                    <span>7-Day Exercise Protocol</span>
+            <div
+              className={`prescription-page page-2 relative rounded-2xl p-5 sm:p-7 space-y-5 shadow-2xl transition-colors ${
+                prescriptionTheme === 'gold-black'
+                  ? 'bg-[#0E0E12] border-2 border-[#D4AF37] text-white shadow-[0_0_40px_rgba(212,175,55,0.18)]'
+                  : 'bg-white border-2 border-[#7E22CE] text-gray-900'
+              }`}
+            >
+              {/* Official Letterhead Header matching Physical Paper */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between no-print">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="p-1 px-3 rounded-lg text-xs font-bold text-purple-700 hover:text-purple-950 hover:bg-purple-50 flex items-center gap-1 cursor-pointer"
+                  >
+                    ‹ Close Prescription
+                  </button>
+                  <span className="py-1 px-3 rounded-lg text-xs font-black bg-[#7E22CE] text-white flex items-center gap-1.5 shadow-sm">
+                    <Dumbbell className="w-3.5 h-3.5 text-white" />
+                    <span>Exercise Protocol • Page 2 of 2</span>
                   </span>
                 </div>
+
+                <ZiathlonLetterheadHeader
+                  pageNumber="PAGE 2 OF 2"
+                  rxNumber={`Rx ID: ZIA-RX-${String(patientName).slice(0, 4).toUpperCase()}-2026`}
+                  date={new Date().toLocaleDateString('en-GB')}
+                />
               </div>
 
               {/* Page 2 Title & Patient Conditioning Profile */}
-              <div className="bg-[#111] border border-yellow-500/40 rounded-xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div
+                className={`rounded-xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border ${
+                  prescriptionTheme === 'gold-black'
+                    ? 'bg-[#16161B] border-[#D4AF37]/40 text-white'
+                    : 'bg-purple-50/80 border border-purple-200'
+                }`}
+              >
                 <div className="flex items-center gap-3.5">
-                  <div className="w-12 h-12 rounded-xl bg-yellow-600/30 border border-yellow-400 flex items-center justify-center text-yellow-200 shadow-[0_0_15px_rgba(234,179,8,0.3)]">
+                  <div
+                    className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-md ${
+                      prescriptionTheme === 'gold-black'
+                        ? 'bg-gradient-to-br from-[#D4AF37] to-[#996515] text-black'
+                        : 'bg-[#7E22CE] text-white'
+                    }`}
+                  >
                     <Dumbbell className="w-6 h-6" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-black text-white tracking-tight">
+                    <h2
+                      className={`text-xl font-black tracking-tight ${
+                        prescriptionTheme === 'gold-black' ? 'text-white' : 'text-gray-900'
+                      }`}
+                    >
                       7-Day Clinical Exercise Guidelines
                     </h2>
-                    <p className="text-xs text-yellow-200 font-medium">
-                      Physiological exercise prescription calibrated to metabolic biomarkers & domain
+                    <p
+                      className={`text-xs font-semibold ${
+                        prescriptionTheme === 'gold-black' ? 'text-[#F5D76E]' : 'text-purple-800'
+                      }`}
+                    >
+                      Physiological exercise prescription calibrated to metabolic biomarkers & {conditionDomain}
                     </p>
                   </div>
                 </div>
 
-                <div className="bg-black/50 border border-yellow-500/30 rounded-lg px-4 py-2.5 text-xs grid grid-cols-2 gap-x-6 gap-y-1 font-sans">
-                  <div className="text-gray-400 font-medium">Patient :</div>
-                  <div className="text-white font-bold">{patientName} ({patientAge} yrs, {patientGender})</div>
-
-                  <div className="text-gray-400 font-medium">Condition :</div>
-                  <div className="text-yellow-400 font-bold">{conditionDomain}</div>
-
-                  <div className="text-gray-400 font-medium">Weekly Target :</div>
-                  <div className="text-emerald-400 font-bold">250 Mins / Week • Zone 2 Cardio & Strength</div>
+                <div
+                  className={`rounded-lg px-4 py-2.5 text-xs grid grid-cols-2 gap-x-6 gap-y-1 font-sans shadow-sm border ${
+                    prescriptionTheme === 'gold-black'
+                      ? 'bg-[#141418] border-[#D4AF37]/30 text-gray-300'
+                      : 'bg-white border border-purple-200'
+                  }`}
+                >
+                  <div className={prescriptionTheme === 'gold-black' ? 'text-[#D4AF37] font-bold' : 'text-gray-600 font-bold'}>
+                    Patient:
+                  </div>
+                  <div className={`font-extrabold ${prescriptionTheme === 'gold-black' ? 'text-white' : 'text-black'}`}>
+                    {patientName}
+                  </div>
+                  <div className={prescriptionTheme === 'gold-black' ? 'text-[#D4AF37] font-bold' : 'text-gray-600 font-bold'}>
+                    Target Zone:
+                  </div>
+                  <div className={`font-extrabold ${prescriptionTheme === 'gold-black' ? 'text-[#F5D76E]' : 'text-[#7E22CE]'}`}>
+                    Zone 2 Aerobic + Functional
+                  </div>
                 </div>
               </div>
 
-              {/* 7-Day Exercise Protocol (Monday through Sunday) Grid */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between border-b border-yellow-500/20 pb-1.5">
-                  <h3 className="text-xs uppercase font-black tracking-widest text-yellow-200 flex items-center gap-2">
-                    <Dumbbell className="w-4 h-4 text-yellow-400" />
-                    <span>7-Day Daily Movement Schedule (Monday to Sunday)</span>
-                  </h3>
-                  <span className="text-[10px] text-gray-400 font-mono">
-                    Department of Sports Medicine • Clinical Exercise Physiology
-                  </span>
-                </div>
+              {/* 7 Days Exercise Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {(exercisePlans && exercisePlans.length > 0 ? exercisePlans : DEFAULT_EXERCISE_SCHEDULE).slice(0, 6).map((ex) => {
+                  const durationText = ex.duration || (ex.durationMins ? `${ex.durationMins} mins` : '45 mins');
+                  const focusText = ex.focus || ex.protocolTitle || ex.focusArea || 'Conditioning Session';
+                  const movementsList = (ex.movements && ex.movements.length > 0)
+                    ? ex.movements
+                    : (ex.exercises && ex.exercises.length > 0)
+                    ? ex.exercises
+                    : [
+                        { name: 'Aerobic Base Conditioning', setsAndReps: '20 mins @ Zone 2' },
+                        { name: 'Targeted Muscle Group Mobility', setsAndReps: '3 sets x 12 reps' },
+                      ];
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-2.5 text-xs">
-                  {exercisePlans.slice(0, 7).map((ex) => (
+                  return (
                     <div
-                      key={ex.dayNumber || ex.day}
-                      className="p-3 bg-[#0a0a0a] border border-yellow-500/30 rounded-xl space-y-2 flex flex-col justify-between hover:border-yellow-400/60 transition-all"
+                      key={ex.dayNumber}
+                      className={`p-3.5 rounded-xl space-y-2 border-2 ${
+                        prescriptionTheme === 'gold-black'
+                          ? 'bg-[#141418] border-[#D4AF37]/40 text-white shadow-md'
+                          : 'bg-white border-purple-200 text-gray-900 shadow-sm'
+                      }`}
                     >
-                      <div>
-                        <div className="flex items-center justify-between pb-1 border-b border-yellow-500/20">
-                          <span className="font-black text-yellow-200 uppercase text-[10.5px]">
-                            {ex.dayName || ex.day}
-                          </span>
-                          <span className="text-[9px] font-mono text-emerald-400 font-bold">
-                            {ex.durationMins ? `${ex.durationMins}m` : ex.duration || ''}
-                          </span>
-                        </div>
-
-                        <div className="font-bold text-white text-[11px] mt-1.5 leading-snug">
-                          {ex.protocolTitle || ex.focus || ''}
-                        </div>
-
-                        {ex.targetHeartRate && (
-                          <p className="text-[9.5px] text-sky-200 mt-0.5">
-                            Target HR: <span className="font-mono text-white font-bold">{ex.targetHeartRate}</span>
-                          </p>
-                        )}
-                        {!ex.targetHeartRate && (ex.focusArea || ex.activity || ex.guideline) && (
-                          <p className="text-[9.5px] text-sky-200 mt-0.5 leading-tight">
-                            {ex.focusArea || ex.activity || ex.guideline}
-                          </p>
-                        )}
-
-                        <div className="mt-2 space-y-1.5">
-                          {(ex.movements || ex.exercises || []).slice(0, 2).map((m: any, mIdx: number) => (
-                            <div key={mIdx} className="bg-black/40 p-1.5 rounded border border-white/5 text-[9.5px]">
-                              <div className="text-yellow-200 font-bold leading-tight">{m.name || m}</div>
-                              {m.setsAndReps && <div className="text-gray-300 font-mono text-[8.5px]">{m.setsAndReps}</div>}
-                            </div>
-                          ))}
-                        </div>
+                      <div
+                        className={`flex items-center justify-between pb-1.5 border-b ${
+                          prescriptionTheme === 'gold-black' ? 'border-[#D4AF37]/20' : 'border-purple-100'
+                        }`}
+                      >
+                        <span
+                          className={`font-black text-xs ${
+                            prescriptionTheme === 'gold-black' ? 'text-[#F5D76E]' : 'text-[#601188]'
+                          }`}
+                        >
+                          Day {ex.dayNumber} • {ex.dayName}
+                        </span>
+                        <span
+                          className={`text-[10px] px-2 py-0.5 rounded font-bold ${
+                            prescriptionTheme === 'gold-black'
+                              ? 'bg-[#241E12] text-[#F5D76E] border border-[#D4AF37]/50'
+                              : 'bg-purple-100 text-[#601188]'
+                          }`}
+                        >
+                          {durationText}
+                        </span>
                       </div>
-
-                      {(ex.postWorkoutRecovery || ex.intensityLevel || ex.intensity) && (
-                        <div className="pt-2 border-t border-white/5 text-[8.5px] text-gray-400 leading-tight">
-                          {ex.postWorkoutRecovery && (
-                            <>
-                              <span className="text-emerald-400 font-bold">Recovery:</span> {ex.postWorkoutRecovery}
-                            </>
-                          )}
-                          {!ex.postWorkoutRecovery && (ex.intensityLevel || ex.intensity) && (
-                            <>
-                              <span className="text-emerald-400 font-bold">Intensity:</span> {ex.intensityLevel || ex.intensity}
-                            </>
-                          )}
-                        </div>
-                      )}
+                      <div
+                        className={`text-xs font-bold ${
+                          prescriptionTheme === 'gold-black' ? 'text-white' : 'text-gray-900'
+                        }`}
+                      >
+                        {focusText}
+                      </div>
+                      <div
+                        className={`space-y-1 text-[11px] ${
+                          prescriptionTheme === 'gold-black' ? 'text-gray-300' : 'text-gray-700'
+                        }`}
+                      >
+                        {movementsList.slice(0, 3).map((item: any, idx: number) => {
+                          const itemName = typeof item === 'string' ? item : item?.name || 'Movement';
+                          const itemDetail = typeof item === 'object' && item?.setsAndReps ? ` (${item.setsAndReps})` : '';
+                          return (
+                            <div key={idx} className="flex items-start gap-1">
+                              <span className={prescriptionTheme === 'gold-black' ? 'text-[#D4AF37] font-bold' : 'text-[#7E22CE] font-bold'}>
+                                •
+                              </span>
+                              <span>{itemName}{itemDetail}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div
+                        className={`pt-1 text-[10px] font-mono border-t ${
+                          prescriptionTheme === 'gold-black'
+                            ? 'text-sky-300 border-[#D4AF37]/20'
+                            : 'text-purple-800 border-purple-50'
+                        }`}
+                      >
+                        Target HR: {ex.targetHeartRate || '120 - 135 bpm'}
+                      </div>
                     </div>
-                  ))}
+                  );
+                })}
+
+                {/* Day 7 / Rest & Recovery Card */}
+                <div
+                  className={`p-3.5 rounded-xl space-y-2 border-2 ${
+                    prescriptionTheme === 'gold-black'
+                      ? 'bg-[#0D1A14] border-emerald-500/50 text-white shadow-md'
+                      : 'bg-purple-50/70 border-purple-200 shadow-sm'
+                  }`}
+                >
+                  <div
+                    className={`flex items-center justify-between pb-1.5 border-b ${
+                      prescriptionTheme === 'gold-black' ? 'border-emerald-500/30' : 'border-purple-100'
+                    }`}
+                  >
+                    <span
+                      className={`font-black text-xs ${
+                        prescriptionTheme === 'gold-black' ? 'text-emerald-400' : 'text-[#601188]'
+                      }`}
+                    >
+                      Day 7 • Active Recovery
+                    </span>
+                    <span
+                      className={`text-[10px] px-2 py-0.5 rounded font-bold ${
+                        prescriptionTheme === 'gold-black'
+                          ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/50'
+                          : 'bg-emerald-100 text-emerald-800'
+                      }`}
+                    >
+                      Rest & Repair
+                    </span>
+                  </div>
+                  <div
+                    className={`text-xs font-bold ${
+                      prescriptionTheme === 'gold-black' ? 'text-white' : 'text-gray-900'
+                    }`}
+                  >
+                    Parasympathetic Restoration
+                  </div>
+                  <div
+                    className={`space-y-1 text-[11px] ${
+                      prescriptionTheme === 'gold-black' ? 'text-gray-300' : 'text-gray-700'
+                    }`}
+                  >
+                    <div className="flex items-start gap-1">
+                      <span className="text-emerald-400 font-bold">•</span>
+                      <span>Diaphragmatic Breathing (4-7-8 rhythm, 15 mins)</span>
+                    </div>
+                    <div className="flex items-start gap-1">
+                      <span className="text-emerald-400 font-bold">•</span>
+                      <span>Light Nature Stroll / Gentle Myofascial Foam Rolling</span>
+                    </div>
+                    <div className="flex items-start gap-1">
+                      <span className="text-emerald-400 font-bold">•</span>
+                      <span>Epsom Salt Warm Bath for Magnesium Transdermal Uptake</span>
+                    </div>
+                  </div>
+                  <div
+                    className={`pt-1 text-[10px] font-mono border-t ${
+                      prescriptionTheme === 'gold-black'
+                        ? 'text-emerald-400 border-emerald-500/30'
+                        : 'text-emerald-800 border-purple-100'
+                    }`}
+                  >
+                    HR: Resting Baseline (&lt;70 bpm)
+                  </div>
                 </div>
               </div>
 
-              {/* Comprehensive Exercise & Clinical Do's & Don'ts */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* DO'S */}
-                <div className="bg-[#0a0a0a] border-2 border-emerald-500/60 rounded-xl p-4 space-y-2.5 shadow-lg">
-                  <div className="flex items-center gap-2 pb-2 border-b border-emerald-500/30">
-                    <div className="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-400 flex items-center justify-center text-emerald-400">
-                      <Check className="w-3.5 h-3.5 stroke-[3]" />
-                    </div>
-                    <h4 className="text-xs font-black uppercase tracking-wider text-emerald-400">
-                      Clinical & Exercise Do's (Essential Principles)
-                    </h4>
-                  </div>
-                  <ul className="space-y-1.5 text-xs text-gray-200 font-medium">
-                    <li className="flex items-start gap-1.5">
-                      <span className="text-emerald-400 font-bold">✓</span>
-                      <span><strong>Hydration with Electrolytes:</strong> Drink 500ml water 30 minutes before workout; replenish 2.5-3L total daily.</span>
-                    </li>
-                    <li className="flex items-start gap-1.5">
-                      <span className="text-emerald-400 font-bold">✓</span>
-                      <span><strong>Post-Workout Window:</strong> Consume 20-25g protein and complex carbs within 45 minutes to optimize muscle protein synthesis.</span>
-                    </li>
-                    <li className="flex items-start gap-1.5">
-                      <span className="text-emerald-400 font-bold">✓</span>
-                      <span><strong>Dynamic Warm-Up:</strong> Perform 8-10 minutes of mobility and dynamic stretches before loading any heavy compound resistance.</span>
-                    </li>
-                    <li className="flex items-start gap-1.5">
-                      <span className="text-emerald-400 font-bold">✓</span>
-                      <span><strong>Controlled Cadence:</strong> Emphasize 3-second controlled eccentric descent rather than ego-lifting heavy weights.</span>
-                    </li>
-                    <li className="flex items-start gap-1.5">
-                      <span className="text-emerald-400 font-bold">✓</span>
-                      <span><strong>Restorative Sleep:</strong> Prioritize 7.5 to 8.5 hours of uninterrupted nocturnal sleep for muscular glycogen replenishment.</span>
-                    </li>
-                  </ul>
-                </div>
-
-                {/* DON'TS */}
-                <div className="bg-[#0a0a0a] border-2 border-red-500/60 rounded-xl p-4 space-y-2.5 shadow-lg">
-                  <div className="flex items-center gap-2 pb-2 border-b border-red-500/30">
-                    <div className="w-5 h-5 rounded-full bg-red-500/20 border border-red-400 flex items-center justify-center text-red-400">
-                      <X className="w-3.5 h-3.5 stroke-[3]" />
-                    </div>
-                    <h4 className="text-xs font-black uppercase tracking-wider text-red-400">
-                      Avoid Habits & Exercise Don'ts
-                    </h4>
-                  </div>
-                  <ul className="space-y-1.5 text-xs text-gray-200 font-medium">
-                    <li className="flex items-start gap-1.5">
-                      <span className="text-red-400 font-bold">✕</span>
-                      <span><strong>No Fasted Training on Hypoglycemics:</strong> Never exercise on prolonged empty stomach if taking insulin or sulfonylureas.</span>
-                    </li>
-                    <li className="flex items-start gap-1.5">
-                      <span className="text-red-400 font-bold">✕</span>
-                      <span><strong>No Sugary Energy Drinks:</strong> Avoid commercial canned energy boosters, high-fructose juices, and liquid syrups.</span>
-                    </li>
-                    <li className="flex items-start gap-1.5">
-                      <span className="text-red-400 font-bold">✕</span>
-                      <span><strong>No Training Through Joint Pain:</strong> Never push through sharp joint pain, tendon inflammation, or severe dizziness.</span>
-                    </li>
-                    <li className="flex items-start gap-1.5">
-                      <span className="text-red-400 font-bold">✕</span>
-                      <span><strong>No Skipping Cool-Down:</strong> Never cease high-effort cardio abruptly without a 5-minute cool-down walk to prevent venous pooling.</span>
-                    </li>
-                    <li className="flex items-start gap-1.5">
-                      <span className="text-red-400 font-bold">✕</span>
-                      <span><strong>No Late Night Vigorous Workouts:</strong> Avoid intense training past 8:30 PM to protect melatonin onset and circadian sleep depth.</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-
-              {/* Bottom Tip */}
-              <div className="bg-[#091530] border border-yellow-500/30 rounded-xl p-3.5 flex items-center justify-between gap-4">
+              {/* Clinical Note Card */}
+              <div
+                className={`rounded-xl p-3.5 flex items-center justify-between gap-4 border ${
+                  prescriptionTheme === 'gold-black'
+                    ? 'bg-[#1B1812] border-[#D4AF37]/50 text-white'
+                    : 'bg-purple-50/90 border border-purple-200'
+                }`}
+              >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-yellow-500/20 border border-yellow-400 flex items-center justify-center text-yellow-200 flex-shrink-0">
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm ${
+                      prescriptionTheme === 'gold-black' ? 'bg-[#D4AF37] text-black' : 'bg-[#7E22CE] text-white'
+                    }`}
+                  >
                     <Lightbulb className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-black text-white uppercase tracking-wider">
+                    <h4
+                      className={`text-xs font-black uppercase tracking-wider ${
+                        prescriptionTheme === 'gold-black' ? 'text-[#D4AF37]' : 'text-gray-900'
+                      }`}
+                    >
                       Sports Medicine Clinical Note
                     </h4>
-                    <p className="text-[11px] text-gray-300">
-                      Skeletal muscle is the body's largest endocrine organ. Zone 2 aerobic pacing and compound resistance training stimulate GLUT4 glucose uptake independently of insulin.
+                    <p
+                      className={`text-[11px] font-medium ${
+                        prescriptionTheme === 'gold-black' ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
+                      Skeletal muscle is the body's primary endocrine metabolic sink. Zone 2 aerobic pacing and compound resistance training stimulate GLUT4 glucose uptake independently of insulin.
                     </p>
                   </div>
                 </div>
 
-                <div className="font-serif italic text-base sm:text-lg text-yellow-200 select-none text-right flex-shrink-0">
-                  Peak Performance Today...
+                <div
+                  className={`font-serif italic text-base sm:text-lg font-bold select-none text-right flex-shrink-0 ${
+                    prescriptionTheme === 'gold-black' ? 'text-[#F5D76E]' : 'text-[#601188]'
+                  }`}
+                >
+                  Peak Vitality Today...
                 </div>
               </div>
 
-              {/* ========================================================================= */}
-              {/* EXACT USER REQUIREMENT: LOGO WITH DR.BHARATHKUMAR SPORTS MEDICINE AT BOTTOM */}
-              {/* ========================================================================= */}
-              <div className="pt-2">
-                <DrBharathkumarSportsMedicineLogo variant="full" />
+              {/* Certified Clinical Signature Block */}
+              <div
+                className={`flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl border-2 ${
+                  prescriptionTheme === 'gold-black'
+                    ? 'border-[#D4AF37]/60 bg-[#16161B] text-white shadow-md'
+                    : 'border-purple-200 bg-purple-50/50'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center font-serif font-black text-xl shadow-sm ${
+                      prescriptionTheme === 'gold-black'
+                        ? 'bg-gradient-to-br from-[#D4AF37] to-[#996515] text-black'
+                        : 'bg-[#7E22CE] text-white'
+                    }`}
+                  >
+                    ℞
+                  </div>
+                  <div>
+                    <div
+                      className={`text-xs font-black uppercase tracking-wide ${
+                        prescriptionTheme === 'gold-black' ? 'text-white' : 'text-gray-900'
+                      }`}
+                    >
+                      ŽIATHLON SPORTS MEDICINE CLINIC
+                    </div>
+                    <div
+                      className={`text-[10px] font-semibold ${
+                        prescriptionTheme === 'gold-black' ? 'text-[#F5D76E]' : 'text-purple-900'
+                      }`}
+                    >
+                      Department of Sports Endocrinology & Clinical Nutrition
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <div
+                    className={`text-xs font-serif italic font-bold ${
+                      prescriptionTheme === 'gold-black' ? 'text-white' : 'text-gray-900'
+                    }`}
+                  >
+                    Authorized Clinical Prescription
+                  </div>
+                  <div
+                    className={`text-[10px] font-mono ${
+                      prescriptionTheme === 'gold-black' ? 'text-[#D4AF37]' : 'text-gray-600'
+                    }`}
+                  >
+                    Certification ID: #RX-2026-MEDICINE
+                  </div>
+                </div>
               </div>
 
-              {/* Page 2 Footer stamp */}
-              <div className="pt-2 flex items-center justify-between text-[10px] text-gray-400 font-mono border-t border-yellow-500/20">
+              {/* Page 2 Footer */}
+              <div
+                className={`pt-2 flex items-center justify-between text-[10px] font-mono border-t ${
+                  prescriptionTheme === 'gold-black'
+                    ? 'border-[#D4AF37]/30 text-gray-400'
+                    : 'border-purple-200 text-gray-600'
+                }`}
+              >
                 <span>Page 2 of 2 • Official Clinical Exercise Prescription</span>
-                <span className="text-yellow-400 font-bold">Consultant: Dr. Bharathkumar • Sports Medicine</span>
+                <span className={`font-bold ${prescriptionTheme === 'gold-black' ? 'text-[#D4AF37]' : 'text-[#601188]'}`}>
+                  Consultant: Dr. Bharathkumar (MD Sports Medicine)
+                </span>
               </div>
             </div>
           )}
 
           {/* ========================================================================= */}
-          {/* 90 CONDITION-SPECIFIC INGREDIENT GUIDELINES (15 Cereals, 15 Pulses, etc.) */}
+          {/* 90 CONDITION-SPECIFIC INGREDIENT GUIDELINES                               */}
           {/* ========================================================================= */}
           {activePageView === 'guidelines' && (
-            <div className="prescription-page page-guidelines relative bg-black border-2 border-purple-500/50 rounded-2xl p-4 sm:p-6 space-y-5 shadow-2xl">
-              <div className="flex items-center justify-between pb-3 border-b border-purple-500/30">
-                <ElshaLogo size="md" showSubtitle={true} />
-                <div className="text-right">
-                  <span className="text-[10px] uppercase font-bold tracking-widest text-purple-400">
-                    Clinical Ingredient Guidelines
-                  </span>
-                  <h3 className="text-sm font-black text-white uppercase">
-                    {conditionIngredients.conditionName} • 90 Items
-                  </h3>
-                </div>
+            <div
+              className={`prescription-page page-guidelines relative rounded-2xl p-5 sm:p-7 space-y-5 shadow-2xl transition-colors ${
+                prescriptionTheme === 'gold-black'
+                  ? 'bg-[#0E0E12] border-2 border-[#D4AF37] text-white shadow-[0_0_40px_rgba(212,175,55,0.18)]'
+                  : 'bg-white border-2 border-[#7E22CE] text-gray-900'
+              }`}
+            >
+              {/* Official Letterhead Header */}
+              <div className="space-y-2">
+                <ZiathlonLetterheadHeader
+                  pageNumber="FORMULARY & INGREDIENTS"
+                  rxNumber={`Rx ID: ZIA-RX-${String(patientName).slice(0, 4).toUpperCase()}-2026`}
+                  date={new Date().toLocaleDateString('en-GB')}
+                />
               </div>
 
-              <div className="bg-[#111] p-3 border border-purple-500/30 rounded-xl text-xs space-y-1">
-                <div className="text-purple-200 font-medium">
-                  <span className="text-purple-400 font-bold">Mechanism: </span>
+              <div
+                className={`p-3.5 rounded-xl text-xs space-y-1 border ${
+                  prescriptionTheme === 'gold-black'
+                    ? 'bg-[#16161B] border-[#D4AF37]/40 text-white'
+                    : 'bg-purple-50/80 border border-purple-200'
+                }`}
+              >
+                <div className="font-medium">
+                  <span className={prescriptionTheme === 'gold-black' ? 'text-[#F5D76E] font-bold' : 'text-[#601188] font-bold'}>
+                    Mechanism:{' '}
+                  </span>
                   {conditionIngredients.clinicalTagline}
                 </div>
-                <div className="text-emerald-300 font-mono text-[11px]">
-                  <span className="text-gray-300 font-bold">Health Target: </span>
+                <div
+                  className={`font-mono text-[11px] ${
+                    prescriptionTheme === 'gold-black' ? 'text-emerald-400' : 'text-emerald-800'
+                  }`}
+                >
+                  <span className={prescriptionTheme === 'gold-black' ? 'text-gray-400 font-bold' : 'text-gray-700 font-bold'}>
+                    Health Target:{' '}
+                  </span>
                   {conditionIngredients.primaryGoal}
                 </div>
               </div>
@@ -871,43 +1565,67 @@ export const NutritionPrescriptionModal: React.FC<NutritionPrescriptionModalProp
               {/* 8 Categories Grid */}
               <div className="space-y-4 text-xs">
                 {[
-                  { title: '🌾 15 Cereals', items: conditionIngredients.cereals, color: 'text-amber-300' },
-                  { title: '🫘 15 Pulses', items: conditionIngredients.pulses, color: 'text-emerald-300' },
-                  { title: '🥦 15 Vegetables', items: conditionIngredients.vegetables, color: 'text-green-400' },
-                  { title: '🍎 15 Fruits', items: conditionIngredients.fruits, color: 'text-rose-300' },
-                  { title: '🥜 10 Nuts & Seeds', items: conditionIngredients.nutsAndSeeds, color: 'text-orange-300' },
-                  { title: '🥛 5 Dairy Foods', items: conditionIngredients.dairyFoods, color: 'text-cyan-300' },
-                  { title: '🌿 5 Ayurvedic Foods', items: conditionIngredients.ayurvedicFoods, color: 'text-purple-300' },
-                  { title: '⚡ 10 Functional Foods', items: conditionIngredients.functionalFoods, color: 'text-yellow-300' },
+                  { title: '🌾 15 Cereals', items: conditionIngredients?.cereals || [], color: 'text-amber-500' },
+                  { title: '🫘 15 Pulses', items: conditionIngredients?.pulses || [], color: 'text-emerald-400' },
+                  { title: '🥦 15 Vegetables', items: conditionIngredients?.vegetables || [], color: 'text-green-400' },
+                  { title: '🍎 15 Fruits', items: conditionIngredients?.fruits || [], color: 'text-rose-400' },
+                  { title: '🥜 10 Nuts & Seeds', items: conditionIngredients?.nutsAndSeeds || [], color: 'text-orange-400' },
+                  { title: '🥛 5 Dairy Foods', items: conditionIngredients?.dairyFoods || [], color: 'text-cyan-400' },
+                  { title: '🌿 5 Ayurvedic Foods', items: conditionIngredients?.ayurvedicFoods || [], color: 'text-purple-400' },
+                  { title: '⚡ 10 Functional Foods', items: conditionIngredients?.functionalFoods || [], color: 'text-yellow-400' },
                 ].map((cat, ci) => (
-                  <div key={ci} className="bg-black/60 border border-white/10 rounded-xl p-3 space-y-2">
-                    <div className={`font-black uppercase tracking-wider text-xs ${cat.color} flex items-center justify-between border-b border-white/10 pb-1`}>
+                  <div
+                    key={ci}
+                    className={`rounded-xl p-3.5 space-y-2 border ${
+                      prescriptionTheme === 'gold-black'
+                        ? 'bg-[#141418] border-[#D4AF37]/30 text-white shadow-md'
+                        : 'bg-white border-purple-200 shadow-sm'
+                    }`}
+                  >
+                    <div
+                      className={`font-black uppercase tracking-wider text-xs ${cat.color} flex items-center justify-between pb-1.5 border-b ${
+                        prescriptionTheme === 'gold-black' ? 'border-zinc-800' : 'border-purple-100'
+                      }`}
+                    >
                       <span>{cat.title}</span>
                       <span className="text-[10px] font-mono text-gray-400 font-normal">
-                        {cat.items.length} Condition Items
+                        {(cat.items || []).length} Items
                       </span>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                      {cat.items.map((it) => (
-                        <div key={it.id} className="p-2 bg-[#091530] border border-white/5 rounded text-[11px] space-y-1">
+                      {(cat.items || []).map((it) => (
+                        <div
+                          key={it.id}
+                          className={`p-2.5 rounded text-[11px] space-y-1 border ${
+                            prescriptionTheme === 'gold-black'
+                              ? 'bg-[#1A1A22] border-zinc-800 text-white'
+                              : 'bg-purple-50/40 border-purple-100'
+                          }`}
+                        >
                           <div className="flex items-center justify-between">
-                            <span className="font-bold text-white">
+                            <span className={`font-bold ${prescriptionTheme === 'gold-black' ? 'text-[#F5D76E]' : 'text-gray-900'}`}>
                               #{it.rank} {it.name}
                             </span>
                             <span
                               className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
                                 it.status === 'Recommended'
-                                  ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/40'
+                                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
                                   : it.status === 'Caution'
-                                  ? 'bg-amber-950 text-amber-300 border border-amber-500/40'
-                                  : 'bg-red-950 text-red-300 border border-red-500/40'
+                                  ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                                  : 'bg-red-100 text-red-800 border border-red-300'
                               }`}
                             >
                               {it.status}
                             </span>
                           </div>
-                          <div className="text-gray-400 text-[10px]">Portion: {it.portion}</div>
-                          <div className="text-purple-200 text-[10px] leading-tight line-clamp-2">
+                          <div className={`text-[10px] ${prescriptionTheme === 'gold-black' ? 'text-gray-400' : 'text-gray-600'}`}>
+                            Portion: {it.portion}
+                          </div>
+                          <div
+                            className={`text-[10px] leading-tight line-clamp-2 ${
+                              prescriptionTheme === 'gold-black' ? 'text-gray-300' : 'text-purple-950'
+                            }`}
+                          >
                             {it.therapeuticMechanism}
                           </div>
                         </div>
@@ -917,25 +1635,71 @@ export const NutritionPrescriptionModal: React.FC<NutritionPrescriptionModalProp
                 ))}
               </div>
 
-              <div className="pt-2">
-                <DrBharathkumarSportsMedicineLogo variant="full" />
+              {/* Guidelines Footer */}
+              <div
+                className={`pt-2 flex items-center justify-between text-[10px] font-mono border-t ${
+                  prescriptionTheme === 'gold-black'
+                    ? 'border-[#D4AF37]/30 text-gray-400'
+                    : 'border-purple-200 text-gray-600'
+                }`}
+              >
+                <span>Certified Clinical Ingredient Formulary</span>
+                <span className={`font-bold ${prescriptionTheme === 'gold-black' ? 'text-[#D4AF37]' : 'text-[#601188]'}`}>
+                  Žiathlon Sports Medicine Clinic
+                </span>
               </div>
             </div>
           )}
         </div>
 
         {/* Modal Bottom Footer (Hidden on print) */}
-        <div className="mt-3 pt-3 border-t border-yellow-500/30 flex items-center justify-between no-print">
-          <span className="text-[10px] font-mono text-gray-400">
-            ELSHA AI 2-Page Prescription • Synchronized with 7-Day Studio & WhatsApp Hub
-          </span>
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-5 py-2 bg-yellow-600 hover:bg-yellow-500 text-white text-xs font-black uppercase tracking-wider rounded-lg transition-colors cursor-pointer shadow-[0_0_12px_rgba(202,138,4,0.5)]"
-          >
-            Close Prescription
-          </button>
+        <div
+          className={`mt-3 pt-3 flex items-center justify-between no-print border-t ${
+            prescriptionTheme === 'gold-black' ? 'border-[#D4AF37]/30' : 'border-purple-200'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <span
+              className={`text-[10px] font-mono font-bold ${
+                prescriptionTheme === 'gold-black' ? 'text-[#D4AF37]' : 'text-purple-900'
+              }`}
+            >
+              Clinical Nutrition Prescription • Synchronized with 7-Day Studio
+            </span>
+            <span
+              className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                prescriptionTheme === 'gold-black'
+                  ? 'bg-[#1C1810] text-[#F5D76E] border border-[#D4AF37]/40'
+                  : 'bg-purple-100 text-purple-800'
+              }`}
+            >
+              {prescriptionTheme === 'gold-black' ? 'Gold & Black Rx' : 'Royal Purple Rx'}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={isGeneratingPdf}
+              onClick={() => handleDownloadGoldBlackPdf(false)}
+              className="px-4 py-2 bg-gradient-to-r from-[#D4AF37] to-[#B8860B] hover:brightness-110 text-black text-xs font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer shadow-md flex items-center gap-1.5 disabled:opacity-50"
+            >
+              <FileDown className="w-3.5 h-3.5 text-black" />
+              <span>{isGeneratingPdf ? 'Exporting...' : 'Export Gold & Black PDF'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-colors cursor-pointer shadow-sm ${
+                prescriptionTheme === 'gold-black'
+                  ? 'bg-[#1E1E24] hover:bg-[#2A2A32] text-white border border-zinc-700'
+                  : 'bg-[#7E22CE] hover:bg-[#601188] text-white'
+              }`}
+            >
+              Close Prescription
+            </button>
+          </div>
         </div>
       </div>
     </div>

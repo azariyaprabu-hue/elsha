@@ -1,0 +1,293 @@
+{
+  "whatsapp_accounts": null,
+  "whatsapp_contacts": [
+    {
+      "id": "contact-919840123456",
+      "phoneNumber": "919840123456",
+      "displayPhoneNumber": "+91 98401 23456",
+      "profileName": "Kiruthika Sundar",
+      "createdAt": "2026-10-06T05:08:44.283Z",
+      "updatedAt": "2026-10-06T05:46:44.718Z"
+    },
+    {
+      "id": "contact-21836385521671",
+      "phoneNumber": "21836385521671",
+      "displayPhoneNumber": "+21836385521671",
+      "profileName": "+21836385521671",
+      "createdAt": "2026-10-01T09:40:00.000Z",
+      "updatedAt": "2026-10-01T11:08:37.436Z"
+    }
+  ],
+  "whatsapp_conversations": [
+    {
+      "id": "conv-919840123456",
+      "contactId": "contact-919840123456",
+      "phoneNumber": "919840123456",
+      "displayPhoneNumber": "+91 98401 23456",
+      "contactName": "+91 98401 23456",
+      "unreadCount": 0,
+      "lastMessageId": "wamid.test.webhook.msg001",
+      "lastMessageText": "Doctor, can I take the electrolytes post workout?",
+      "lastMessageTimestamp": "17:06",
+      "lastMessageTimeRaw": 1791220000000,
+      "lastMessageDirection": "inbound",
+      "lastMessageStatus": "read",
+      "updatedAt": "2026-10-06T05:46:44.719Z"
+    },
+    {
+      "id": "conv-21836385521671",
+      "contactId": "contact-21836385521671",
+      "phoneNumber": "21836385521671",
+      "displayPhoneNumber": "+218 36385521671",
+      "contactName": "Patient (+218 36385521671)",
+      "unreadCount": 0,
+      "lastMessageId": "3EB0E6CE216BACCA6B1831",
+      "lastMessageText": "Dr. Bharath confirms: Hydration with electrolytes is recommended during your afternoon session.",
+      "lastMessageTimestamp": "11:08",
+      "lastMessageTimeRaw": 1790852916000,
+      "lastMessageDirection": "outbound",
+      "lastMessageStatus": "sent",
+      "updatedAt": "2026-10-01T11:08:37.437Z"
+    }
+  ],
+  "whatsapp_messages": [
+    {
+      "id": "AC122A73527659C10513DD09DF10F8ED",
+      "wamid": "AC122A73527659C10513DD09DF10F8ED",
+      "conversationId": "conv-21836385521671",
+      "contactId": "contact-21836385521671",
+      "fromPhone": "clinic",
+      "toPhone": "21836385521671",
+      "direction": "outbound",
+      "type": "text",
+      "text": "Hello! Welcome to ŽIATHLON Sports Medicine. Please let us know how we can assist you with your clinical consultation.",
+      "timestamp": "09:46 AM",
+      "timeRaw": 1790847971000,
+      "status": "read"
+    },
+    {
+      "id": "IN-AC3910B829",
+      "wamid": "IN-AC3910B829",
+      "conversationId": "conv-21836385521671",
+      "contactId": "contact-21836385521671",
+      "fromPhone": "21836385521671",
+      "toPhone": "clinic",
+      "direction": "inbound",
+      "type": "text",
+      "text": "Thank you doctor. I wanted to ask regarding my diet prescription and protein intake.",
+      "timestamp": "09:55 AM",
+      "timeRaw": 1790848500000,
+      "status": "read"
+    },
+    {
+      "id": "AC40C19E2F7940FD49B16AF09AEB994A",
+      "wamid": "AC40C19E2F7940FD49B16AF09AEB994A",
+      "conversationId": "conv-21836385521671",
+      "contactId": "contact-21836385521671",
+      "fromPhone": "clinic",
+      "toPhone": "21836385521671",
+      "direction": "outbound",
+      "type": "text",
+      "text": "Your targeted protein intake is 70g daily aligned with your metabolic goals. Please follow the meal timing guidelines in your dossier.",
+      "timestamp": "10:01 AM",
+      "timeRaw": 1790848887000,
+      "status": "read"
+    },
+    {
+      "id": "IN-AC5819B021",
+      "wamid": "IN-AC5819B021",
+      "conversationId": "conv-21836385521671",
+      "contactId": "contact-21836385521671",
+      "fromPhone": "21836385521671",
+      "toPhone": "clinic",
+      "direction": "inbound",
+      "type": "text",
+      "text": "Understood, doctor. Is it safe to continue morning cardio before breakfast?",
+      "timestamp": "10:48 AM",
+      "timeRaw": 1790851680000,
+      "status": "read"
+    },
+    {
+      "id": "AC4EF75A5473570AF91EA7A3BE48AE20",
+      "wamid": "AC4EF75A5473570AF91EA7A3BE48AE20",
+      "conversationId": "conv-21836385521671",
+      "contactId": "contact-21836385521671",
+      "fromPhone": "clinic",
+      "toPhone": "21836385521671",
+      "direction": "outbound",
+      "type": "text",
+      "text": "Yes, Zone 1-2 fasted morning cardio is clinically safe and optimizes fat oxidation. Keep hydration adequate.",
+      "timestamp": "10:54 AM",
+      "timeRaw": 1790852052000,
+      "status": "delivered"
+    },
+    {
+      "id": "3EB0E6CE216BACCA6B1831",
+      "wamid": "3EB0E6CE216BACCA6B1831",
+      "conversationId": "conv-21836385521671",
+      "contactId": "contact-21836385521671",
+      "fromPhone": "clinic",
+      "toPhone": "21836385521671",
+      "direction": "outbound",
+      "type": "text",
+      "text": "Dr. Bharath confirms: Hydration with electrolytes is recommended during your afternoon session.",
+      "timestamp": "11:08",
+      "timeRaw": 1790852916000,
+      "status": "sent"
+    },
+    {
+      "id": "wamid.HBgLMTE5ODQwMTIzNDU2FQIAEhggQ0RFNjEzMzUzODIxOTM=",
+      "wamid": "wamid.HBgLMTE5ODQwMTIzNDU2FQIAEhggQ0RFNjEzMzUzODIxOTM=",
+      "conversationId": "conv-919840123456",
+      "contactId": "contact-919840123456",
+      "fromPhone": "919840123456",
+      "toPhone": "clinic",
+      "direction": "inbound",
+      "type": "text",
+      "text": "Good morning Dr. Bharath. My post-prandial blood sugar is 132 mg/dL today. Should I proceed with the strength circuit?",
+      "timestamp": "16:53",
+      "timeRaw": 1791219200000,
+      "status": "read"
+    },
+    {
+      "id": "wamid.test.webhook.msg001",
+      "wamid": "wamid.test.webhook.msg001",
+      "conversationId": "conv-919840123456",
+      "contactId": "contact-919840123456",
+      "fromPhone": "919840123456",
+      "toPhone": "clinic",
+      "direction": "inbound",
+      "type": "text",
+      "text": "Doctor, can I take the electrolytes post workout?",
+      "timestamp": "17:06",
+      "timeRaw": 1791220000000,
+      "status": "read"
+    }
+  ],
+  "whatsapp_message_status": [
+    {
+      "wamid": "AC122A73527659C10513DD09DF10F8ED",
+      "status": "delivered",
+      "timestamp": "2026-10-01T09:46:11.039Z",
+      "recipientPhone": "21836385521671"
+    },
+    {
+      "wamid": "AC122A73527659C10513DD09DF10F8ED",
+      "status": "delivered",
+      "timestamp": "2026-10-01T09:46:11.087Z",
+      "recipientPhone": "21836385521671"
+    },
+    {
+      "wamid": "AC122A73527659C10513DD09DF10F8ED",
+      "status": "delivered",
+      "timestamp": "2026-10-01T09:47:33.183Z",
+      "recipientPhone": "21836385521671"
+    },
+    {
+      "wamid": "AC122A73527659C10513DD09DF10F8ED",
+      "status": "delivered",
+      "timestamp": "2026-10-01T09:47:34.047Z",
+      "recipientPhone": "21836385521671"
+    },
+    {
+      "wamid": "AC122A73527659C10513DD09DF10F8ED",
+      "status": "read",
+      "timestamp": "2026-10-01T09:48:04.758Z",
+      "recipientPhone": "21836385521671"
+    },
+    {
+      "wamid": "AC40C19E2F7940FD49B16AF09AEB994A",
+      "status": "delivered",
+      "timestamp": "2026-10-01T10:01:27.761Z",
+      "recipientPhone": "21836385521671"
+    },
+    {
+      "wamid": "AC40C19E2F7940FD49B16AF09AEB994A",
+      "status": "delivered",
+      "timestamp": "2026-10-01T10:01:29.094Z",
+      "recipientPhone": "21836385521671"
+    },
+    {
+      "wamid": "AC40C19E2F7940FD49B16AF09AEB994A",
+      "status": "read",
+      "timestamp": "2026-10-01T10:01:43.935Z",
+      "recipientPhone": "21836385521671"
+    },
+    {
+      "wamid": "ACA20AE2430379C507AC5C1564F0F3D1",
+      "status": "delivered",
+      "timestamp": "2026-10-01T10:16:55.791Z",
+      "recipientPhone": ""
+    },
+    {
+      "wamid": "AC4EF75A5473570AF91EA7A3BE48AE20",
+      "status": "delivered",
+      "timestamp": "2026-10-01T10:54:12.408Z",
+      "recipientPhone": "21836385521671"
+    },
+    {
+      "wamid": "AC4EF75A5473570AF91EA7A3BE48AE20",
+      "status": "delivered",
+      "timestamp": "2026-10-01T10:54:29.489Z",
+      "recipientPhone": "21836385521671"
+    },
+    {
+      "wamid": "AC4EF75A5473570AF91EA7A3BE48AE20",
+      "status": "read",
+      "timestamp": "2026-10-01T10:54:32.605Z",
+      "recipientPhone": "21836385521671"
+    },
+    {
+      "wamid": "AC4EF75A5473570AF91EA7A3BE48AE20",
+      "status": "delivered",
+      "timestamp": "2026-10-01T10:54:34.081Z",
+      "recipientPhone": "21836385521671"
+    },
+    {
+      "wamid": "wamid.HBgLMTE5ODQwMTIzNDU2FQIAEhggQ0RFNjEzMzUzODIxOTM=",
+      "status": "read",
+      "timestamp": "2026-10-06T05:08:58.836Z",
+      "recipientPhone": "clinic"
+    },
+    {
+      "wamid": "wamid.test.webhook.msg001",
+      "status": "read",
+      "timestamp": "2026-10-06T05:46:53.452Z",
+      "recipientPhone": "clinic"
+    }
+  ],
+  "whatsapp_webhook_events": [
+    {
+      "eventId": "wamid.HBgLMTE5ODQwMTIzNDU2FQIAEhggQ0RFNjEzMzUzODIxOTM=",
+      "receivedAt": "2026-10-06T05:08:44.260Z",
+      "timeRaw": 1791263324260,
+      "eventType": "message",
+      "senderPhone": "919840123456",
+      "messageId": "wamid.HBgLMTE5ODQwMTIzNDU2FQIAEhggQ0RFNjEzMzUzODIxOTM="
+    },
+    {
+      "eventId": "status-wamid.HBgLMTE5ODQwMTIzNDU2FQIAEhggQ0RFNjEzMzUzODIxOTM=-read",
+      "receivedAt": "2026-10-06T05:08:58.835Z",
+      "timeRaw": 1791263338835,
+      "eventType": "status_read",
+      "senderPhone": "919840123456",
+      "messageId": "wamid.HBgLMTE5ODQwMTIzNDU2FQIAEhggQ0RFNjEzMzUzODIxOTM="
+    },
+    {
+      "eventId": "wamid.test.webhook.msg001",
+      "receivedAt": "2026-10-06T05:46:44.697Z",
+      "timeRaw": 1791265604697,
+      "eventType": "message",
+      "senderPhone": "919840123456",
+      "messageId": "wamid.test.webhook.msg001"
+    },
+    {
+      "eventId": "status-wamid.test.webhook.msg001-read",
+      "receivedAt": "2026-10-06T05:46:53.451Z",
+      "timeRaw": 1791265613451,
+      "eventType": "status_read",
+      "senderPhone": "919840123456",
+      "messageId": "wamid.test.webhook.msg001"
+    }
+  ]
+}

@@ -21,12 +21,39 @@ export interface GeneralInfo {
   visceralFat?: number;
   waistCircumference?: number;
   hipCircumference?: number;
+  waist?: number;
+  hip?: number;
+  bodyFat?: number;
+  metabolicAge?: number;
+  skeletalMuscle?: number;
   occupation?: string;
   maritalStatus?: string;
   livingCircumstances?: string;
   phone?: string;
   email?: string;
   bloodGroup?: string;
+  dateOfBirth?: string;
+  place?: string;
+  tag?: string;
+  customTag?: string;
+  referral?: string; // 'Insta' | 'Friends' | custom
+  referralSource?: string; // 'Insta' | 'Friends' | custom
+  address?: string;
+  pincode?: string;
+  previousReports?: Array<{
+    id: string;
+    name: string;
+    date: string;
+    url?: string;
+    size?: string;
+    type?: string;
+  }>;
+  orderedLabTests?: OrderedLabTestItem[];
+  informantName?: string;
+  bodyTemperature?: string;
+  pulseRate?: string;
+  bloodPressure?: string;
+  spo2?: string;
 }
 
 export interface Calculations {
@@ -35,6 +62,7 @@ export interface Calculations {
   bmr: number;
   tdee: number;
   waistToHipRatio?: number;
+  idealCalories?: number;
 }
 
 export type MajorDomainId = 'diseases' | 'disorders' | 'performance' | 'fitness';
@@ -60,6 +88,7 @@ export interface SymptomAssessmentItem {
   symptom: string;
   duration: string;
   severity: SymptomSeverity | '';
+  selected?: boolean;
 }
 
 export type LifestyleAssessmentRating = 'Good' | 'Moderate' | 'Poor' | 'High';
@@ -102,12 +131,106 @@ export interface FamilyHistoryItem {
   condition: string;
   whoHasIt: string;
   year: string;
+  status?: string;
+  notes?: string;
 }
 
 export interface MedicalHistory {
   surgeries: SurgicalHistoryItem[];
   medications: MedicationItem[];
   familyHistory: FamilyHistoryItem[];
+  medicalConditions?: Array<{ condition: string; notes?: string; status?: string }>;
+  allergies?: string;
+}
+
+export interface ExtractedPatientDossier {
+  name?: string;
+  age?: number | string;
+  sex?: Sex;
+  dateOfBirth?: string;
+  place?: string;
+  phone?: string;
+  email?: string;
+  height?: number | string;
+  weight?: number | string;
+  waistCircumference?: number;
+  hipCircumference?: number;
+  bmi?: number;
+  bloodPressure?: string;
+  hba1c?: string;
+  fastingGlucose?: string;
+  clinicalSummary?: string;
+  tag?: string;
+  customTag?: string;
+  activityLevel?: ActivityLevel;
+  domain?: string;
+  category?: string;
+  symptoms?: Array<{
+    id?: string;
+    symptom: string;
+    duration?: string;
+    severity?: SymptomSeverity | string;
+    notes?: string;
+    icdCode?: string;
+  }>;
+  patientMedicalHistory?: Array<{
+    id?: string;
+    condition: string;
+    status?: string;
+    duration?: string;
+    durationOrYear?: string;
+    diagnosisYear?: string;
+    treatmentStatus?: string;
+    notes?: string;
+  }>;
+  familyHistory?: Array<{
+    id?: string;
+    relation: string;
+    conditions: string[];
+    ageOfOnset?: string;
+    status?: string;
+    medications?: string;
+    lifestyleNotes?: string;
+  }>;
+  medications?: Array<{
+    id?: string;
+    name: string;
+    dosage?: string;
+    frequency?: string;
+    timing?: string;
+    purpose?: string;
+    duration?: string;
+  }>;
+  lifestyleHabits?: {
+    diet?: string;
+    exercise?: string;
+    exerciseRoutine?: string;
+    sleep?: string;
+    sleepDuration?: string;
+    stress?: string;
+    stressLevel?: string;
+    smoking?: string;
+    alcohol?: string;
+    hydration?: string;
+    waterIntake?: string;
+  };
+  dailyRoutine?: Array<{
+    id?: string;
+    time: string;
+    activity: string;
+  }>;
+  dietaryRecall?: Array<{
+    id?: string;
+    mealTime: string;
+    foodItemsConsumed: string;
+    quantity: string;
+    householdMeasure?: string;
+  }>;
+  workingDiagnoses?: string[];
+  diagnosticsToBeDone?: string[];
+  selectedDomain?: string;
+  selectedCategory?: string;
+  clinicalNotes?: string;
 }
 
 export interface GutHealthQuestion {
@@ -158,6 +281,47 @@ export interface FoodFrequencyCategory {
   items: FoodFrequencyItem[];
 }
 
+export type IcmrCookingMethod =
+  | 'Raw'
+  | 'Boiled / Simmered'
+  | 'Steamed'
+  | 'Dry Roasted / Puffed'
+  | 'Pressure Cooked'
+  | 'Sautéed / Tadka'
+  | 'Shallow Fried / Pan Fried'
+  | 'Deep Fried'
+  | 'Fermented'
+  | 'Baked';
+
+export interface CustomRecipeIngredient {
+  id: string;
+  foodCode?: string;
+  name: string;
+  quantityGrams: number;
+  cookingMethod: IcmrCookingMethod;
+  per100g?: {
+    energyKj?: number;
+    energyKcal: number;
+    proteinG: number;
+    fatG: number;
+    carbsG: number;
+    fiberG: number;
+    calciumMg?: number;
+    ironMg?: number;
+  };
+  calculated: {
+    energyKj: number;
+    energyKcal: number;
+    proteinG: number;
+    fatG: number;
+    carbsG: number;
+    fiberG: number;
+    calciumMg: number;
+    ironMg: number;
+    cookingAdjustmentNote?: string;
+  };
+}
+
 export interface DietaryRecallItem {
   id: string;
   mealTime: string;
@@ -166,6 +330,9 @@ export interface DietaryRecallItem {
   quantity: string;
   unitMeasure?: string;
   preparationMethod?: string;
+  cookingMethod?: IcmrCookingMethod;
+  customIngredients?: CustomRecipeIngredient[];
+  hasCustomIngredients?: boolean;
 }
 
 export interface DietaryRecallEntry {
@@ -176,6 +343,9 @@ export interface DietaryRecallEntry {
   quantity: string;
   unitMeasure?: string;
   preparationMethod?: string;
+  cookingMethod?: IcmrCookingMethod;
+  customIngredients?: CustomRecipeIngredient[];
+  hasCustomIngredients?: boolean;
 }
 
 export interface NutrientGapItem {
@@ -328,6 +498,8 @@ export interface DietDayPlan {
   meals: MealPlanItem[];
   totalNutrients?: NutrientBreakdown;
 }
+
+export type MealPlanDay = DietDayPlan;
 
 export interface ExerciseDayPlan {
   dayNumber: number;
@@ -503,4 +675,139 @@ export interface MealSwapRecommendation {
   clinicalBenefit: string;
   quickRecipeTip: string;
 }
+
+// Lab Test Ordered under Profile Prescription Folder
+export interface OrderedLabTestItem {
+  id: string;
+  testName: string; // e.g. "Blood Test (Fasting Glucose)", "Lipid Profile", "Urine Routine"
+  category: 'Blood Test' | 'Lipid Test' | 'Urine Test' | 'Thyroid' | 'Renal' | 'Other';
+  instructions: string;
+  fastingRequired: boolean;
+  orderedDate: string;
+  status: 'Ordered' | 'Sample Collected' | 'Report Verified';
+}
+
+// Medicinal Prescription Table: Medicine | Dosage | Duration
+export interface MedicinalPrescriptionDrug {
+  id: string;
+  medicine: string;
+  dosage: string;
+  duration: string;
+  timing?: string; // e.g., "After Breakfast", "Before Bed"
+  instructions?: string;
+}
+
+export interface PrescriptionItem {
+  id: string;
+  medicineName: string;
+  dosage: string;
+  frequency: string;
+  timing: string;
+  duration: string;
+  instructions: string;
+}
+
+// Medicinal Goals Table: Primary | Secondary | Tertiary
+export interface ClinicalGoalItem {
+  id: string;
+  type: 'Primary' | 'Secondary' | 'Tertiary';
+  title: string;
+  targetDescription: string;
+  targetTimeline: string;
+  status: 'In Progress' | 'Active Target' | 'Achieved';
+}
+
+// Medicinal Diagnostics Table: Susceptibility and Diagnostics
+export interface DiagnosticFindingItem {
+  id: string;
+  susceptibilityCondition: string; // e.g. "Susceptible to Liver Diseases (NAFLD)", "Susceptible to Type 2 Diabetes"
+  riskLevel: 'High Risk' | 'Moderate Risk' | 'Mild Susceptibility' | 'Elevated';
+  supportingBiomarkers: string;
+  clinicalIntervention: string;
+  diagnosedDate: string;
+}
+
+// Blood Report Ranges Table: Value | Normal Range & Color Reasons
+export interface BloodReportRangeItem {
+  id: string;
+  testName: string;
+  value: string;
+  unit: string;
+  normalRange: string;
+  status: 'normal' | 'borderline' | 'abnormal'; // normal -> green, borderline -> orange, abnormal -> red
+  reason: string;
+}
+
+// Exercise Table & Guidelines: AI 7-Day & Manual Typing
+export interface ExerciseDayGuideline {
+  dayNumber: number;
+  dayName: string;
+  protocolFocus: string;
+  exercises: string;
+  setsReps: string;
+  hrZoneIntensity: string;
+  recoveryNote: string;
+}
+
+// Medical Folder & Past Visit Types
+export interface PatientRecord {
+  id: string;
+  name: string;
+  age?: number;
+  sex?: string;
+  dob?: string;
+  phone?: string;
+  email?: string;
+  city?: string;
+  address?: string;
+  tag?: string;
+  created_at?: string;
+}
+
+export interface PatientSections {
+  patient_id: string;
+  symptoms: string;
+  symptom_duration?: string;
+  patient_history: string;
+  medication: string;
+  family_history: string;
+  diagnostics: string;
+  notes?: string;
+}
+
+export interface PastVisitRecord {
+  id: string;
+  patient_id: string;
+  visit_date: string;
+  visit_display_date: string;
+  doctor_name: string;
+  doctor_title?: string;
+  visit_type?: string;
+  summary_tag?: string;
+  symptoms: string;
+  symptom_duration?: string;
+  patient_history: string;
+  medication: string;
+  family_history: string;
+  diagnostics: string;
+  notes?: string;
+  created_at: string;
+}
+
+export interface MedicalDocumentItem {
+  id: string;
+  patient_id: string;
+  file_name?: string;
+  original_file_name?: string;
+  mime_type: string;
+  file_size: number;
+  category: string;
+  notes?: string;
+  document_date: string;
+  visit_id?: string;
+  uploaded_at: string;
+  view_url: string;
+  download_url: string;
+}
+
 

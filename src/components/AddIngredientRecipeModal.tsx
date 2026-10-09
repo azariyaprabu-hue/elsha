@@ -121,40 +121,40 @@ export const AddIngredientRecipeModal: React.FC<AddIngredientRecipeModalProps> =
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
-      <div className="relative w-full max-w-3xl bg-[#090d0b] border-2 border-[#C5A028] shadow-[0_0_50px_rgba(197,160,40,0.2)] text-white overflow-hidden my-8 max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-purple-950/40 backdrop-blur-xs overflow-y-auto">
+      <div className="relative w-full max-w-3xl bg-white border-2 border-purple-200 rounded-2xl shadow-2xl text-gray-950 overflow-hidden my-8 max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-[#C5A028]/40 bg-[#050706] flex items-center justify-between">
+        <div className="p-4 sm:p-5 border-b border-purple-200 bg-purple-50 flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider bg-[#C5A028] text-black">
+              <span className="px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider bg-[#7E22CE] text-white rounded">
                 ICMR-NIN Engine
               </span>
-              <span className="text-xs text-gray-400 font-mono">Day {dayNumber} • {mealName}</span>
+              <span className="text-xs text-gray-600 font-mono">Day {dayNumber} • {mealName}</span>
             </div>
-            <h3 className="text-lg font-bold text-white tracking-wide mt-1 flex items-center gap-2">
-              <Calculator className="w-4 h-4 text-[#C5A028]" />
+            <h3 className="text-lg font-bold text-gray-950 tracking-wide mt-1 flex items-center gap-2">
+              <Calculator className="w-5 h-5 text-[#7E22CE]" />
               Automated ICMR Nutrient Calculator
             </h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-purple-100 rounded-lg transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab Switcher: Add Ingredient vs Add Standard Recipe */}
-        <div className="flex border-b border-white/10 bg-[#0c100e]">
+        <div className="flex border-b border-purple-200 bg-purple-50/50">
           <button
             type="button"
             onClick={() => setActiveTab('ingredient')}
-            className={`flex-1 py-3 px-4 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${
+            className={`flex-1 py-3 px-4 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer ${
               activeTab === 'ingredient'
-                ? 'bg-[#C5A028] text-black font-black shadow-inner'
-                : 'text-gray-400 hover:text-white hover:bg-white/5'
+                ? 'bg-white text-[#7E22CE] border-b-2 border-[#7E22CE] font-black'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-purple-100/50'
             }`}
           >
             <Utensils className="w-3.5 h-3.5" />
@@ -163,10 +163,10 @@ export const AddIngredientRecipeModal: React.FC<AddIngredientRecipeModalProps> =
           <button
             type="button"
             onClick={() => setActiveTab('recipe')}
-            className={`flex-1 py-3 px-4 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${
+            className={`flex-1 py-3 px-4 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer ${
               activeTab === 'recipe'
-                ? 'bg-[#C5A028] text-black font-black shadow-inner'
-                : 'text-gray-400 hover:text-white hover:bg-white/5'
+                ? 'bg-white text-[#7E22CE] border-b-2 border-[#7E22CE] font-black'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-purple-100/50'
             }`}
           >
             <BookOpen className="w-3.5 h-3.5" />
@@ -185,10 +185,10 @@ export const AddIngredientRecipeModal: React.FC<AddIngredientRecipeModalProps> =
                     key={cat}
                     type="button"
                     onClick={() => setSelectedCategory(cat)}
-                    className={`px-3 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap transition-colors border ${
+                    className={`px-3 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap transition-colors border cursor-pointer ${
                       selectedCategory === cat
-                        ? 'bg-[#C5A028] text-black border-[#C5A028]'
-                        : 'bg-[#111613] text-gray-400 border-white/10 hover:border-white/20 hover:text-white'
+                        ? 'bg-[#7E22CE] text-white border-[#7E22CE]'
+                        : 'bg-purple-50 text-gray-700 border-purple-200 hover:border-[#7E22CE] hover:text-[#7E22CE]'
                     }`}
                   >
                     {cat}
@@ -200,18 +200,18 @@ export const AddIngredientRecipeModal: React.FC<AddIngredientRecipeModalProps> =
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <div className="relative">
-                    <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
+                    <Search className="w-4 h-4 text-gray-500 absolute left-3 top-2.5" />
                     <input
                       type="text"
                       placeholder="Search Indian staples, millets, dals, keerai..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full bg-[#111613] border border-white/15 focus:border-[#C5A028] pl-9 pr-3 py-2 text-xs text-white focus:outline-none placeholder:text-gray-600"
+                      className="w-full bg-purple-50/50 border border-purple-200 focus:border-[#7E22CE] pl-9 pr-3 py-2 text-xs text-gray-950 rounded-lg focus:outline-none placeholder:text-gray-400"
                     />
                   </div>
 
                   {/* List of Ingredients */}
-                  <div className="border border-white/10 max-h-48 overflow-y-auto divide-y divide-white/5 bg-[#070a08]">
+                  <div className="border border-purple-200 rounded-xl max-h-48 overflow-y-auto divide-y divide-purple-100 bg-white">
                     {filteredIngredients.map((ing) => {
                       const isSelected = selectedIngredient.id === ing.id;
                       return (
@@ -222,19 +222,19 @@ export const AddIngredientRecipeModal: React.FC<AddIngredientRecipeModalProps> =
                             setSelectedIngredient(ing);
                             setUnit(ing.defaultUnit);
                           }}
-                          className={`w-full text-left p-2.5 text-xs transition-colors flex items-center justify-between ${
+                          className={`w-full text-left p-2.5 text-xs transition-colors flex items-center justify-between cursor-pointer ${
                             isSelected
-                              ? 'bg-[#C5A028]/20 border-l-2 border-[#C5A028] text-white font-bold'
-                              : 'hover:bg-white/5 text-gray-300'
+                              ? 'bg-purple-100/70 border-l-4 border-[#7E22CE] text-gray-950 font-bold'
+                              : 'hover:bg-purple-50 text-gray-700'
                           }`}
                         >
                           <div>
-                            <div className="font-medium text-white">{ing.name}</div>
+                            <div className="font-medium text-gray-950">{ing.name}</div>
                             {ing.regionalName && (
-                              <div className="text-[10px] text-[#C5A028] font-mono">{ing.regionalName}</div>
+                              <div className="text-[10px] text-[#7E22CE] font-mono">{ing.regionalName}</div>
                             )}
                           </div>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-black/50 border border-white/10 text-gray-400">
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-50 border border-purple-200 text-gray-600">
                             {ing.category}
                           </span>
                         </button>
@@ -244,10 +244,10 @@ export const AddIngredientRecipeModal: React.FC<AddIngredientRecipeModalProps> =
 
                   {/* Highlight card for selected ingredient */}
                   {selectedIngredient.clinicalHighlight && (
-                    <div className="p-2.5 bg-[#121914] border border-[#C5A028]/30 text-[11px] text-[#f7d88c] flex items-start gap-2">
-                      <Sparkles className="w-4 h-4 text-[#C5A028] shrink-0 mt-0.5" />
+                    <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-900 flex items-start gap-2">
+                      <Sparkles className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                       <div>
-                        <span className="font-bold text-white">ICMR Clinical Insight: </span>
+                        <span className="font-bold text-amber-950">ICMR Clinical Insight: </span>
                         {selectedIngredient.clinicalHighlight}
                       </div>
                     </div>
@@ -255,16 +255,16 @@ export const AddIngredientRecipeModal: React.FC<AddIngredientRecipeModalProps> =
                 </div>
 
                 {/* Portion Input & Real-time Live Calculation */}
-                <div className="p-4 bg-[#111613] border border-white/10 space-y-4">
-                  <div className="flex items-center justify-between border-b border-white/10 pb-2">
-                    <span className="text-xs uppercase font-mono text-gray-400">Selected Item</span>
-                    <span className="text-xs font-bold text-[#C5A028] font-mono">{selectedIngredient.name}</span>
+                <div className="p-4 bg-purple-50/50 border border-purple-200 rounded-xl space-y-4">
+                  <div className="flex items-center justify-between border-b border-purple-200 pb-2">
+                    <span className="text-xs uppercase font-mono text-gray-600">Selected Item</span>
+                    <span className="text-xs font-bold text-[#7E22CE] font-mono">{selectedIngredient.name}</span>
                   </div>
 
                   {/* Quantity & Unit */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[10px] font-mono uppercase text-gray-400 mb-1">
+                      <label className="block text-[10px] font-mono uppercase text-gray-600 mb-1">
                         Quantity
                       </label>
                       <input
@@ -273,17 +273,17 @@ export const AddIngredientRecipeModal: React.FC<AddIngredientRecipeModalProps> =
                         step="any"
                         value={quantity}
                         onChange={(e) => setQuantity(parseFloat(e.target.value) || 0)}
-                        className="w-full bg-black border border-white/20 focus:border-[#C5A028] px-3 py-1.5 text-xs text-white font-mono focus:outline-none"
+                        className="w-full bg-white border border-purple-200 focus:border-[#7E22CE] px-3 py-1.5 text-xs text-gray-950 font-mono rounded-lg focus:outline-none"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-mono uppercase text-gray-400 mb-1">
+                      <label className="block text-[10px] font-mono uppercase text-gray-600 mb-1">
                         Measure Unit
                       </label>
                       <select
                         value={unit}
                         onChange={(e) => setUnit(e.target.value)}
-                        className="w-full bg-black border border-white/20 focus:border-[#C5A028] px-2.5 py-1.5 text-xs text-white font-mono focus:outline-none"
+                        className="w-full bg-white border border-purple-200 focus:border-[#7E22CE] px-2.5 py-1.5 text-xs text-gray-950 font-mono rounded-lg focus:outline-none cursor-pointer"
                       >
                         <option value="g">Grams (g)</option>
                         <option value="cup">Standard Cup (~150g)</option>
@@ -297,52 +297,52 @@ export const AddIngredientRecipeModal: React.FC<AddIngredientRecipeModalProps> =
                     </div>
                   </div>
 
-                  <div className="text-[11px] text-gray-400 font-mono">
-                    Computed Net Weight: <span className="text-white font-bold">{candidateWeightGrams} grams</span>
+                  <div className="text-[11px] text-gray-600 font-mono">
+                    Computed Net Weight: <span className="text-gray-950 font-bold">{candidateWeightGrams} grams</span>
                   </div>
 
                   {/* Live Automated ICMR Nutrient Calculation Card */}
-                  <div className="p-3 bg-black/60 border border-[#C5A028]/40 space-y-2">
-                    <div className="flex items-center justify-between text-[11px] font-mono text-[#C5A028]">
-                      <span>⚡ AUTOMATED NUTRIENTS</span>
-                      <span className="text-white font-bold">{candidateNutrients.calories} kcal</span>
+                  <div className="p-3 bg-white border border-purple-200 rounded-xl space-y-2 shadow-2xs">
+                    <div className="flex items-center justify-between text-[11px] font-mono text-[#7E22CE]">
+                      <span className="font-bold">⚡ AUTOMATED NUTRIENTS</span>
+                      <span className="text-gray-950 font-bold">{candidateNutrients.calories} kcal</span>
                     </div>
 
                     {/* Macros Grid */}
                     <div className="grid grid-cols-4 gap-1.5 text-center text-[10px] font-mono">
-                      <div className="p-1.5 bg-[#111] border border-white/5">
-                        <div className="text-gray-500">Carbs</div>
-                        <div className="text-[#f7d88c] font-bold">{candidateNutrients.carbs}g</div>
+                      <div className="p-1.5 bg-purple-50 border border-purple-100 rounded">
+                        <div className="text-gray-600">Carbs</div>
+                        <div className="text-[#7E22CE] font-bold">{candidateNutrients.carbs}g</div>
                       </div>
-                      <div className="p-1.5 bg-[#111] border border-white/5">
-                        <div className="text-gray-500">Protein</div>
-                        <div className="text-emerald-400 font-bold">{candidateNutrients.protein}g</div>
+                      <div className="p-1.5 bg-purple-50 border border-purple-100 rounded">
+                        <div className="text-gray-600">Protein</div>
+                        <div className="text-emerald-700 font-bold">{candidateNutrients.protein}g</div>
                       </div>
-                      <div className="p-1.5 bg-[#111] border border-white/5">
-                        <div className="text-gray-500">Fat</div>
-                        <div className="text-amber-400 font-bold">{candidateNutrients.fat}g</div>
+                      <div className="p-1.5 bg-purple-50 border border-purple-100 rounded">
+                        <div className="text-gray-600">Fat</div>
+                        <div className="text-amber-700 font-bold">{candidateNutrients.fat}g</div>
                       </div>
-                      <div className="p-1.5 bg-[#111] border border-white/5">
-                        <div className="text-gray-500">Fiber</div>
-                        <div className="text-indigo-400 font-bold">{candidateNutrients.fiber}g</div>
+                      <div className="p-1.5 bg-purple-50 border border-purple-100 rounded">
+                        <div className="text-gray-600">Fiber</div>
+                        <div className="text-indigo-700 font-bold">{candidateNutrients.fiber}g</div>
                       </div>
                     </div>
 
                     {/* Key Micros */}
-                    <div className="pt-1.5 border-t border-white/10 grid grid-cols-3 gap-1.5 text-[10px] font-mono text-gray-400">
-                      <div>Calcium: <span className="text-white">{candidateNutrients.calcium}mg</span></div>
-                      <div>Iron: <span className="text-white">{candidateNutrients.iron}mg</span></div>
-                      <div>Zinc: <span className="text-white">{candidateNutrients.zinc}mg</span></div>
-                      <div>Magnesium: <span className="text-white">{candidateNutrients.magnesium}mg</span></div>
-                      <div>Potassium: <span className="text-white">{candidateNutrients.potassium}mg</span></div>
-                      <div>Vit C: <span className="text-white">{candidateNutrients.vitaminC}mg</span></div>
+                    <div className="pt-1.5 border-t border-purple-100 grid grid-cols-3 gap-1.5 text-[10px] font-mono text-gray-600">
+                      <div>Calcium: <span className="text-gray-950 font-bold">{candidateNutrients.calcium}mg</span></div>
+                      <div>Iron: <span className="text-gray-950 font-bold">{candidateNutrients.iron}mg</span></div>
+                      <div>Zinc: <span className="text-gray-950 font-bold">{candidateNutrients.zinc}mg</span></div>
+                      <div>Magnesium: <span className="text-gray-950 font-bold">{candidateNutrients.magnesium}mg</span></div>
+                      <div>Potassium: <span className="text-gray-950 font-bold">{candidateNutrients.potassium}mg</span></div>
+                      <div>Vit C: <span className="text-gray-950 font-bold">{candidateNutrients.vitaminC}mg</span></div>
                     </div>
                   </div>
 
                   <button
                     type="button"
                     onClick={handleAddIngredientSubmit}
-                    className="w-full py-2.5 px-4 bg-[#C5A028] text-black font-black uppercase text-xs tracking-wider hover:bg-[#d8b235] transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-lg"
+                    className="w-full py-2.5 px-4 bg-[#7E22CE] text-white font-black uppercase text-xs tracking-wider hover:bg-[#6b1dae] transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs rounded-xl"
                   >
                     <Plus className="w-4 h-4" />
                     Add Ingredient to Meal
@@ -356,7 +356,7 @@ export const AddIngredientRecipeModal: React.FC<AddIngredientRecipeModalProps> =
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Standard Recipe List */}
                 <div className="space-y-2">
-                  <label className="text-[10px] uppercase font-mono text-gray-400">
+                  <label className="text-[10px] uppercase font-mono text-gray-600 font-bold">
                     Select ICMR-Standardized Clinical Recipe
                   </label>
                   <div className="space-y-2">
@@ -366,22 +366,22 @@ export const AddIngredientRecipeModal: React.FC<AddIngredientRecipeModalProps> =
                         <div
                           key={recipe.id}
                           onClick={() => setSelectedRecipeId(recipe.id)}
-                          className={`p-3 border cursor-pointer transition-all ${
+                          className={`p-3 border rounded-xl cursor-pointer transition-all ${
                             isSelected
-                              ? 'bg-[#C5A028]/15 border-[#C5A028] text-white'
-                              : 'bg-[#111613] border-white/10 hover:border-white/30 text-gray-300'
+                              ? 'bg-purple-100/70 border-[#7E22CE] text-gray-950 ring-1 ring-[#7E22CE]'
+                              : 'bg-white border-purple-200 hover:border-[#7E22CE] text-gray-700'
                           }`}
                         >
                           <div className="flex items-center justify-between font-bold text-xs">
-                            <span>{recipe.name}</span>
-                            <span className="text-[10px] px-1.5 py-0.5 bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 rounded">
+                            <span className="text-gray-950">{recipe.name}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 bg-emerald-50 border border-emerald-300 text-emerald-700 rounded">
                               {recipe.glycemicIndex} GI
                             </span>
                           </div>
-                          <p className="text-[11px] text-gray-400 mt-1 line-clamp-2">
+                          <p className="text-[11px] text-gray-600 mt-1 line-clamp-2">
                             {recipe.clinicalNotes}
                           </p>
-                          <div className="text-[10px] font-mono text-[#C5A028] mt-1.5">
+                          <div className="text-[10px] font-mono text-[#7E22CE] font-bold mt-1.5">
                             {recipe.ingredients.length} measured ingredients
                           </div>
                         </div>
@@ -391,38 +391,38 @@ export const AddIngredientRecipeModal: React.FC<AddIngredientRecipeModalProps> =
                 </div>
 
                 {/* Recipe Composition & Live Computed Breakdown */}
-                <div className="p-4 bg-[#111613] border border-white/10 space-y-4">
-                  <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                <div className="p-4 bg-purple-50/50 border border-purple-200 rounded-xl space-y-4">
+                  <div className="flex items-center justify-between border-b border-purple-200 pb-2">
                     <div>
-                      <span className="text-[10px] uppercase font-mono text-gray-400">Recipe Breakdown</span>
-                      <h4 className="text-xs font-bold text-white mt-0.5">{builtCandidateRecipe.name}</h4>
+                      <span className="text-[10px] uppercase font-mono text-gray-600">Recipe Breakdown</span>
+                      <h4 className="text-xs font-bold text-gray-950 mt-0.5">{builtCandidateRecipe.name}</h4>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <label className="text-[10px] font-mono text-gray-400">Servings:</label>
+                      <label className="text-[10px] font-mono text-gray-600">Servings:</label>
                       <input
                         type="number"
                         min="1"
                         max="5"
                         value={recipeServings}
                         onChange={(e) => setRecipeServings(Math.max(1, parseInt(e.target.value) || 1))}
-                        className="w-12 bg-black border border-white/20 px-2 py-0.5 text-xs text-white text-center font-mono"
+                        className="w-12 bg-white border border-purple-200 rounded px-2 py-0.5 text-xs text-gray-950 text-center font-mono"
                       />
                     </div>
                   </div>
 
                   {/* Constituent Ingredients */}
                   <div className="space-y-1.5">
-                    <span className="text-[10px] uppercase font-mono text-gray-400">
+                    <span className="text-[10px] uppercase font-mono text-gray-600 font-bold">
                       Constituent Ingredients (Scaled)
                     </span>
                     <div className="max-h-28 overflow-y-auto space-y-1 pr-1">
                       {builtCandidateRecipe.ingredients.map((ing) => (
                         <div
                           key={ing.id}
-                          className="flex items-center justify-between text-[11px] py-1 px-2 bg-black/40 border border-white/5"
+                          className="flex items-center justify-between text-[11px] py-1 px-2 bg-white border border-purple-100 rounded"
                         >
-                          <span className="text-gray-300 font-medium">{ing.name}</span>
-                          <span className="text-[#C5A028] font-mono text-[10px]">
+                          <span className="text-gray-800 font-medium">{ing.name}</span>
+                          <span className="text-[#7E22CE] font-mono text-[10px] font-bold">
                             {ing.weightGrams}g ({ing.nutrients.calories} kcal)
                           </span>
                         </div>
@@ -431,44 +431,44 @@ export const AddIngredientRecipeModal: React.FC<AddIngredientRecipeModalProps> =
                   </div>
 
                   {/* Automated Computed Recipe Nutrients */}
-                  <div className="p-3 bg-black/70 border border-[#C5A028]/40 space-y-2">
-                    <div className="flex items-center justify-between text-[11px] font-mono text-[#C5A028]">
-                      <span>TOTAL RECIPE NUTRIENTS</span>
-                      <span className="text-white font-bold">{builtCandidateRecipe.nutrients.calories} kcal</span>
+                  <div className="p-3 bg-white border border-purple-200 rounded-xl space-y-2 shadow-2xs">
+                    <div className="flex items-center justify-between text-[11px] font-mono text-[#7E22CE]">
+                      <span className="font-bold">TOTAL RECIPE NUTRIENTS</span>
+                      <span className="text-gray-950 font-bold">{builtCandidateRecipe.nutrients.calories} kcal</span>
                     </div>
                     <div className="grid grid-cols-4 gap-1 text-center text-[10px] font-mono">
-                      <div className="p-1 bg-[#111]">
-                        <div className="text-gray-500">Carbs</div>
-                        <div className="text-[#f7d88c] font-bold">{builtCandidateRecipe.nutrients.carbs}g</div>
+                      <div className="p-1 bg-purple-50 rounded">
+                        <div className="text-gray-600">Carbs</div>
+                        <div className="text-[#7E22CE] font-bold">{builtCandidateRecipe.nutrients.carbs}g</div>
                       </div>
-                      <div className="p-1 bg-[#111]">
-                        <div className="text-gray-500">Protein</div>
-                        <div className="text-emerald-400 font-bold">{builtCandidateRecipe.nutrients.protein}g</div>
+                      <div className="p-1 bg-purple-50 rounded">
+                        <div className="text-gray-600">Protein</div>
+                        <div className="text-emerald-700 font-bold">{builtCandidateRecipe.nutrients.protein}g</div>
                       </div>
-                      <div className="p-1 bg-[#111]">
-                        <div className="text-gray-500">Fat</div>
-                        <div className="text-amber-400 font-bold">{builtCandidateRecipe.nutrients.fat}g</div>
+                      <div className="p-1 bg-purple-50 rounded">
+                        <div className="text-gray-600">Fat</div>
+                        <div className="text-amber-700 font-bold">{builtCandidateRecipe.nutrients.fat}g</div>
                       </div>
-                      <div className="p-1 bg-[#111]">
-                        <div className="text-gray-500">Fiber</div>
-                        <div className="text-indigo-400 font-bold">{builtCandidateRecipe.nutrients.fiber}g</div>
+                      <div className="p-1 bg-purple-50 rounded">
+                        <div className="text-gray-600">Fiber</div>
+                        <div className="text-indigo-700 font-bold">{builtCandidateRecipe.nutrients.fiber}g</div>
                       </div>
                     </div>
 
-                    <div className="pt-1.5 border-t border-white/10 grid grid-cols-3 gap-1.5 text-[10px] font-mono text-gray-400">
-                      <div>Calcium: <span className="text-white">{builtCandidateRecipe.nutrients.calcium}mg</span></div>
-                      <div>Iron: <span className="text-white">{builtCandidateRecipe.nutrients.iron}mg</span></div>
-                      <div>Zinc: <span className="text-white">{builtCandidateRecipe.nutrients.zinc}mg</span></div>
-                      <div>Magnesium: <span className="text-white">{builtCandidateRecipe.nutrients.magnesium}mg</span></div>
-                      <div>Potassium: <span className="text-white">{builtCandidateRecipe.nutrients.potassium}mg</span></div>
-                      <div>Vit C: <span className="text-white">{builtCandidateRecipe.nutrients.vitaminC}mg</span></div>
+                    <div className="pt-1.5 border-t border-purple-100 grid grid-cols-3 gap-1.5 text-[10px] font-mono text-gray-600">
+                      <div>Calcium: <span className="text-gray-950 font-bold">{builtCandidateRecipe.nutrients.calcium}mg</span></div>
+                      <div>Iron: <span className="text-gray-950 font-bold">{builtCandidateRecipe.nutrients.iron}mg</span></div>
+                      <div>Zinc: <span className="text-gray-950 font-bold">{builtCandidateRecipe.nutrients.zinc}mg</span></div>
+                      <div>Magnesium: <span className="text-gray-950 font-bold">{builtCandidateRecipe.nutrients.magnesium}mg</span></div>
+                      <div>Potassium: <span className="text-gray-950 font-bold">{builtCandidateRecipe.nutrients.potassium}mg</span></div>
+                      <div>Vit C: <span className="text-gray-950 font-bold">{builtCandidateRecipe.nutrients.vitaminC}mg</span></div>
                     </div>
                   </div>
 
                   <button
                     type="button"
                     onClick={handleAddRecipeSubmit}
-                    className="w-full py-2.5 px-4 bg-[#C5A028] text-black font-black uppercase text-xs tracking-wider hover:bg-[#d8b235] transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-lg"
+                    className="w-full py-2.5 px-4 bg-[#7E22CE] text-white font-black uppercase text-xs tracking-wider hover:bg-[#6b1dae] transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs rounded-xl"
                   >
                     <Plus className="w-4 h-4" />
                     Add Recipe to Meal

@@ -71,21 +71,21 @@ export const DomainSelectorSection: React.FC<DomainSelectorSectionProps> = ({
                 }}
                 className={`relative cursor-pointer p-5 border transition-all duration-200 ${
                   isSelected
-                    ? 'bg-[#0d0617] border-[#7E22CE] shadow-[0_0_20px_rgba(126,34,206,0.35)]'
-                    : 'bg-black/60 border-white/10 hover:border-[#7E22CE]/50 text-gray-400'
+                    ? 'bg-white border-[#7E22CE] shadow-[0_0_20px_rgba(126,34,206,0.35)]'
+                    : 'bg-white/80 border-purple-100 hover:border-[#7E22CE]/50 text-gray-600'
                 }`}
               >
                 <div className="flex items-center justify-between mb-3">
-                  <div className="p-2 bg-black border border-white/10">
+                  <div className="p-2 bg-purple-50 border border-purple-100">
                     {getDomainIcon(dom.id)}
                   </div>
-                  <span className="text-xs font-mono px-2 py-0.5 bg-black text-[#A855F7] border border-[#7E22CE]/40 font-bold">
+                  <span className="text-xs font-mono px-2 py-0.5 bg-purple-50 text-[#7E22CE] border border-purple-200 font-bold">
                     #{dom.code}
                   </span>
                 </div>
 
-                <div className="text-sm font-bold tracking-wider uppercase text-white mb-3">
-                  {dom.code}. {dom.name}
+                <div className="text-lg font-black tracking-wider uppercase text-black mb-3">
+                  {dom.name}
                 </div>
 
                 <div className="flex items-center justify-between pt-2 border-t border-white/10">

@@ -41,6 +41,14 @@ import {
   generateAIPlanWithGemini,
 } from '../utils/dynamicClinicalDietEngine';
 import { MASTER_DOMAIN_CATEGORY_GROUPS } from '../data/domainRecipePosterMasterData';
+import { decomposeTextToIcmrIngredients } from '../utils/icmrRecipeEngine';
+import {
+  getActiveRdaTargets,
+  getEffectiveDayTarget,
+  setDaySpecificOverride,
+} from '../utils/nutritionStore';
+import { PatientRdaTargets } from '../utils/rdaCalculationEngine';
+import { X, Check } from 'lucide-react';
 
 export type { CustomMealItem, CustomMealSlot, CustomDayPlan };
 export { INITIAL_7_DAY_STUDIO_PLAN };
@@ -410,6 +418,53 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
   const [isAutoScaling, setIsAutoScaling] = useState<boolean>(false);
   const [viewMode, setViewMode] = useState<'day-by-day' | 'weekly-matrix'>('day-by-day');
 
+  // Single Source of Truth RDA Targets
+  const [rdaTargets, setRdaTargets] = useState<PatientRdaTargets>(() =>
+    getActiveRdaTargets(generalInfo, calculations, activeCondition)
+  );
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      if (e.detail) setRdaTargets(e.detail);
+    };
+    window.addEventListener('ziathlon:rda-targets-updated', handler);
+    return () => window.removeEventListener('ziathlon:rda-targets-updated', handler);
+  }, []);
+
+  // Day-Specific Target Override Modal State
+  const [dayTargetModalOpen, setDayTargetModalOpen] = useState(false);
+  const [targetModalDayNumber, setTargetModalDayNumber] = useState(1);
+  const [targetModalNutrientId, setTargetModalNutrientId] = useState('protein');
+  const [targetModalValue, setTargetModalValue] = useState(70);
+  const [targetModalApplyAll, setTargetModalApplyAll] = useState(false);
+
+  const handleOpenDayTargetModal = (dayNum: number, nutrientId: string = 'protein') => {
+    setTargetModalDayNumber(dayNum);
+    setTargetModalNutrientId(nutrientId);
+    const { target } = getEffectiveDayTarget(rdaTargets, dayNum, nutrientId);
+    setTargetModalValue(target);
+    setTargetModalApplyAll(false);
+    setDayTargetModalOpen(true);
+  };
+
+  const handleSaveDayTargetOverride = () => {
+    const updated = setDaySpecificOverride(
+      targetModalDayNumber,
+      targetModalNutrientId,
+      Number(targetModalValue) || 0,
+      targetModalApplyAll
+    );
+    if (updated) {
+      setRdaTargets(updated);
+      showToast(
+        targetModalApplyAll
+          ? `✓ Target updated for ALL 7 Days!`
+          : `✓ Target updated specifically for Day ${targetModalDayNumber}!`
+      );
+    }
+    setDayTargetModalOpen(false);
+  };
+
   const showToast = (msg: string) => {
     setNotificationToast(msg);
     setTimeout(() => setNotificationToast(null), 3500);
@@ -642,6 +697,52 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
   const carbPct = Math.round((carbCals / totalMacroCals) * 100);
   const fatPct = Math.round((fatCals / totalMacroCals) * 100);
 
+  // Target vs Planned / Actual comparison for currentPlan
+  const dayComparison = useMemo(() => {
+    const allItems = currentPlan.slots.flatMap((s) => s.items);
+    const actEnergy = allItems.reduce((acc, it) => acc + (it.calories || 0), 0);
+    const actCarbs = allItems.reduce((acc, it) => acc + (it.carbs || 0), 0);
+    const actProtein = allItems.reduce((acc, it) => acc + (it.protein || 0), 0);
+    const actFat = allItems.reduce((acc, it) => acc + (it.fat || 0), 0);
+    const actFibre = allItems.reduce((acc, it) => acc + (it.fiber || 0), 0);
+    const actIron = allItems.reduce((acc, it) => acc + ((it as any).iron || 0), 0) || Math.round((actEnergy / 100) * 1.2 * 10) / 10;
+
+    const itemsToCheck = [
+      { id: 'energy', name: 'Energy', unit: 'kcal', actual: Math.round(actEnergy) },
+      { id: 'carbohydrates', name: 'Carbohydrate', unit: 'g', actual: Math.round(actCarbs * 10) / 10 },
+      { id: 'protein', name: 'Protein', unit: 'g', actual: Math.round(actProtein * 10) / 10 },
+      { id: 'fat', name: 'Fat', unit: 'g', actual: Math.round(actFat * 10) / 10 },
+      { id: 'fibre', name: 'Fibre', unit: 'g', actual: Math.round(actFibre * 10) / 10 },
+      { id: 'iron', name: 'Iron', unit: 'mg', actual: Math.round(actIron * 10) / 10 },
+    ];
+
+    return itemsToCheck.map((it) => {
+      const { target, isOverridden, baseTarget } = getEffectiveDayTarget(
+        rdaTargets,
+        currentPlan.dayNumber,
+        it.id
+      );
+      const diff = Math.round((it.actual - target) * 10) / 10;
+      const diffPct = target > 0 ? (diff / target) * 100 : 0;
+      let status: 'Within target' | 'Below target' | 'Exceeds target' = 'Within target';
+      if (diffPct < -6) status = 'Below target';
+      else if (diffPct > 6) status = 'Exceeds target';
+
+      return {
+        id: it.id,
+        name: it.name,
+        unit: it.unit,
+        target,
+        actual: it.actual,
+        diff,
+        diffPct: Math.round(diffPct),
+        status,
+        isOverridden,
+        baseTarget,
+      };
+    });
+  }, [currentPlan, rdaTargets]);
+
   // 1. ALTER PLAN: Delete an item
   const handleDeleteItem = (slotId: string, itemId: string) => {
     setPlans((prev) =>
@@ -808,7 +909,7 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
 
   // WhatsApp Dispatch
   const handleExportToWhatsApp = () => {
-    let text = `*ELSHA CLINICAL NUTRITION PRESCRIPTION*\n`;
+    let text = `*ŽIATHLON SPORTS MEDICINE CLINIC - NUTRITION PRESCRIPTION*\n`;
     text += `*Patient:* ${generalInfo.name || 'Client'} | *Condition:* ${activeCondition}\n`;
     text += `*Day:* ${currentPlan.dayName} (${currentPlan.focus})\n`;
     text += `*Daily Targets:* ${targetDailyKcal} kcal | Protein: ${Math.round(totalDayProtein)}g | Fiber: ${Math.round(totalDayFiber)}g\n`;
@@ -827,7 +928,7 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
     text += `1. Follow meal times punctually to stabilize circadian clock genes.\n`;
     text += `2. Take a 15-minute gentle stroll (Shatapadi) after lunch.\n`;
     text += `3. Bedtime restorative infusion must be taken warm 30 mins before sleep.\n`;
-    text += `\n_Prescribed via ELSHA Clinical Nutrition Intelligence_`;
+    text += `\n_Prescribed via Žiathlon Sports Medicine Clinic Intelligence_`;
 
     if (onSendToWhatsApp) {
       onSendToWhatsApp(text);
@@ -848,28 +949,28 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
     <div className="space-y-6">
       {/* Notification Toast */}
       {notificationToast && (
-        <div className="fixed top-6 right-6 z-50 px-4 py-3 bg-[#7E22CE] text-white text-xs font-bold rounded-xl shadow-2xl border border-white/20 flex items-center gap-2 animate-bounce">
+        <div className="fixed top-6 right-6 z-50 px-4 py-3 bg-[#8C5E28] text-white text-xs font-bold rounded-xl shadow-2xl border border-[#D9C4A5] flex items-center gap-2 animate-bounce">
           <CheckCircle2 className="w-4 h-4 text-emerald-300 shrink-0" />
           <span>{notificationToast}</span>
         </div>
       )}
 
       {/* HEADER BAR: DYNAMIC CLINICAL MATRIX STUDIO */}
-      <div className="p-5 bg-gradient-to-r from-[#170529] via-[#0c0317] to-black border-2 border-[#7E22CE] rounded-2xl flex flex-wrap items-center justify-between gap-4 shadow-xl">
+      <div className="p-5 bg-[#FAF6ED] border-2 border-[#D9C4A5] rounded-2xl flex flex-wrap items-center justify-between gap-4 shadow-xs text-[#2E1C07]">
         <div>
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[10px] uppercase font-mono tracking-[0.3em] text-[#C084FC] font-black">
+            <span className="text-[10px] uppercase font-mono tracking-[0.3em] text-[#8C5E28] font-black">
               7-DAY DIETARY MATRIX STUDIO • ICMR-NIN 2024 & IFCT
             </span>
-            <span className="px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-400 text-emerald-300 text-[9.5px] font-mono font-bold">
+            <span className="px-2 py-0.5 rounded-full bg-[#EEDEC8] border border-[#D9C4A5] text-[#5C3A14] text-[9.5px] font-mono font-bold">
               ✓ 5 Distinct Meal Categories Enforced
             </span>
           </div>
-          <h2 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-2 mt-1">
-            <ChefHat className="w-6 h-6 text-[#C084FC]" />
+          <h2 className="text-2xl font-black text-[#2E1C07] uppercase tracking-tight flex items-center gap-2 mt-1">
+            <ChefHat className="w-6 h-6 text-[#8C5E28]" />
             <span>Dynamic 7-Day Diet Plan & Clinical Studio</span>
           </h2>
-          <p className="text-xs text-gray-300 mt-1 max-w-2xl">
+          <p className="text-xs text-[#5C3A14] mt-1 max-w-2xl">
             Fully dynamic plans calibrated for <strong>{activeCondition}</strong> ({activeDomainGroup.toUpperCase()}).
             Breakfast, Lunch, Snacks, Dinner, and Bedtime each have specialized, completely different food selections with zero cross-meal repetition.
           </p>
@@ -881,7 +982,7 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
             type="button"
             onClick={handleTriggerGeminiAIGeneration}
             disabled={isGeneratingAI}
-            className="px-4 py-2 bg-gradient-to-r from-purple-700 via-indigo-600 to-purple-800 hover:from-purple-600 hover:to-indigo-500 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shadow-[0_0_20px_rgba(147,51,234,0.7)] border border-purple-300 disabled:opacity-50"
+            className="px-4 py-2 bg-[#8C5E28] hover:bg-[#724B1E] text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shadow-xs border border-[#D9C4A5] disabled:opacity-50"
             title="Generate full 7-day plan with distinct meal categories using Gemini AI"
           >
             <Sparkles className={`w-4 h-4 text-yellow-300 ${isGeneratingAI ? 'animate-spin' : ''}`} />
@@ -893,10 +994,10 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
             type="button"
             onClick={handleAiAutoBalancePortionSizes}
             disabled={isAutoScaling}
-            className="px-3.5 py-2 bg-[#7E22CE] hover:bg-[#9333EA] text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shadow-[0_0_15px_rgba(126,34,206,0.6)]"
+            className="px-3.5 py-2 bg-[#FAF6ED] hover:bg-[#EEDEC8] text-[#5C3A14] border border-[#D9C4A5] text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shadow-xs"
             title="Automatically balance all meal portions to hit ICMR calorie requirements"
           >
-            <Zap className={`w-3.5 h-3.5 text-yellow-300 ${isAutoScaling ? 'animate-spin' : ''}`} />
+            <Zap className={`w-3.5 h-3.5 text-[#8C5E28] ${isAutoScaling ? 'animate-spin' : ''}`} />
             <span>{isAutoScaling ? 'Balancing...' : '⚡ Auto-Balance Portions'}</span>
           </button>
 
@@ -904,7 +1005,7 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
           <button
             type="button"
             onClick={handleExportToWhatsApp}
-            className="px-3.5 py-2 bg-[#25D366] hover:bg-[#1EBE5D] text-black text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shadow-[0_0_15px_rgba(37,211,102,0.4)]"
+            className="px-3.5 py-2 bg-[#25D366] hover:bg-[#1EBE5D] text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shadow-xs"
             title="Send formatted 7-Day Meal Plan to client via WhatsApp"
           >
             <Send className="w-3.5 h-3.5" />
@@ -923,10 +1024,10 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
                 } catch {}
                 onOpenFinalPrescription();
               }}
-              className="px-3.5 py-2 bg-black border border-purple-400 hover:bg-purple-950 text-purple-200 hover:text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
+              className="px-3.5 py-2 bg-[#FFFDF9] border border-[#D9C4A5] hover:bg-[#FAF6ED] text-[#8C5E28] text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shadow-xs"
               title="Open Official Rx Prescription"
             >
-              <FileText className="w-3.5 h-3.5 text-yellow-300" />
+              <FileText className="w-3.5 h-3.5 text-[#8C5E28]" />
               <span>Rx Prescription</span>
             </button>
           )}
@@ -934,19 +1035,19 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
       </div>
 
       {/* INTERACTIVE DOMAIN & CONDITION SELECTOR BAR */}
-      <div className="p-4 bg-[#0a0314] border-2 border-[#7E22CE]/60 rounded-2xl space-y-3">
+      <div className="p-4 bg-[#FAF6ED] border-2 border-[#D9C4A5] rounded-2xl space-y-3 shadow-xs">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
-            <Layers className="w-4 h-4 text-[#C084FC]" />
-            <span className="text-xs font-black text-white uppercase tracking-wider">
+            <Layers className="w-4 h-4 text-[#8C5E28]" />
+            <span className="text-xs font-black text-[#2E1C07] uppercase tracking-wider">
               Switch Clinical Domain / Condition:
             </span>
-            <span className="text-[10px] text-gray-400">
+            <span className="text-[10px] text-[#5C3A14]">
               (Updates all 7 days with tailored Breakfast, Lunch, Snacks, Dinner & Bedtime)
             </span>
           </div>
-          <span className="text-xs font-mono text-purple-300">
-            Active: <strong className="text-white underline">{activeCondition}</strong>
+          <span className="text-xs font-mono text-[#5C3A14]">
+            Active: <strong className="text-[#8C5E28] underline">{activeCondition}</strong>
           </span>
         </div>
 
@@ -966,8 +1067,8 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
                 }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider shrink-0 transition-all border cursor-pointer ${
                   isGroupActive
-                    ? 'bg-[#7E22CE] text-white border-purple-400 shadow-[0_0_10px_rgba(126,34,206,0.6)]'
-                    : 'bg-black/60 border-white/10 text-gray-400 hover:text-white hover:border-[#7E22CE]'
+                    ? 'bg-[#8C5E28] text-white border-[#8C5E28] shadow-xs'
+                    : 'bg-[#FFFDF9] border-[#D9C4A5] text-[#5C3A14] hover:bg-[#EEDEC8]'
                 }`}
               >
                 <span>{grp.groupName}</span>
@@ -987,8 +1088,8 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
                 onClick={() => handleConditionSwitch(item, activeDomainGroup)}
                 className={`px-3 py-1 rounded-full text-[11px] font-bold tracking-wide transition-all border cursor-pointer ${
                   isSelected
-                    ? 'bg-purple-600 text-white border-purple-300 shadow-[0_0_12px_rgba(168,85,247,0.8)] font-black'
-                    : 'bg-black/40 border-purple-900/60 text-gray-300 hover:text-white hover:border-purple-500'
+                    ? 'bg-[#8C5E28] text-white border-[#8C5E28] shadow-xs font-black'
+                    : 'bg-[#FFFDF9] border-[#D9C4A5] text-[#5C3A14] hover:border-[#8C5E28]'
                 }`}
               >
                 {item}
@@ -999,10 +1100,10 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
 
         {/* AI Rationale Banner */}
         {aiRationale && (
-          <div className="mt-2 p-3 bg-purple-950/40 border border-purple-500/40 rounded-xl flex items-start gap-2 text-xs text-purple-200">
-            <Sparkles className="w-4 h-4 text-yellow-300 shrink-0 mt-0.5" />
+          <div className="mt-2 p-3 bg-[#FFFDF9] border border-[#D9C4A5] rounded-xl flex items-start gap-2 text-xs text-[#5C3A14]">
+            <Sparkles className="w-4 h-4 text-[#8C5E28] shrink-0 mt-0.5" />
             <div>
-              <span className="font-bold text-white uppercase text-[10.5px] tracking-wider block">
+              <span className="font-bold text-[#2E1C07] uppercase text-[10.5px] tracking-wider block">
                 Clinical Diet Strategy ({lastModelUsed || 'ICMR-NIN 2024 Engine'}):
               </span>
               <span>{aiRationale}</span>
@@ -1012,11 +1113,11 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
       </div>
 
       {/* Target Calorie Requirement & Macro Calculation Bar */}
-      <div className="p-4 bg-[#090312] border-2 border-[#7E22CE]/60 rounded-2xl grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+      <div className="p-4 bg-[#FAF6ED] border-2 border-[#D9C4A5] rounded-2xl grid grid-cols-1 md:grid-cols-4 gap-4 items-center shadow-xs">
         {/* Requirement Selector */}
         <div className="space-y-1">
-          <label className="text-[10px] font-mono uppercase text-gray-400 font-bold block flex items-center gap-1">
-            <Scale className="w-3 h-3 text-[#C084FC]" />
+          <label className="text-[10px] font-mono uppercase text-[#5C3A14] font-bold block flex items-center gap-1">
+            <Scale className="w-3 h-3 text-[#8C5E28]" />
             Target Requirement:
           </label>
           <div className="flex items-center gap-2">
@@ -1036,7 +1137,7 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
                 setPlans(updated);
                 showToast(`Recalibrated 7-Day Plan to ${newTarget} kcal`);
               }}
-              className="px-3 py-1.5 bg-black border border-[#7E22CE] text-white text-xs font-mono font-bold rounded-lg focus:outline-none focus:ring-1 focus:ring-[#C084FC]"
+              className="px-3 py-1.5 bg-[#FFFDF9] border border-[#D9C4A5] text-[#2E1C07] text-xs font-mono font-bold rounded-lg focus:outline-none focus:border-[#8C5E28]"
             >
               <option value={1200}>1,200 kcal (Strict Deficit / Low Glycemic)</option>
               <option value={1400}>1,400 kcal (Moderate Fat Loss)</option>
@@ -1049,28 +1150,28 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
         </div>
 
         {/* Real-time ICMR Calculation */}
-        <div className="p-2.5 rounded-xl bg-black/60 border border-white/10 flex items-center justify-between">
+        <div className="p-2.5 rounded-xl bg-[#FFFDF9] border border-[#E3D4C0] flex items-center justify-between">
           <div>
-            <div className="text-[9px] font-mono uppercase text-gray-400 font-bold">Daily Energy Target</div>
-            <div className="text-lg font-black text-white font-mono flex items-center gap-1">
-              <Flame className="w-4 h-4 text-amber-400" />
+            <div className="text-[9px] font-mono uppercase text-[#5C3A14] font-bold">Daily Energy Target</div>
+            <div className="text-lg font-black text-[#2E1C07] font-mono flex items-center gap-1">
+              <Flame className="w-4 h-4 text-amber-600" />
               <span>{totalDayCalories} / {targetDailyKcal} kcal</span>
             </div>
           </div>
           <div className="text-right">
-            <div className="text-[9.5px] font-mono text-purple-300">
+            <div className="text-[9.5px] font-mono text-[#5C3A14]">
               {Math.abs(totalDayCalories - targetDailyKcal) <= 50 ? (
-                <span className="text-emerald-400 font-bold">✓ On Target</span>
+                <span className="text-emerald-700 font-bold">✓ On Target</span>
               ) : totalDayCalories > targetDailyKcal ? (
-                <span className="text-amber-400 font-bold">+{totalDayCalories - targetDailyKcal} kcal</span>
+                <span className="text-amber-800 font-bold">+{totalDayCalories - targetDailyKcal} kcal</span>
               ) : (
-                <span className="text-cyan-400 font-bold">-{targetDailyKcal - totalDayCalories} kcal</span>
+                <span className="text-blue-800 font-bold">-{targetDailyKcal - totalDayCalories} kcal</span>
               )}
             </div>
             <button
               type="button"
               onClick={handleAiAutoBalancePortionSizes}
-              className="text-[9.5px] font-mono text-[#C084FC] underline hover:text-white cursor-pointer"
+              className="text-[9.5px] font-mono text-[#8C5E28] underline hover:text-[#724B1E] cursor-pointer"
             >
               Auto-Adjust
             </button>
@@ -1078,15 +1179,15 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
         </div>
 
         {/* Macro Distribution */}
-        <div className="p-2.5 rounded-xl bg-black/60 border border-white/10 col-span-1 md:col-span-2 space-y-1.5">
-          <div className="flex items-center justify-between text-[9.5px] font-mono text-gray-300">
+        <div className="p-2.5 rounded-xl bg-[#FFFDF9] border border-[#E3D4C0] col-span-1 md:col-span-2 space-y-1.5">
+          <div className="flex items-center justify-between text-[9.5px] font-mono text-[#5C3A14]">
             <span>Macro Breakdown (ICMR Guideline: 20% P • 50% C • 30% F)</span>
-            <span className="text-purple-300 font-bold">Total Fiber: {Math.round(totalDayFiber)}g</span>
+            <span className="text-[#8C5E28] font-bold">Total Fiber: {Math.round(totalDayFiber)}g</span>
           </div>
 
-          <div className="w-full h-2 rounded-full overflow-hidden bg-white/10 flex">
+          <div className="w-full h-2 rounded-full overflow-hidden bg-[#EEDEC8] flex">
             <div
-              className="bg-purple-500 h-full transition-all"
+              className="bg-[#8C5E28] h-full transition-all"
               style={{ width: `${proteinPct}%` }}
               title={`Protein: ${proteinPct}% (${Math.round(totalDayProtein)}g)`}
             />
@@ -1096,30 +1197,30 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
               title={`Carbs: ${carbPct}% (${Math.round(totalDayCarbs)}g)`}
             />
             <div
-              className="bg-emerald-500 h-full transition-all"
+              className="bg-emerald-600 h-full transition-all"
               style={{ width: `${fatPct}%` }}
               title={`Fat: ${fatPct}% (${Math.round(totalDayFat)}g)`}
             />
           </div>
 
           <div className="flex justify-between text-[10px] font-mono">
-            <span className="text-purple-400">P: {Math.round(totalDayProtein)}g ({proteinPct}%)</span>
-            <span className="text-amber-400">C: {Math.round(totalDayCarbs)}g ({carbPct}%)</span>
-            <span className="text-emerald-400">F: {Math.round(totalDayFat)}g ({fatPct}%)</span>
+            <span className="text-[#8C5E28] font-bold">P: {Math.round(totalDayProtein)}g ({proteinPct}%)</span>
+            <span className="text-amber-700 font-bold">C: {Math.round(totalDayCarbs)}g ({carbPct}%)</span>
+            <span className="text-emerald-700 font-bold">F: {Math.round(totalDayFat)}g ({fatPct}%)</span>
           </div>
         </div>
       </div>
 
       {/* VIEW TOGGLE: Day-by-Day vs. 7-Day Matrix */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#7E22CE]/40 pb-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#D9C4A5] pb-3">
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => setViewMode('day-by-day')}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 ${
               viewMode === 'day-by-day'
-                ? 'bg-[#7E22CE] text-white shadow-[0_0_10px_rgba(126,34,206,0.5)]'
-                : 'bg-black/60 border border-white/10 text-gray-400 hover:text-white'
+                ? 'bg-[#8C5E28] text-white shadow-xs'
+                : 'bg-[#FFFDF9] border border-[#D9C4A5] text-[#5C3A14] hover:bg-[#FAF6ED]'
             }`}
           >
             <Calendar className="w-3.5 h-3.5" />
@@ -1130,8 +1231,8 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
             onClick={() => setViewMode('weekly-matrix')}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 ${
               viewMode === 'weekly-matrix'
-                ? 'bg-[#7E22CE] text-white shadow-[0_0_10px_rgba(126,34,206,0.5)]'
-                : 'bg-black/60 border border-white/10 text-gray-400 hover:text-white'
+                ? 'bg-[#8C5E28] text-white shadow-xs'
+                : 'bg-[#FFFDF9] border border-[#D9C4A5] text-[#5C3A14] hover:bg-[#FAF6ED]'
             }`}
           >
             <Table className="w-3.5 h-3.5" />
@@ -1144,7 +1245,7 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
             <button
               type="button"
               onClick={onOpenFinalPrescription}
-              className="px-3 py-1.5 bg-black border border-[#7E22CE] hover:bg-[#7E22CE] text-[#C084FC] hover:text-white text-xs font-black uppercase tracking-wider rounded-lg transition-colors cursor-pointer"
+              className="px-3.5 py-1.5 bg-[#FFFDF9] border-2 border-[#8C5E28] hover:bg-[#8C5E28] text-[#8C5E28] hover:text-white text-xs font-black uppercase tracking-wider rounded-lg transition-colors cursor-pointer shadow-xs"
             >
               Open Rx Prescription
             </button>
@@ -1159,27 +1260,44 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
 
       {viewMode === 'day-by-day' ? (
         <>
-          {/* 7-Day Day Selector Tabs + ALL 7 DAYS (Complete Plan) */}
+          {/* 7-Day Day Selector Tabs with Day-Specific "+" Buttons */}
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
             {plans.map((p, idx) => {
               const isActive = activeDaySelection === idx;
+              const hasOverrides = rdaTargets?.dayOverrides?.[p.dayNumber] && Object.keys(rdaTargets.dayOverrides[p.dayNumber]).length > 0;
               return (
-                <button
-                  key={p.dayNumber}
-                  type="button"
-                  onClick={() => {
-                    setActiveDaySelection(idx);
-                    setActiveDayIndex(idx);
-                  }}
-                  className={`px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider shrink-0 transition-all border flex items-center gap-2 cursor-pointer ${
-                    isActive
-                      ? 'bg-[#7E22CE] text-white border-[#C084FC] shadow-[0_0_12px_rgba(126,34,206,0.6)]'
-                      : 'bg-black/60 border-white/10 text-gray-400 hover:text-white hover:border-[#7E22CE]'
-                  }`}
-                >
-                  <Calendar className="w-3.5 h-3.5 text-[#C084FC]" />
-                  <span>Day {p.dayNumber} ({p.dayName})</span>
-                </button>
+                <div key={p.dayNumber} className="flex items-center shrink-0 shadow-2xs">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveDaySelection(idx);
+                      setActiveDayIndex(idx);
+                    }}
+                    className={`px-3 py-2 rounded-l-xl text-xs font-black uppercase tracking-wider transition-all border flex items-center gap-1.5 cursor-pointer ${
+                      isActive
+                        ? 'bg-[#8C5E28] text-white border-[#8C5E28] shadow-xs'
+                        : 'bg-[#FAF6ED] border-[#D9C4A5] text-[#5C3A14] hover:bg-[#EEDEC8]'
+                    }`}
+                  >
+                    <Calendar className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-[#8C5E28]'}`} />
+                    <span>Day {p.dayNumber}</span>
+                    {hasOverrides && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" title="Day-Specific Override Active" />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenDayTargetModal(p.dayNumber)}
+                    className={`p-2 rounded-r-xl border border-l-0 text-xs font-bold transition-all cursor-pointer ${
+                      isActive
+                        ? 'bg-[#724B1E] text-white border-[#8C5E28]'
+                        : 'bg-[#F3E8D6] text-[#5C3A14] border-[#D9C4A5] hover:bg-[#8C5E28] hover:text-white'
+                    }`}
+                    title={`Day ${p.dayNumber} + (Modify day-specific target)`}
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               );
             })}
 
@@ -1187,13 +1305,13 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
             <button
               type="button"
               onClick={() => setActiveDaySelection('all')}
-              className={`px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider shrink-0 transition-all border flex items-center gap-2 cursor-pointer ${
+              className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider shrink-0 transition-all border flex items-center gap-2 cursor-pointer ${
                 activeDaySelection === 'all'
-                  ? 'bg-gradient-to-r from-amber-600 via-yellow-600 to-amber-700 text-white border-yellow-400 shadow-[0_0_15px_rgba(234,179,8,0.5)] font-black'
-                  : 'bg-black/80 border-yellow-500/40 text-yellow-400 hover:bg-yellow-500/20'
+                  ? 'bg-[#8C5E28] text-white border-[#8C5E28] shadow-xs font-black'
+                  : 'bg-[#FAF6ED] border-[#D9C4A5] text-[#5C3A14] hover:bg-[#EEDEC8]'
               }`}
             >
-              <Award className="w-3.5 h-3.5 text-yellow-300" />
+              <Award className="w-3.5 h-3.5 text-[#8C5E28]" />
               <span>★ ALL 7 DAYS (Detailed Slots)</span>
             </button>
 
@@ -1201,25 +1319,25 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
             <button
               type="button"
               onClick={() => setActiveDaySelection('table')}
-              className={`px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider shrink-0 transition-all border flex items-center gap-2 cursor-pointer ${
+              className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider shrink-0 transition-all border flex items-center gap-2 cursor-pointer ${
                 activeDaySelection === 'table'
-                  ? 'bg-gradient-to-r from-purple-700 via-indigo-600 to-purple-800 text-white border-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.6)] font-black'
-                  : 'bg-black/80 border-purple-500/40 text-purple-300 hover:bg-purple-900/30'
+                  ? 'bg-[#8C5E28] text-white border-[#8C5E28] shadow-xs font-black'
+                  : 'bg-[#FAF6ED] border-[#D9C4A5] text-[#5C3A14] hover:bg-[#EEDEC8]'
               }`}
             >
-              <Table className="w-3.5 h-3.5 text-purple-300" />
+              <Table className="w-3.5 h-3.5 text-[#8C5E28]" />
               <span>📊 Whole 7-Day Plan (One Table)</span>
             </button>
           </div>
 
           {/* QUICK WORKOUT SLOT BAR */}
-          <div className="p-3 bg-[#0d0517] border border-[#7E22CE]/60 rounded-xl flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="p-3 bg-[#FAF6ED] border border-[#D9C4A5] rounded-xl flex flex-wrap items-center justify-between gap-3 text-xs shadow-2xs">
             <div className="flex items-center gap-2">
-              <Zap className="w-4 h-4 text-amber-400" />
-              <span className="font-bold text-white uppercase text-[11px]">
+              <Zap className="w-4 h-4 text-[#8C5E28]" />
+              <span className="font-bold text-[#2E1C07] uppercase text-[11px]">
                 Specialized Workout Nutrition Slots:
               </span>
-              <span className="text-[10px] text-gray-400">
+              <span className="text-[10px] text-[#5C3A14]">
                 (Add clinical nutrient timing to Day {activeDayIndex + 1})
               </span>
             </div>
@@ -1227,25 +1345,25 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
               <button
                 type="button"
                 onClick={() => handleAddWorkoutSlot('PRE')}
-                className="px-2.5 py-1 bg-[#1a0830] hover:bg-[#7E22CE] border border-[#7E22CE] text-purple-200 hover:text-white text-[10.5px] font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1"
+                className="px-2.5 py-1 bg-[#FFFDF9] hover:bg-[#FAF6ED] border border-[#D9C4A5] text-[#5C3A14] hover:text-[#8C5E28] text-[10.5px] font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1 shadow-2xs"
               >
-                <Plus className="w-3 h-3 text-amber-400" />
+                <Plus className="w-3 h-3 text-[#8C5E28]" />
                 <span>+ PRE-Workout</span>
               </button>
               <button
                 type="button"
                 onClick={() => handleAddWorkoutSlot('DURING')}
-                className="px-2.5 py-1 bg-[#1a0830] hover:bg-[#7E22CE] border border-[#7E22CE] text-purple-200 hover:text-white text-[10.5px] font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1"
+                className="px-2.5 py-1 bg-[#FFFDF9] hover:bg-[#FAF6ED] border border-[#D9C4A5] text-[#5C3A14] hover:text-[#8C5E28] text-[10.5px] font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1 shadow-2xs"
               >
-                <Plus className="w-3 h-3 text-cyan-400" />
+                <Plus className="w-3 h-3 text-[#8C5E28]" />
                 <span>+ DURING-Workout</span>
               </button>
               <button
                 type="button"
                 onClick={() => handleAddWorkoutSlot('POST')}
-                className="px-2.5 py-1 bg-[#1a0830] hover:bg-[#7E22CE] border border-[#7E22CE] text-purple-200 hover:text-white text-[10.5px] font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1"
+                className="px-2.5 py-1 bg-[#FFFDF9] hover:bg-[#FAF6ED] border border-[#D9C4A5] text-[#5C3A14] hover:text-[#8C5E28] text-[10.5px] font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1 shadow-2xs"
               >
-                <Plus className="w-3 h-3 text-emerald-400" />
+                <Plus className="w-3 h-3 text-[#8C5E28]" />
                 <span>+ POST-Workout</span>
               </button>
             </div>
@@ -1254,15 +1372,15 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
           {/* VIEW RENDERER */}
           {activeDaySelection === 'table' ? (
             <div className="space-y-4">
-              <div className="p-4 bg-gradient-to-r from-purple-950 via-[#130722] to-black border-2 border-[#7E22CE] rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-xl">
+              <div className="p-4 bg-[#FAF6ED] border-2 border-[#D9C4A5] rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-xs">
                 <div>
-                  <span className="text-[10px] uppercase font-mono tracking-widest text-[#C084FC] font-bold">
+                  <span className="text-[10px] uppercase font-mono tracking-widest text-[#8C5E28] font-bold">
                     WHOLE 7-DAY CLINICAL MATRIX • DIRECT CLINICAL VIEW
                   </span>
-                  <h3 className="text-lg font-black text-white uppercase">
+                  <h3 className="text-lg font-black text-[#2E1C07] uppercase">
                     7-Day Consolidated Meal Matrix Table
                   </h3>
-                  <p className="text-xs text-gray-300">
+                  <p className="text-xs text-[#5C3A14]">
                     Showing all 7 days with distinct food items for Breakfast, Lunch, Snacks, Dinner, and Bedtime.
                   </p>
                 </div>
@@ -1291,25 +1409,25 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
                 return (
                   <div
                     key={p.dayNumber}
-                    className="p-5 rounded-2xl bg-[#0a0214] border-2 border-[#7E22CE]/60 space-y-4 shadow-xl"
+                    className="p-5 rounded-2xl bg-[#FFFDF9] border-2 border-[#D9C4A5] space-y-4 shadow-xs"
                   >
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E3D4C0] pb-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-[#7E22CE] text-white flex items-center justify-center font-black text-sm">
+                        <div className="w-9 h-9 rounded-xl bg-[#8C5E28] text-white flex items-center justify-center font-black text-sm shadow-2xs">
                           D{p.dayNumber}
                         </div>
                         <div>
-                          <h3 className="text-base font-black text-white uppercase">
+                          <h3 className="text-base font-black text-[#2E1C07] uppercase">
                             Day {p.dayNumber}: {p.dayName}
                           </h3>
-                          <span className="text-xs text-purple-300 font-medium">{p.focus}</span>
+                          <span className="text-xs text-[#5C3A14] font-medium">{p.focus}</span>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-3">
-                        <span className="text-xs font-mono text-gray-300">
-                          Day Total: <strong className="text-white font-bold">{dayCals} kcal</strong>
-                          <span className="text-purple-300 ml-2">({Math.round(dayProt)}g protein)</span>
+                        <span className="text-xs font-mono text-[#5C3A14]">
+                          Day Total: <strong className="text-[#2E1C07] font-bold">{dayCals} kcal</strong>
+                          <span className="text-[#8C5E28] ml-2">({Math.round(dayProt)}g protein)</span>
                         </span>
                         <button
                           type="button"
@@ -1317,7 +1435,7 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
                             setActiveDaySelection(pIdx);
                             setActiveDayIndex(pIdx);
                           }}
-                          className="px-2.5 py-1 bg-[#1a0730] hover:bg-[#7E22CE] text-purple-200 hover:text-white text-[11px] font-bold rounded-lg transition-colors cursor-pointer"
+                          className="px-2.5 py-1 bg-[#FAF6ED] hover:bg-[#8C5E28] text-[#5C3A14] hover:text-white border border-[#D9C4A5] text-[11px] font-bold rounded-lg transition-colors cursor-pointer shadow-2xs"
                         >
                           Edit Day {p.dayNumber}
                         </button>
@@ -1333,16 +1451,16 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
                         return (
                           <div
                             key={slot.slotId}
-                            className="p-3.5 rounded-xl bg-black/60 border border-white/10 space-y-2"
+                            className="p-3.5 rounded-xl bg-[#FAF6ED] border border-[#D9C4A5] space-y-2 shadow-2xs"
                           >
                             <div className="flex items-center justify-between text-xs">
                               <div>
-                                <span className="font-black text-white uppercase text-[11px] block">
+                                <span className="font-black text-[#2E1C07] uppercase text-[11px] block">
                                   {slot.slotName}
                                 </span>
-                                <span className="text-[10px] font-mono text-purple-300">{slot.time}</span>
+                                <span className="text-[10px] font-mono text-[#8C5E28]">{slot.time}</span>
                               </div>
-                              <span className="text-[9.5px] font-mono px-2 py-0.5 rounded bg-[#1a0730] border border-[#7E22CE]/40 text-purple-300">
+                              <span className="text-[9.5px] font-mono px-2 py-0.5 rounded bg-[#FFFDF9] border border-[#D9C4A5] text-[#5C3A14]">
                                 {slot.frequency || 'Daily'}
                               </span>
                             </div>
@@ -1350,17 +1468,17 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
                             <div className="space-y-1.5">
                               {slot.items.map((it) => (
                                 <div key={it.id} className="text-xs">
-                                  <div className="font-bold text-gray-200">{it.dishName}</div>
-                                  <div className="text-[10px] text-gray-400 font-mono">
+                                  <div className="font-bold text-[#2E1C07]">{it.dishName}</div>
+                                  <div className="text-[10px] text-[#5C3A14] font-mono">
                                     {it.portionHousehold} • {it.calories} kcal ({it.protein}g P)
                                   </div>
                                 </div>
                               ))}
                             </div>
 
-                            <div className="pt-1.5 border-t border-white/5 flex justify-between text-[10px] font-mono text-gray-400">
+                            <div className="pt-1.5 border-t border-[#E3D4C0] flex justify-between text-[10px] font-mono text-[#5C3A14]">
                               <span>Slot Total: {slotCals} kcal</span>
-                              <span className="text-purple-300">P: {slotProt}g</span>
+                              <span className="text-[#8C5E28] font-bold">P: {slotProt}g</span>
                             </div>
                           </div>
                         );
@@ -1371,20 +1489,20 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
               })}
 
               {/* AFTER END OF ALL 7 DAYS: CONSOLIDATED MASTER MATRIX TABLE */}
-              <div className="pt-6 border-t-2 border-[#7E22CE]/60">
-                <div className="mb-4 p-4 bg-gradient-to-r from-purple-950/80 via-[#130722] to-black border-2 border-[#C084FC] rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-xl">
+              <div className="pt-6 border-t-2 border-[#D9C4A5]">
+                <div className="mb-4 p-4 bg-[#FAF6ED] border-2 border-[#D9C4A5] rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-xs">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-purple-600/30 border border-purple-400 flex items-center justify-center text-purple-300 font-black text-sm">
+                    <div className="w-10 h-10 rounded-xl bg-[#8C5E28] text-white flex items-center justify-center font-black text-sm shadow-xs">
                       7/7
                     </div>
                     <div>
-                      <div className="text-[10px] uppercase font-mono tracking-widest text-[#C084FC] font-bold">
+                      <div className="text-[10px] uppercase font-mono tracking-widest text-[#8C5E28] font-bold">
                         End of 7 Days Reached • Full Protocol Consolidated
                       </div>
-                      <h4 className="text-base font-black text-white uppercase">
+                      <h4 className="text-base font-black text-[#2E1C07] uppercase">
                         Master 7-Day Diet Plan Matrix Table
                       </h4>
-                      <p className="text-xs text-gray-300">
+                      <p className="text-xs text-[#5C3A14]">
                         All 7 days displayed across meal categories. Directly editable, printable, and saved to clinical records.
                       </p>
                     </div>
@@ -1396,18 +1514,91 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
           ) : (
             /* INDIVIDUAL DAY VIEW */
             <>
-              {/* Current Day Focus Banner */}
-              <div className="p-3 bg-[#110521] border border-[#7E22CE]/60 rounded-xl flex items-center justify-between text-xs">
+              {/* Current Day Focus Banner (Sandalwood Theme) */}
+              <div className="p-3 bg-[#FAF6ED] border-2 border-[#D9C4A5] rounded-xl flex items-center justify-between text-xs text-[#2E1C07] shadow-2xs">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-[#C084FC]" />
-                  <span className="font-bold text-white font-sans uppercase">
+                  <Sparkles className="w-4 h-4 text-[#8C5E28]" />
+                  <span className="font-bold text-[#2E1C07] font-sans uppercase">
                     Day {currentPlan.dayNumber} ({currentPlan.dayName}) Therapeutic Focus:
                   </span>
-                  <span className="text-purple-200">{currentPlan.focus}</span>
+                  <span className="text-[#5C3A14] font-medium">{currentPlan.focus}</span>
                 </div>
-                <span className="text-[11px] font-mono text-gray-400 hidden sm:inline">
+                <span className="text-[11px] font-mono text-gray-500 hidden sm:inline">
                   Condition: {activeCondition} • Patient: {generalInfo.name || 'Client'}
                 </span>
+              </div>
+
+              {/* DAILY TARGET VS ACTUAL COMPARISON TABLE (Scientific Single Source of Truth) */}
+              <div className="bg-[#FAF6ED] border-2 border-[#D9C4A5] rounded-2xl p-4 shadow-xs space-y-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E3D4C0] pb-2">
+                  <div className="flex items-center gap-2">
+                    <Scale className="w-4 h-4 text-[#8C5E28]" />
+                    <h4 className="text-xs font-black uppercase tracking-wider text-[#2E1C07]">
+                      Day {currentPlan.dayNumber} Target vs. Planned / Actual Comparison
+                    </h4>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenDayTargetModal(currentPlan.dayNumber)}
+                    className="px-3 py-1 rounded-lg bg-[#8C5E28] hover:bg-[#724B1E] text-white text-[11px] font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer shadow-2xs"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>+ Modify Day {currentPlan.dayNumber} Target</span>
+                  </button>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-[#EEDEC8] text-[#2E1C07] font-black uppercase font-mono text-[10px]">
+                        <th className="py-2 px-3">Nutrient</th>
+                        <th className="py-2 px-3">Target</th>
+                        <th className="py-2 px-3">Planned / Actual</th>
+                        <th className="py-2 px-3">Difference</th>
+                        <th className="py-2 px-3">Status</th>
+                        <th className="py-2 px-3 text-right">Day Override Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#E3D4C0] text-[#42280C]">
+                      {dayComparison.map((row) => (
+                        <tr key={row.id} className="hover:bg-[#FFFDF9] transition-colors">
+                          <td className="py-2 px-3 font-bold text-[#2E1C07]">{row.name}</td>
+                          <td className="py-2 px-3 font-mono font-bold">
+                            {row.target} {row.unit}
+                          </td>
+                          <td className="py-2 px-3 font-mono font-bold text-[#8C5E28]">
+                            {row.actual} {row.unit}
+                          </td>
+                          <td className="py-2 px-3 font-mono">
+                            <span className={row.diff > 0 ? 'text-amber-800 font-bold' : row.diff < 0 ? 'text-rose-700 font-bold' : 'text-emerald-700 font-bold'}>
+                              {row.diff > 0 ? `+` : ''}{row.diff} {row.unit}
+                            </span>
+                          </td>
+                          <td className="py-2 px-3">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider font-mono ${
+                              row.status === 'Within target'
+                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                : row.status === 'Below target'
+                                ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                                : 'bg-purple-100 text-purple-900 border border-purple-300'
+                            }`}>
+                              {row.status}
+                            </span>
+                          </td>
+                          <td className="py-2 px-3 text-right font-mono text-[10px]">
+                            {row.isOverridden ? (
+                              <span className="text-[#8C5E28] font-bold" title={`Base RDA: ${row.baseTarget} ${row.unit}`}>
+                                Day {currentPlan.dayNumber} Specific (Base: {row.baseTarget})
+                              </span>
+                            ) : (
+                              <span className="text-gray-400">Standard RDA</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
               {/* Meal Slots List with Dish Modification & Custom Recipe Input */}
@@ -1430,17 +1621,17 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
                   return (
                     <div
                       key={slot.slotId}
-                      className="p-5 rounded-2xl bg-[#090310] border-2 border-[#7E22CE]/40 hover:border-[#7E22CE] transition-all space-y-4 shadow-md"
+                      className="p-5 rounded-2xl bg-[#FFFDF9] border-2 border-[#D9C4A5] hover:border-[#8C5E28] transition-all space-y-4 shadow-xs"
                     >
                       {/* Slot Header */}
-                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E3D4C0] pb-3">
                         <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-xl bg-black border border-[#7E22CE] text-[#C084FC]">
+                          <div className="p-2 rounded-xl bg-[#FAF6ED] border border-[#D9C4A5] text-[#8C5E28]">
                             <Clock className="w-4 h-4" />
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
-                              <h4 className="text-sm font-black text-white uppercase tracking-wide">
+                              <h4 className="text-sm font-black text-[#2E1C07] uppercase tracking-wide">
                                 {slot.slotName}
                               </h4>
                               {/* Editable Slot Frequency */}
@@ -1449,7 +1640,7 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
                                 onChange={(e) =>
                                   handleUpdateSlotFrequency(activeDayIndex, slot.slotId, e.target.value)
                                 }
-                                className="bg-black text-[10px] text-purple-300 font-mono px-2 py-0.5 rounded border border-[#7E22CE]/60 focus:outline-none cursor-pointer"
+                                className="bg-white text-[10px] text-[#5C3A14] font-mono px-2 py-0.5 rounded border border-[#D9C4A5] focus:outline-none cursor-pointer"
                               >
                                 <option value="Daily">Frequency: Daily</option>
                                 <option value="Workout Days (4/Week)">Frequency: Workout Days (4/Week)</option>
@@ -1458,14 +1649,14 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
                                 <option value="Post-Workout Only">Frequency: Post-Workout Only</option>
                               </select>
                             </div>
-                            <span className="text-xs font-mono text-[#C084FC]">{slot.time}</span>
+                            <span className="text-xs font-mono text-[#8C5E28]">{slot.time}</span>
                           </div>
                         </div>
 
                         <div className="flex items-center gap-3">
-                          <span className="text-xs font-mono text-gray-300">
-                            Slot Energy: <strong className="text-white font-bold">{slotCalories} kcal</strong>
-                            <span className="text-purple-300 ml-2">({slotProtein}g protein)</span>
+                          <span className="text-xs font-mono text-[#5C3A14]">
+                            Slot Energy: <strong className="text-[#2E1C07] font-bold">{slotCalories} kcal</strong>
+                            <span className="text-[#8C5E28] ml-2">({slotProtein}g protein)</span>
                           </span>
 
                           {/* Add Recipe Button for this Slot */}
@@ -1475,7 +1666,7 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
                               setSelectedSlotForRecipe(slot.slotId);
                               setShowAddRecipeBox(true);
                             }}
-                            className="px-3 py-1.5 bg-[#17062e] hover:bg-[#7E22CE] border border-[#7E22CE] text-purple-200 hover:text-white text-xs font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1 shadow-sm"
+                            className="px-3 py-1.5 bg-[#FAF6ED] hover:bg-[#8C5E28] border border-[#D9C4A5] text-[#5C3A14] hover:text-white text-xs font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1 shadow-2xs"
                           >
                             <Plus className="w-3.5 h-3.5" />
                             <span>+ Add Custom Recipe</span>
@@ -1486,42 +1677,55 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
                       {/* Items in Slot */}
                       <div className="space-y-2.5">
                         {slot.items.length === 0 ? (
-                          <div className="p-4 rounded-xl border border-dashed border-white/10 text-center text-xs text-gray-500">
+                          <div className="p-4 rounded-xl border border-dashed border-[#D9C4A5] text-center text-xs text-gray-500">
                             No dishes in this meal slot. Click "+ Add Custom Recipe" or pick from the category bank below.
                           </div>
                         ) : (
                           slot.items.map((it) => (
                             <div
                               key={it.id}
-                              className="p-3.5 rounded-xl bg-black/70 border border-white/10 flex flex-wrap items-center justify-between gap-3 hover:border-white/20 transition-all"
+                              className="p-3.5 rounded-xl bg-[#FAF6ED] border border-[#D9C4A5] flex flex-wrap items-center justify-between gap-3 hover:border-[#8C5E28] transition-all"
                             >
                               <div className="space-y-0.5 max-w-xl">
                                 <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="text-sm font-bold text-white">{it.dishName}</span>
-                                  <span className="px-2 py-0.5 rounded-full text-[9.5px] font-mono bg-[#1a0730] border border-[#7E22CE] text-purple-300">
+                                  <span className="text-sm font-bold text-[#2E1C07]">{it.dishName}</span>
+                                  <span className="px-2 py-0.5 rounded-full text-[9.5px] font-mono bg-[#FFFDF9] border border-[#D9C4A5] text-[#5C3A14]">
                                     {it.portionHousehold}
                                   </span>
                                   <span
                                     className={`px-2 py-0.5 rounded-full text-[9px] font-mono font-bold ${
                                       it.glycemicStatus.includes('Low')
-                                        ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-500/40'
-                                        : 'bg-amber-950/80 text-amber-400 border border-amber-500/40'
+                                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                        : 'bg-amber-100 text-amber-900 border border-amber-300'
                                     }`}
                                   >
                                     {it.glycemicStatus}
                                   </span>
                                 </div>
                                 {it.therapeuticNote && (
-                                  <p className="text-[11px] text-gray-300 leading-snug">
+                                  <p className="text-[11px] text-[#5C3A14] leading-snug">
                                     {it.therapeuticNote}
                                   </p>
                                 )}
+                                {(() => {
+                                  const icmrDecomp = decomposeTextToIcmrIngredients(it.dishName, it.portionHousehold);
+                                  return (
+                                    <div className="text-[10px] font-mono text-[#5C3A14] flex items-center gap-1.5 flex-wrap pt-0.5">
+                                      <span className="px-1.5 py-0.5 bg-[#EEDEC8] border border-[#D9C4A5] rounded text-[9px] text-[#2E1C07] font-bold">
+                                        {icmrDecomp.cookingMethod}
+                                      </span>
+                                      <span className="text-[#5C3A14]">
+                                        ICMR Raw: <span className="text-[#8C5E28] font-semibold">{icmrDecomp.displaySummary}</span>
+                                      </span>
+                                    </div>
+                                  );
+                                })()}
                               </div>
 
                               <div className="flex items-center gap-4">
                                 <div className="text-right font-mono text-xs">
-                                  <div className="text-white font-bold">{it.calories} kcal</div>
-                                  <div className="text-[10px] text-gray-400">
+                                  <div className="text-[#2E1C07] font-bold">{it.calories} kcal</div>
+                                  <div className="text-[10px] text-[#5C3A14]">
                                     P: {it.protein}g • C: {it.carbs}g • F: {it.fiber}g
                                   </div>
                                 </div>
@@ -1529,7 +1733,7 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
                                 <button
                                   type="button"
                                   onClick={() => handleDeleteItem(slot.slotId, it.id)}
-                                  className="p-1.5 rounded-lg bg-red-950/40 hover:bg-red-900 border border-red-800/60 text-red-300 hover:text-white transition-colors cursor-pointer"
+                                  className="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 transition-colors cursor-pointer"
                                   title="Remove dish"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
@@ -1541,13 +1745,13 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
                       </div>
 
                       {/* Specialized Category Suggestions for this slot */}
-                      <div className="pt-2 border-t border-white/5 space-y-1.5">
-                        <div className="flex items-center justify-between text-[10.5px] text-gray-400">
-                          <span className="font-bold uppercase tracking-wider text-purple-300 flex items-center gap-1">
+                      <div className="pt-2 border-t border-[#E3D4C0] space-y-1.5">
+                        <div className="flex items-center justify-between text-[10.5px] text-[#5C3A14]">
+                          <span className="font-bold uppercase tracking-wider text-[#8C5E28] flex items-center gap-1">
                             <ChefHat className="w-3 h-3" />
                             1-Click Add from {slotCategory.toUpperCase()} Category Bank:
                           </span>
-                          <span className="text-[10px] text-emerald-400 font-mono">
+                          <span className="text-[10px] text-emerald-700 font-mono">
                             ✓ Specialized for {slot.slotName}
                           </span>
                         </div>
@@ -1557,12 +1761,12 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
                               key={rIdx}
                               type="button"
                               onClick={() => handleInsertFromBank(r, slot.slotId)}
-                              className="px-2.5 py-1 rounded-lg bg-black border border-white/10 hover:border-[#7E22CE] text-gray-300 hover:text-white text-[11px] flex items-center gap-1.5 transition-colors cursor-pointer"
+                              className="px-2.5 py-1 rounded-lg bg-[#FAF6ED] border border-[#D9C4A5] hover:border-[#8C5E28] text-[#5C3A14] hover:text-[#2E1C07] text-[11px] flex items-center gap-1.5 transition-colors cursor-pointer"
                               title={`${r.therapeuticNote} (${r.calories} kcal)`}
                             >
-                              <Plus className="w-3 h-3 text-[#C084FC]" />
+                              <Plus className="w-3 h-3 text-[#8C5E28]" />
                               <span>{r.dishName}</span>
-                              <span className="text-[9.5px] font-mono text-purple-400">
+                              <span className="text-[9.5px] font-mono text-[#8C5E28]">
                                 ({r.calories} kcal)
                               </span>
                             </button>
@@ -1575,19 +1779,19 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
               </div>
 
               {/* Day Complete Callout */}
-              <div className="p-4 bg-[#0a0214] border-2 border-emerald-500/60 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-lg">
+              <div className="p-4 bg-[#FAF6ED] border-2 border-[#D9C4A5] rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-xs">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-950/80 border border-emerald-400 flex items-center justify-center text-emerald-300">
-                    <CheckCircle2 className="w-5 h-5" />
+                  <div className="w-10 h-10 rounded-xl bg-[#EEDEC8] border border-[#D9C4A5] flex items-center justify-center text-[#8C5E28]">
+                    <CheckCircle2 className="w-5 h-5 text-[#8C5E28]" />
                   </div>
                   <div>
-                    <div className="text-[10px] uppercase font-mono tracking-widest text-emerald-400 font-bold">
+                    <div className="text-[10px] uppercase font-mono tracking-widest text-[#8C5E28] font-bold">
                       Day {currentPlan.dayNumber} Formulated
                     </div>
-                    <h4 className="text-sm font-black text-white uppercase">
+                    <h4 className="text-sm font-black text-[#2E1C07] uppercase">
                       Day {currentPlan.dayNumber} ({currentPlan.dayName}) Total: {totalDayCalories} kcal ({Math.round(totalDayProtein)}g Protein)
                     </h4>
-                    <p className="text-xs text-gray-300">
+                    <p className="text-xs text-[#5C3A14]">
                       All meal slots customized with differentiated food sources. Ready to prescribe.
                     </p>
                   </div>
@@ -1726,9 +1930,108 @@ export const Custom7DayPlanStudio: React.FC<Custom7DayPlanStudioProps> = ({
               <button
                 type="button"
                 onClick={handleAddCustomRecipe}
-                className="px-4 py-2 bg-[#7E22CE] hover:bg-[#9333EA] text-white text-xs font-black uppercase tracking-wider rounded-lg cursor-pointer transition-colors shadow-[0_0_12px_rgba(126,34,206,0.6)]"
+                className="px-4 py-2 bg-[#8C5E28] hover:bg-[#724B1E] text-white text-xs font-black uppercase tracking-wider rounded-lg cursor-pointer transition-colors shadow-xs"
               >
                 Add to Meal Plan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DAY-SPECIFIC TARGET OVERRIDE MODAL */}
+      {dayTargetModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-[#FAF6ED] rounded-2xl border-2 border-[#D9C4A5] shadow-2xl p-6 space-y-4 animate-in zoom-in-95 text-[#2E1C07]">
+            <div className="flex items-center justify-between border-b border-[#E3D4C0] pb-3">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-[#8C5E28]" />
+                <h3 className="font-black text-sm uppercase tracking-wide text-[#2E1C07]">
+                  Day {targetModalDayNumber} + Nutrient Target Override
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDayTargetModalOpen(false)}
+                className="p-1 rounded-lg text-gray-500 hover:text-gray-800 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="text-[10px] font-mono uppercase text-[#8C5E28] font-bold block mb-1">
+                  Select Nutrient to Modify for Day {targetModalDayNumber}:
+                </label>
+                <select
+                  value={targetModalNutrientId}
+                  onChange={(e) => {
+                    const nid = e.target.value;
+                    setTargetModalNutrientId(nid);
+                    const { target } = getEffectiveDayTarget(rdaTargets, targetModalDayNumber, nid);
+                    setTargetModalValue(target);
+                  }}
+                  className="w-full bg-[#FFFDF9] border border-[#D9C4A5] rounded-xl p-2.5 text-xs text-[#2E1C07] font-bold focus:outline-none focus:border-[#8C5E28]"
+                >
+                  <option value="protein">Protein (g/day)</option>
+                  <option value="energy">Energy (kcal/day)</option>
+                  <option value="carbohydrates">Carbohydrates (g/day)</option>
+                  <option value="fat">Fat (g/day)</option>
+                  <option value="fibre">Fibre (g/day)</option>
+                  <option value="iron">Iron (mg/day)</option>
+                  {rdaTargets.nutrients.filter((n) => n.isCustomAdded).map((n) => (
+                    <option key={n.id} value={n.id}>{n.name} ({n.unit})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between text-[11px] mb-1">
+                  <span className="text-gray-500">Base Reference RDA Target:</span>
+                  <strong className="font-mono text-[#5C3A14]">
+                    {rdaTargets.nutrients.find((n) => n.id === targetModalNutrientId)?.prescribedTarget || 0}
+                  </strong>
+                </div>
+                <label className="text-[10px] font-mono uppercase text-[#8C5E28] font-bold block mb-1">
+                  New Day {targetModalDayNumber} Prescribed Target:
+                </label>
+                <input
+                  type="number"
+                  value={targetModalValue}
+                  onChange={(e) => setTargetModalValue(parseFloat(e.target.value) || 0)}
+                  className="w-full bg-[#FFFDF9] border-2 border-[#8C5E28] rounded-xl p-2.5 font-mono text-base font-black text-[#2E1C07] focus:outline-none"
+                />
+              </div>
+
+              <div className="p-3 bg-[#EEDEC8]/60 rounded-xl border border-[#D9C4A5] flex items-center gap-2.5">
+                <input
+                  type="checkbox"
+                  id="chk-apply-all"
+                  checked={targetModalApplyAll}
+                  onChange={(e) => setTargetModalApplyAll(e.target.checked)}
+                  className="w-4 h-4 rounded text-[#8C5E28] accent-[#8C5E28] cursor-pointer"
+                />
+                <label htmlFor="chk-apply-all" className="text-xs text-[#42280C] cursor-pointer select-none">
+                  Apply to <strong>All 7 Days</strong> (Otherwise applies ONLY to Day {targetModalDayNumber})
+                </label>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#E3D4C0]">
+              <button
+                type="button"
+                onClick={() => setDayTargetModalOpen(false)}
+                className="px-4 py-2 rounded-xl border border-[#D9C4A5] text-[#5C3A14] text-xs font-bold hover:bg-[#EEDEC8] cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveDayTargetOverride}
+                className="px-5 py-2 rounded-xl bg-[#8C5E28] hover:bg-[#724B1E] text-white text-xs font-black uppercase tracking-wider cursor-pointer shadow-xs"
+              >
+                Save Day Target ✓
               </button>
             </div>
           </div>

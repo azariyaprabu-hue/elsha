@@ -238,60 +238,60 @@ export const MentalAssessmentSection: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="border-b-2 border-[#7E22CE] pb-4 flex flex-wrap items-center justify-between gap-3">
+      <div className="border-b-2 border-[#D9C4A5] pb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2 text-[10px] uppercase font-bold tracking-[0.4em] text-[#A855F7]">
-            <Brain className="w-3.5 h-3.5 text-[#A855F7]" />
+          <div className="flex items-center gap-2 text-[10px] uppercase font-bold tracking-[0.4em] text-[#8C5E28]">
+            <Brain className="w-3.5 h-3.5 text-[#8C5E28]" />
             <span>MODULE 08 • VALIDATED CLINICAL NEURO-PSYCHIATRIC ASSESSMENT</span>
           </div>
-          <h2 className="text-2xl font-black tracking-tight text-white uppercase mt-0.5">
+          <h2 className="text-2xl font-black tracking-tight text-[#2E1C07] uppercase mt-0.5">
             Neuro Emotional Assessment
           </h2>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-[#5C3A14]">
             15 scientifically validated clinical questions evaluating HPA-Axis Stress, Serotonin, GABA, Dopamine, and Gut-Brain Axis.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 text-xs bg-[#0d0617] px-3.5 py-2 border border-[#7E22CE] text-[#A855F7] font-bold uppercase tracking-wider">
-          <Activity className="w-4 h-4 text-purple-400" />
+        <div className="flex items-center gap-2 text-xs bg-[#FAF6ED] px-3.5 py-2 border-2 border-[#D9C4A5] text-[#5C3A14] font-bold uppercase tracking-wider rounded-xl shadow-2xs">
+          <Activity className="w-4 h-4 text-[#8C5E28]" />
           <span>PSS-10 / GAD-7 / PHQ-9 Grounded</span>
         </div>
       </div>
 
-      {/* COMPOSITE SCORECARD */}
-      <div className="bg-[#0e071a] border border-[#7E22CE] p-5">
+      {/* COMPOSITE SCORECARD (Light Sandalwood Theme) */}
+      <div className="bg-[#FAF6ED] border-2 border-[#D9C4A5] rounded-2xl p-5 shadow-xs">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-1.5 max-w-xl">
-            <span className="text-[10px] uppercase tracking-widest font-black text-[#A855F7]">
+            <span className="text-[10px] uppercase tracking-widest font-black text-[#8C5E28] block">
               Allostatic Stress & Neuro-Strain Index
             </span>
             <div className="flex items-baseline gap-3">
-              <div className="text-4xl font-bold text-white">
+              <div className="text-4xl font-bold text-[#2E1C07]">
                 {totalScore} <span className="text-sm font-normal opacity-60">/ 60</span>
               </div>
-              <span className={`px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${risk.badgeBg}`}>
+              <span className={`px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider rounded ${risk.badgeBg}`}>
                 {risk.level}
               </span>
             </div>
-            <p className="text-xs text-gray-300 leading-relaxed">
+            <p className="text-xs text-[#5C3A14] leading-relaxed">
               {risk.summary}
             </p>
           </div>
 
           {/* Meter Bar */}
           <div className="w-full sm:w-64 space-y-2">
-            <div className="flex justify-between text-[10px] text-gray-400 font-mono uppercase">
+            <div className="flex justify-between text-[10px] text-[#5C3A14] font-mono uppercase">
               <span>Optimal (0)</span>
-              <span className="text-[#A855F7] font-bold">{stressPercentage}% Strain</span>
+              <span className="text-[#8C5E28] font-bold">{stressPercentage}% Strain</span>
               <span>Severe (60)</span>
             </div>
-            <div className="h-2.5 w-full bg-white/20 overflow-hidden">
+            <div className="h-2.5 w-full bg-[#EAD8C0] overflow-hidden rounded-full">
               <div
-                className="h-full bg-gradient-to-r from-emerald-500 via-[#7E22CE] to-red-500 transition-all duration-500"
+                className="h-full bg-gradient-to-r from-emerald-500 via-[#C28B38] to-red-500 transition-all duration-500"
                 style={{ width: `${stressPercentage}%` }}
               />
             </div>
-            <div className="flex justify-between text-[9px] text-gray-400 font-mono uppercase tracking-wider">
+            <div className="flex justify-between text-[9px] text-[#5C3A14] font-mono uppercase tracking-wider">
               <span>Resilient</span>
               <span>Subclinical</span>
               <span>Burnout</span>
@@ -301,9 +301,9 @@ export const MentalAssessmentSection: React.FC = () => {
       </div>
 
       {/* DOMAIN FILTER BAR */}
-      <div className="p-3 bg-[#0d0617] border border-white/15 flex flex-wrap items-center justify-between gap-2">
+      <div className="p-3 bg-[#FAF6ED] border border-[#D9C4A5] rounded-xl flex flex-wrap items-center justify-between gap-2 shadow-2xs">
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-[10px] uppercase font-mono text-[#A855F7] font-bold">
+          <span className="text-[10px] uppercase font-mono text-[#8C5E28] font-bold">
             Filter Neuro-Domain:
           </span>
           {domainCategories.map((dom) => (
@@ -311,17 +311,17 @@ export const MentalAssessmentSection: React.FC = () => {
               key={dom}
               type="button"
               onClick={() => setActiveDomainFilter(dom)}
-              className={`px-3 py-1 text-xs font-bold transition-all cursor-pointer border ${
+              className={`px-3 py-1 text-xs font-bold transition-all cursor-pointer rounded-lg border ${
                 activeDomainFilter === dom
-                  ? 'bg-[#7E22CE] text-white border-[#A855F7]'
-                  : 'bg-black text-gray-400 border-white/10 hover:text-white hover:border-[#7E22CE]/60'
+                  ? 'bg-[#8C5E28] text-white border-[#8C5E28] shadow-2xs'
+                  : 'bg-[#FFFDF9] text-[#5C3A14] border-[#D9C4A5] hover:bg-[#EEDEC8]'
               }`}
             >
               {dom}
             </button>
           ))}
         </div>
-        <span className="text-[10px] font-mono text-gray-400">
+        <span className="text-[10px] font-mono text-[#5C3A14]">
           Showing {filteredQuestions.length} of 15 Scientific Questions
         </span>
       </div>
@@ -331,18 +331,18 @@ export const MentalAssessmentSection: React.FC = () => {
         {filteredQuestions.map((q) => (
           <div
             key={q.id}
-            className="bg-[#0d0617] border border-[#7E22CE]/50 hover:border-[#7E22CE] p-4 transition-all"
+            className="bg-[#FFFDF9] border border-[#D9C4A5] hover:border-[#8C5E28] p-4 transition-all rounded-xl shadow-2xs"
           >
             <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
               <div className="flex items-center gap-2.5">
-                <span className="w-7 h-7 rounded-full bg-[#7E22CE] text-white flex items-center justify-center text-xs font-bold font-mono">
+                <span className="w-7 h-7 rounded-full bg-[#8C5E28] text-white flex items-center justify-center text-xs font-bold font-mono">
                   {q.questionNumber.toString().padStart(2, '0')}
                 </span>
                 <div>
-                  <span className="text-[10px] font-mono uppercase font-bold text-[#C084FC]">
+                  <span className="text-[10px] font-mono uppercase font-bold text-[#8C5E28]">
                     {q.domain}
                   </span>
-                  <h3 className="text-sm font-bold text-white leading-snug">
+                  <h3 className="text-sm font-bold text-[#2E1C07] leading-snug">
                     {q.question}
                   </h3>
                 </div>
@@ -350,16 +350,16 @@ export const MentalAssessmentSection: React.FC = () => {
 
               {/* Current Selection Badge */}
               <span
-                className={`text-[10px] font-mono font-bold uppercase px-2.5 py-1 border ${
+                className={`text-[10px] font-mono font-bold uppercase px-2.5 py-1 rounded border ${
                   q.patientRating === 0
-                    ? 'border-emerald-500 text-emerald-400 bg-emerald-950/40'
+                    ? 'border-emerald-500 text-emerald-800 bg-emerald-50'
                     : q.patientRating === 1
-                    ? 'border-emerald-400 text-emerald-300 bg-emerald-950/20'
+                    ? 'border-emerald-400 text-emerald-700 bg-emerald-50/60'
                     : q.patientRating === 2
-                    ? 'border-yellow-500 text-yellow-300 bg-yellow-950/20'
+                    ? 'border-amber-500 text-amber-800 bg-amber-50'
                     : q.patientRating === 3
-                    ? 'border-purple-500 text-purple-300 bg-purple-950/30'
-                    : 'border-red-500 text-red-300 bg-red-950/40'
+                    ? 'border-[#8C5E28] text-[#5C3A14] bg-[#EEDEC8]'
+                    : 'border-red-500 text-red-800 bg-red-50'
                 }`}
               >
                 {ratingLabels[q.patientRating]}
@@ -375,10 +375,10 @@ export const MentalAssessmentSection: React.FC = () => {
                     key={rate}
                     type="button"
                     onClick={() => handleUpdateRating(q.id, rate as any)}
-                    className={`py-2 px-1 text-center text-xs font-bold transition-all cursor-pointer border ${
+                    className={`py-2 px-1 text-center text-xs font-bold transition-all cursor-pointer rounded-lg border ${
                       isSelected
-                        ? 'bg-[#7E22CE] text-white border-[#A855F7] shadow-[0_0_10px_rgba(126,34,206,0.5)]'
-                        : 'bg-black text-gray-400 border-white/10 hover:border-white/30 hover:text-white'
+                        ? 'bg-[#8C5E28] text-white border-[#8C5E28] shadow-xs'
+                        : 'bg-[#FAF6ED] text-[#5C3A14] border-[#D9C4A5] hover:border-[#8C5E28]'
                     }`}
                   >
                     <div className="text-[10px] font-mono opacity-60">Score: {rate}</div>
@@ -391,20 +391,20 @@ export const MentalAssessmentSection: React.FC = () => {
             </div>
 
             {/* Scientific Breakdown */}
-            <div className="mt-3 pt-3 border-t border-white/10 grid grid-cols-1 md:grid-cols-3 gap-3 text-[11px]">
+            <div className="mt-3 pt-3 border-t border-[#E3D4C0] grid grid-cols-1 md:grid-cols-3 gap-3 text-[11px]">
               <div>
-                <span className="text-[#A855F7] font-bold block mb-0.5">Clinical Tool & Significance:</span>
-                <p className="text-gray-300">{q.clinicalSignificance}</p>
+                <span className="text-[#8C5E28] font-bold block mb-0.5">Clinical Tool & Significance:</span>
+                <p className="text-[#5C3A14]">{q.clinicalSignificance}</p>
               </div>
 
               <div>
-                <span className="text-purple-300 font-bold block mb-0.5">Neuro-Biochemical Mechanism:</span>
-                <p className="text-gray-300">{q.neuroBiochemicalPathway}</p>
+                <span className="text-[#A87B41] font-bold block mb-0.5">Neuro-Biochemical Mechanism:</span>
+                <p className="text-[#5C3A14]">{q.neuroBiochemicalPathway}</p>
               </div>
 
               <div>
-                <span className="text-emerald-400 font-bold block mb-0.5">Therapeutic Repletion Protocol:</span>
-                <p className="text-gray-300">{q.nutritionalRecommendation}</p>
+                <span className="text-emerald-700 font-bold block mb-0.5">Therapeutic Repletion Protocol:</span>
+                <p className="text-[#5C3A14]">{q.nutritionalRecommendation}</p>
               </div>
             </div>
           </div>

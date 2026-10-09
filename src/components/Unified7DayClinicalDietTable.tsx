@@ -9,6 +9,7 @@ interface Unified7DayClinicalDietTableProps {
   sourceBadge?: string;
   categoryTag?: string;
   readOnly?: boolean;
+  variant?: 'purple-white' | 'dark';
 }
 
 interface SlotDefinition {
@@ -25,6 +26,7 @@ export const Unified7DayClinicalDietTable: React.FC<Unified7DayClinicalDietTable
   sourceBadge = 'CLINICAL 7-DAY DIET PLAN',
   categoryTag = 'LOW GLYCEMIC FOODS',
   readOnly = false,
+  variant = 'purple-white',
 }) => {
   const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -193,7 +195,7 @@ export const Unified7DayClinicalDietTable: React.FC<Unified7DayClinicalDietTable
       if (dIdx !== dayIdx) return day;
 
       let found = false;
-      const updatedSlots = day.slots.map((slot) => {
+      const updatedSlots = (day.slots || []).map((slot) => {
         if (def.matcher(slot.slotName)) {
           found = true;
           // Parse lines or split text to items if user typed with + or newlines
@@ -277,11 +279,11 @@ export const Unified7DayClinicalDietTable: React.FC<Unified7DayClinicalDietTable
   };
 
   return (
-    <div className="w-full space-y-2 text-white font-sans">
+    <div className={`w-full space-y-2 font-sans ${variant === 'purple-white' ? 'text-gray-900' : 'text-white'}`}>
       {/* Toast */}
       {saveToast && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#0d0617] border-2 border-emerald-500 text-white p-3 rounded-xl shadow-2xl text-xs font-mono flex items-center gap-2 animate-in fade-in">
-          <Check className="w-4 h-4 text-emerald-400" />
+        <div className="fixed bottom-6 right-6 z-50 bg-white border-2 border-emerald-500 text-gray-950 p-3 rounded-xl shadow-2xl text-xs font-mono flex items-center gap-2 animate-in fade-in">
+          <Check className="w-4 h-4 text-emerald-600" />
           <span>{saveToast}</span>
         </div>
       )}
@@ -290,10 +292,16 @@ export const Unified7DayClinicalDietTable: React.FC<Unified7DayClinicalDietTable
       {!readOnly && onUpdatePlans && (
         <div className="flex flex-wrap items-center justify-between gap-2 pb-1.5 no-print">
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 bg-purple-900/60 border border-purple-400/40 text-purple-200 text-[10px] font-black uppercase tracking-wider rounded">
+            <span
+              className={`px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider rounded ${
+                variant === 'purple-white'
+                  ? 'bg-[#FAF6ED] border border-[#D9C4A5] text-[#5C3A14]'
+                  : 'bg-purple-900/60 border border-purple-400/40 text-purple-200'
+              }`}
+            >
               {sourceBadge}
             </span>
-            <span className="text-xs text-gray-300">
+            <span className={`text-xs ${variant === 'purple-white' ? 'text-[#5C3A14] font-medium' : 'text-gray-300'}`}>
               One Consolidated 7-Day Table • Exact Recipes from 7-Day Diet Plan
             </span>
           </div>
@@ -301,10 +309,14 @@ export const Unified7DayClinicalDietTable: React.FC<Unified7DayClinicalDietTable
             <button
               type="button"
               onClick={handleResetToDefault7DayPlan}
-              className="py-1 px-3 bg-purple-900/40 hover:bg-purple-800/60 border border-purple-400/50 text-purple-200 text-xs font-bold rounded-lg flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+              className={`py-1 px-3 text-xs font-bold rounded-lg flex items-center gap-1.5 transition-all cursor-pointer shadow-xs ${
+                variant === 'purple-white'
+                  ? 'bg-[#FAF6ED] hover:bg-[#EEDEC8] border border-[#D9C4A5] text-[#5C3A14]'
+                  : 'bg-purple-900/40 hover:bg-purple-800/60 border border-purple-400/50 text-purple-200'
+              }`}
               title="Reset to the default clinical 7-day plan"
             >
-              <RotateCcw className="w-3.5 h-3.5 text-yellow-300" />
+              <RotateCcw className="w-3.5 h-3.5 text-[#8C5E28]" />
               <span>Reset to Default 7-Day Plan</span>
             </button>
           </div>
@@ -312,7 +324,13 @@ export const Unified7DayClinicalDietTable: React.FC<Unified7DayClinicalDietTable
       )}
 
       {/* THE CONSOLIDATED 7-DAY TABLE: EXACT ALIGNMENT MATCHING REFERENCE CHART */}
-      <div className="overflow-x-auto rounded-lg border-2 border-[#4a154b] shadow-2xl bg-[#090b14]">
+      <div
+        className={
+          variant === 'purple-white'
+            ? 'overflow-x-auto rounded-xl border-2 border-[#D9C4A5] shadow-xs bg-[#FFFDF9]'
+            : 'overflow-x-auto rounded-lg border-2 border-[#4a154b] shadow-2xl bg-[#090b14]'
+        }
+      >
         <table className="w-full text-left border-collapse min-w-[920px] table-fixed">
           {/* Column widths: Timings (12.5%), then 7 days (12.5% each) = 100% */}
           <colgroup>
@@ -326,19 +344,37 @@ export const Unified7DayClinicalDietTable: React.FC<Unified7DayClinicalDietTable
             <col style={{ width: '12.5%' }} />
           </colgroup>
 
-          {/* PURPLE HEADER ROW: Timings | Monday | Tuesday | Wednesday | Thursday | Friday | Saturday | Sunday */}
+          {/* SANDALWOOD HEADER ROW: Timings | Monday | Tuesday | Wednesday | Thursday | Friday | Saturday | Sunday */}
           <thead>
-            <tr className="bg-[#3b134d] text-white border-b-2 border-[#4a154b]">
-              <th className="py-2.5 px-2.5 text-xs font-black uppercase tracking-wider border-r border-[#631f78] text-yellow-300">
+            <tr
+              className={
+                variant === 'purple-white'
+                  ? 'bg-[#8C5E28] text-white border-b-2 border-[#724B1E]'
+                  : 'bg-[#3b134d] text-white border-b-2 border-[#4a154b]'
+              }
+            >
+              <th
+                className={`py-2.5 px-2.5 text-xs font-black uppercase tracking-wider ${
+                  variant === 'purple-white'
+                    ? 'border-r border-[#A87B41] text-white'
+                    : 'border-r border-[#631f78] text-yellow-300'
+                }`}
+              >
                 Timings & Meals
               </th>
               {dayNames.map((day, idx) => (
                 <th
                   key={day}
-                  className="py-2.5 px-2 text-xs font-black uppercase tracking-wider border-r border-[#631f78] last:border-r-0 text-center text-white"
+                  className={`py-2.5 px-2 text-xs font-black uppercase tracking-wider last:border-r-0 text-center text-white ${
+                    variant === 'purple-white' ? 'border-r border-[#A87B41]' : 'border-r border-[#631f78]'
+                  }`}
                 >
                   <div>Day {idx + 1}</div>
-                  <div className="text-[10px] text-purple-200 font-medium lowercase tracking-normal">
+                  <div
+                    className={`text-[10px] font-medium lowercase tracking-normal ${
+                      variant === 'purple-white' ? 'text-[#FAF6ED]' : 'text-purple-200'
+                    }`}
+                  >
                     {day}
                   </div>
                 </th>
@@ -346,19 +382,49 @@ export const Unified7DayClinicalDietTable: React.FC<Unified7DayClinicalDietTable
             </tr>
           </thead>
 
-          <tbody className="text-xs divide-y divide-[#2a133d]">
+          <tbody
+            className={`text-xs ${
+              variant === 'purple-white' ? 'divide-y divide-[#E3D4C0]' : 'divide-y divide-[#2a133d]'
+            }`}
+          >
             {slotDefinitions.map((def, rowIdx) => {
-              const rowBg = rowIdx % 2 === 0 ? 'bg-[#0b0312]' : 'bg-[#11061c]';
+              const rowBg =
+                variant === 'purple-white'
+                  ? rowIdx % 2 === 0
+                    ? 'bg-[#FFFDF9]'
+                    : 'bg-[#FAF6ED]/70'
+                  : rowIdx % 2 === 0
+                  ? 'bg-[#0b0312]'
+                  : 'bg-[#11061c]';
               const timing = getSlotTiming(def);
 
               return (
-                <tr key={def.key} className={`${rowBg} hover:bg-[#180a26] transition-colors`}>
+                <tr
+                  key={def.key}
+                  className={`${rowBg} ${
+                    variant === 'purple-white' ? 'hover:bg-[#FAF6ED]' : 'hover:bg-[#180a26]'
+                  } transition-colors`}
+                >
                   {/* Column 1: Timing & Meal Name */}
-                  <td className="py-3 px-2.5 border-r border-[#4a154b] font-bold text-gray-200 align-top">
-                    <div className="text-xs font-black text-purple-300 uppercase tracking-tight">
+                  <td
+                    className={`py-3 px-2.5 align-top font-bold ${
+                      variant === 'purple-white'
+                        ? 'border-r border-[#D9C4A5] bg-[#FAF6ED] text-[#2E1C07]'
+                        : 'border-r border-[#4a154b] text-gray-200'
+                    }`}
+                  >
+                    <div
+                      className={`text-xs font-black uppercase tracking-tight ${
+                        variant === 'purple-white' ? 'text-[#8C5E28]' : 'text-purple-300'
+                      }`}
+                    >
                       {def.label}
                     </div>
-                    <div className="text-[11px] text-gray-400 font-mono mt-0.5">
+                    <div
+                      className={`text-[11px] font-mono mt-0.5 ${
+                        variant === 'purple-white' ? 'text-[#5C3A14] font-semibold' : 'text-gray-400'
+                      }`}
+                    >
                       {timing}
                     </div>
                   </td>
@@ -371,16 +437,34 @@ export const Unified7DayClinicalDietTable: React.FC<Unified7DayClinicalDietTable
                       <td
                         key={dayIdx}
                         onClick={() => handleStartEdit(dayIdx, def)}
-                        className={`py-2.5 px-2 border-r border-[#3a1242] last:border-r-0 align-top leading-tight text-[11px] text-gray-200 group relative ${
-                          !readOnly ? 'cursor-pointer hover:bg-purple-950/50 hover:text-white' : ''
+                        className={`py-2.5 px-2 last:border-r-0 align-top leading-tight text-[11px] group relative ${
+                          variant === 'purple-white'
+                            ? 'border-r border-[#E3D4C0] text-[#2E1C07]'
+                            : 'border-r border-[#3a1242] text-gray-200'
+                        } ${
+                          !readOnly
+                            ? variant === 'purple-white'
+                              ? 'cursor-pointer hover:bg-[#EEDEC8]/40 hover:text-black'
+                              : 'cursor-pointer hover:bg-purple-950/50 hover:text-white'
+                            : ''
                         }`}
-                        title={!readOnly ? `Click to edit Day ${dayIdx + 1} (${dayNames[dayIdx]}) ${def.label}` : undefined}
+                        title={
+                          !readOnly
+                            ? `Click to edit Day ${dayIdx + 1} (${dayNames[dayIdx]}) ${def.label}`
+                            : undefined
+                        }
                       >
                         <div className="min-h-[52px] whitespace-pre-line break-words font-medium">
                           {mealContent}
                         </div>
                         {!readOnly && (
-                          <span className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 text-[10px] text-purple-300 bg-purple-950/90 p-0.5 rounded border border-purple-500/40">
+                          <span
+                            className={`absolute top-1 right-1 opacity-0 group-hover:opacity-100 text-[10px] p-0.5 rounded border ${
+                              variant === 'purple-white'
+                                ? 'text-[#8C5E28] bg-[#FAF6ED] border-[#D9C4A5]'
+                                : 'text-purple-300 bg-purple-950/90 border-purple-500/40'
+                            }`}
+                          >
                             <Edit3 className="w-2.5 h-2.5" />
                           </span>
                         )}
@@ -394,8 +478,20 @@ export const Unified7DayClinicalDietTable: React.FC<Unified7DayClinicalDietTable
 
           {/* Table Footer: Daily Caloric & Macro Targets for each Day */}
           <tfoot>
-            <tr className="bg-[#1f092b] border-t-2 border-[#4a154b] text-[10.5px] font-mono text-purple-200">
-              <td className="py-2.5 px-2.5 border-r border-[#4a154b] font-bold uppercase text-yellow-300">
+            <tr
+              className={`text-[10.5px] font-mono ${
+                variant === 'purple-white'
+                  ? 'bg-[#EEDEC8] border-t-2 border-[#8C5E28] text-[#2E1C07]'
+                  : 'bg-[#1f092b] border-t-2 border-[#4a154b] text-purple-200'
+              }`}
+            >
+              <td
+                className={`py-2.5 px-2.5 font-bold uppercase ${
+                  variant === 'purple-white'
+                    ? 'border-r border-[#D9C4A5] text-[#8C5E28]'
+                    : 'border-r border-[#4a154b] text-yellow-300'
+                }`}
+              >
                 Daily Totals
               </td>
               {dayNames.map((_, dayIdx) => {
@@ -418,10 +514,24 @@ export const Unified7DayClinicalDietTable: React.FC<Unified7DayClinicalDietTable
                 return (
                   <td
                     key={dayIdx}
-                    className="py-2 px-1.5 border-r border-[#4a154b] last:border-r-0 text-center"
+                    className={`py-2 px-1.5 last:border-r-0 text-center ${
+                      variant === 'purple-white' ? 'border-r border-[#D9C4A5]' : 'border-r border-[#4a154b]'
+                    }`}
                   >
-                    <div className="font-black text-emerald-400">{totalKcal} kcal</div>
-                    <div className="text-[9.5px] text-purple-300">P: {totalProtein}g</div>
+                    <div
+                      className={`font-black ${
+                        variant === 'purple-white' ? 'text-[#8C5E28]' : 'text-emerald-400'
+                      }`}
+                    >
+                      {totalKcal} kcal
+                    </div>
+                    <div
+                      className={`text-[9.5px] ${
+                        variant === 'purple-white' ? 'text-[#5C3A14] font-bold' : 'text-purple-300'
+                      }`}
+                    >
+                      P: {totalProtein}g
+                    </div>
                   </td>
                 );
               })}
@@ -432,54 +542,54 @@ export const Unified7DayClinicalDietTable: React.FC<Unified7DayClinicalDietTable
 
       {/* Direct Cell Edit Modal */}
       {editingCell && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 no-print">
-          <div className="w-full max-w-lg bg-[#100319] border-2 border-purple-500 rounded-2xl p-5 space-y-4 shadow-[0_0_50px_rgba(168,85,247,0.5)]">
-            <div className="flex items-center justify-between border-b border-white/10 pb-2">
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 no-print">
+          <div className="w-full max-w-lg bg-[#FFFDF9] border-2 border-[#D9C4A5] rounded-2xl p-5 space-y-4 shadow-2xl text-[#2E1C07]">
+            <div className="flex items-center justify-between border-b border-[#E3D4C0] pb-2">
               <div>
-                <span className="text-[10px] font-mono uppercase text-purple-300 font-bold">
+                <span className="text-[10px] font-mono uppercase text-[#8C5E28] font-bold">
                   EDIT 7-DAY CLINICAL DIET TABLE
                 </span>
-                <h4 className="text-base font-black text-white">
+                <h4 className="text-base font-black text-[#2E1C07]">
                   Day {editingCell.dayIdx + 1} ({dayNames[editingCell.dayIdx]}) • {editingCell.slotLabel} ({editingCell.slotTime})
                 </h4>
               </div>
               <button
                 type="button"
                 onClick={() => setEditingCell(null)}
-                className="text-gray-400 hover:text-white text-sm cursor-pointer p-1 rounded hover:bg-white/10"
+                className="text-gray-500 hover:text-gray-900 text-sm cursor-pointer p-1.5 rounded-lg hover:bg-[#FAF6ED] transition-colors"
               >
                 ✕
               </button>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-200 mb-1.5">
+              <label className="block text-xs font-bold text-[#42280C] mb-1.5">
                 Exact Food Recipes & Portions (Will reflect in 7-Day Plan & Rx Prescription):
               </label>
               <textarea
                 value={editText}
                 onChange={(e) => setEditText(e.target.value)}
                 rows={5}
-                className="w-full p-3 rounded-xl bg-black/80 border-2 border-purple-400/60 text-white text-xs focus:outline-none focus:border-purple-300 font-mono leading-relaxed"
+                className="w-full p-3 rounded-xl bg-white border border-[#D9C4A5] text-[#2E1C07] text-xs focus:outline-none focus:border-[#8C5E28] font-mono leading-relaxed"
                 placeholder="e.g. Idli (3 nos) + Sambar (75g) + Coconut Chutney (2 tbsp)"
               />
-              <p className="text-[10px] text-gray-400 mt-1">
+              <p className="text-[10px] text-[#5C3A14] mt-1">
                 Whatever you type here is saved instantly to the 7-Day Diet Plan and displayed on Page 1 of the Rx Prescription.
               </p>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-white/10">
+            <div className="flex justify-end gap-2 pt-2 border-t border-[#E3D4C0]">
               <button
                 type="button"
                 onClick={() => setEditingCell(null)}
-                className="px-3.5 py-1.5 rounded-lg bg-black border border-white/20 text-gray-300 text-xs font-bold hover:text-white cursor-pointer"
+                className="px-3.5 py-1.5 rounded-lg bg-[#FAF6ED] border border-[#D9C4A5] text-[#5C3A14] text-xs font-bold hover:bg-[#EEDEC8] cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleSaveEdit}
-                className="px-4 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-lg cursor-pointer"
+                className="px-4 py-1.5 rounded-lg bg-[#8C5E28] hover:bg-[#724B1E] text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-xs cursor-pointer"
               >
                 <Save className="w-3.5 h-3.5" />
                 <span>Save to 7-Day Diet & Prescription</span>

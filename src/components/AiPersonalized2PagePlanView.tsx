@@ -3,7 +3,9 @@ import { GeneralInfo, Calculations, DietaryRecallItem, MedicalHistory } from '..
 import { CustomDayPlan, CustomMealItem, CustomMealSlot } from '../data/customStudio7DayPlans';
 import { ExerciseDayItem, CLINICAL_DOMAINS_LIST, generateDomainDietAndExercisePlan } from '../utils/aiDomainDietExerciseGenerator';
 import { generateComplete2PagePlanPdf, Complete2PagePlanPdfData } from '../utils/pdfGenerator';
-import { ElshaLogo } from './ElshaLogo';
+import { getActiveRdaTargets } from '../utils/nutritionStore';
+import { ZiathlonLogo } from './ZiathlonLogo';
+import { ZiathlonLetterheadHeader } from './ZiathlonLetterheadHeader';
 import { DrBharathkumarSportsMedicineLogo } from './DrBharathkumarSportsMedicineLogo';
 import {
   Sparkles,
@@ -509,30 +511,30 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
   const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
   return (
-    <div className="space-y-6 text-white font-sans max-w-7xl mx-auto">
+    <div className="space-y-6 text-gray-900 font-sans max-w-7xl mx-auto">
       {/* Top Clinical AI Control Panel */}
-      <div className="bg-gradient-to-r from-[#060c1c] via-[#091533] to-[#060c1c] border-2 border-sky-500/50 rounded-2xl p-5 shadow-[0_0_35px_rgba(56,189,248,0.2)]">
+      <div className="bg-white border-2 border-[#7E22CE] rounded-2xl p-5 shadow-xl">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="flex items-start sm:items-center gap-3.5">
-            <div className="w-13 h-13 rounded-2xl bg-sky-500/20 border-2 border-sky-400 flex items-center justify-center text-sky-300 shadow-[0_0_20px_rgba(56,189,248,0.5)] shrink-0">
-              <Sparkles className="w-7 h-7" />
+            <div className="w-12 h-12 rounded-2xl bg-purple-50 border-2 border-[#7E22CE] flex items-center justify-center text-[#7E22CE] shadow-sm shrink-0">
+              <Sparkles className="w-6 h-6" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="px-2.5 py-0.5 bg-sky-500/20 border border-sky-400 text-sky-300 text-[10px] font-black uppercase tracking-wider rounded font-mono">
-                  ELSHA CLINICAL NUTRITION AI
+                <span className="px-2.5 py-0.5 bg-purple-100 border border-purple-300 text-purple-900 text-[10px] font-black uppercase tracking-wider rounded font-mono">
+                  ŽIATHLON CLINICAL NUTRITION AI
                 </span>
-                <span className="px-2 py-0.5 bg-emerald-950/80 border border-emerald-400 text-emerald-300 text-[10px] font-black uppercase tracking-wider rounded font-mono flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3" /> FULLY AUTOMATED & DYNAMIC
+                <span className="px-2 py-0.5 bg-purple-50 border border-purple-300 text-purple-900 text-[10px] font-black uppercase tracking-wider rounded font-mono flex items-center gap-1">
+                  <ShieldCheck className="w-3 h-3 text-[#7E22CE]" /> FULLY AUTOMATED & DYNAMIC
                 </span>
-                <span className="px-2 py-0.5 bg-amber-950/80 border border-amber-400 text-amber-300 text-[10px] font-black uppercase tracking-wider rounded font-mono">
+                <span className="px-2 py-0.5 bg-purple-100 border border-purple-300 text-purple-900 text-[10px] font-black uppercase tracking-wider rounded font-mono">
                   2-PAGE PRESCRIPTION
                 </span>
               </div>
-              <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight mt-1">
+              <h2 className="text-xl sm:text-2xl font-black text-black tracking-tight mt-1">
                 Dynamic 7-Day Diet & Exercise Prescription Generator
               </h2>
-              <p className="text-xs text-sky-200/90 mt-0.5">
+              <p className="text-xs text-purple-900 font-medium mt-0.5">
                 Calibrates recipes, portions, macro ratios, exercise movements, and clinical guidelines dynamically across all diseases, disorders, and fitness domains.
               </p>
             </div>
@@ -544,9 +546,9 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
               type="button"
               id="btn-download-2page-pdf"
               onClick={handleDownload2PagePdf}
-              className="py-2.5 px-4 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-black text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-[0_0_20px_rgba(245,158,11,0.4)] flex items-center gap-2 cursor-pointer transform hover:scale-[1.02] active:scale-[0.98]"
+              className="py-2.5 px-4 bg-[#7E22CE] hover:bg-[#601188] text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center gap-2 cursor-pointer transform hover:scale-[1.02] active:scale-[0.98]"
             >
-              <Download className="w-4 h-4 text-black" />
+              <Download className="w-4 h-4 text-white" />
               <span>Download PDF (2-Page Plan)</span>
             </button>
 
@@ -554,9 +556,9 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
               type="button"
               id="btn-print-2page-plan"
               onClick={() => window.print()}
-              className="py-2.5 px-3.5 bg-sky-900/60 hover:bg-sky-800/80 text-sky-200 border border-sky-400/40 text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center gap-2 cursor-pointer"
+              className="py-2.5 px-3.5 bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-300 text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center gap-2 cursor-pointer shadow-sm"
             >
-              <Printer className="w-4 h-4 text-sky-300" />
+              <Printer className="w-4 h-4 text-purple-700" />
               <span>Print Plan</span>
             </button>
 
@@ -564,9 +566,9 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
               <button
                 type="button"
                 onClick={onOpenPrescription}
-                className="py-2.5 px-3.5 bg-black/60 hover:bg-black/90 text-gray-300 border border-white/20 text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+                className="py-2.5 px-3.5 bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-300 text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
               >
-                <Layers className="w-4 h-4 text-[#C5A028]" />
+                <Layers className="w-4 h-4 text-[#7E22CE]" />
                 <span>Rx Modal</span>
               </button>
             )}
@@ -574,17 +576,17 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
         </div>
 
         {/* Clinical Dossier Selector Bar */}
-        <div className="mt-5 pt-4 border-t border-sky-500/20 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+        <div className="mt-5 pt-4 border-t border-purple-200 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
           {/* 1. Disease / Disorder / Performance Domain */}
           <div className="space-y-1">
-            <label className="text-[10px] font-bold uppercase font-mono tracking-wider text-sky-300 block">
+            <label className="text-[10px] font-bold uppercase font-mono tracking-wider text-purple-900 block">
               1. Condition / Fitness Domain:
             </label>
             <select
               id="select-clinical-domain"
               value={selectedDomainId}
               onChange={(e) => setSelectedDomainId(e.target.value)}
-              className="w-full bg-[#030712] border border-sky-500/40 rounded-lg px-3 py-2 text-xs text-white font-medium focus:outline-none focus:border-sky-400 cursor-pointer"
+              className="w-full bg-white border border-purple-300 rounded-lg px-3 py-2 text-xs text-black font-semibold focus:outline-none focus:border-[#7E22CE] cursor-pointer"
             >
               <optgroup label="Diseases & Disorders">
                 {CLINICAL_DOMAINS_LIST.filter((d) => d.group === 'Diseases & Disorders').map((d) => (
@@ -605,14 +607,14 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
 
           {/* 2. Diet Domain */}
           <div className="space-y-1">
-            <label className="text-[10px] font-bold uppercase font-mono tracking-wider text-emerald-300 block">
+            <label className="text-[10px] font-bold uppercase font-mono tracking-wider text-purple-900 block">
               2. Therapeutic Diet Domain:
             </label>
             <select
               id="select-diet-domain"
               value={selectedDietDomainId}
               onChange={(e) => setSelectedDietDomainId(e.target.value)}
-              className="w-full bg-[#030712] border border-emerald-500/40 rounded-lg px-3 py-2 text-xs text-white font-medium focus:outline-none focus:border-emerald-400 cursor-pointer"
+              className="w-full bg-white border border-purple-300 rounded-lg px-3 py-2 text-xs text-black font-semibold focus:outline-none focus:border-[#7E22CE] cursor-pointer"
             >
               {DIET_DOMAINS_LIST.map((dd) => (
                 <option key={dd.id} value={dd.id}>
@@ -624,10 +626,10 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
 
           {/* 3. Patient Clinical Summary Context */}
           <div className="space-y-1">
-            <label className="text-[10px] font-bold uppercase font-mono tracking-wider text-amber-300 block">
+            <label className="text-[10px] font-bold uppercase font-mono tracking-wider text-purple-900 block">
               3. Patient Clinical Context:
             </label>
-            <div className="p-2 bg-black/60 border border-white/10 rounded-lg text-[11px] text-gray-300 font-mono truncate">
+            <div className="p-2 bg-purple-50/70 border border-purple-200 rounded-lg text-[11px] text-gray-900 font-mono truncate font-semibold">
               {generalInfo.name || 'Kiruthika'} • {generalInfo.age || 22}y • {generalInfo.weight || 62}kg • BMI {calculations.bmi || '22.8'} • TDEE {calculations.tdee || 1950} kcal
             </div>
           </div>
@@ -639,7 +641,7 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
               id="btn-ai-generate-dynamic-plan"
               onClick={() => generatePlan(false)}
               disabled={isGenerating}
-              className="w-full py-2 px-3 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-black text-xs uppercase tracking-wider rounded-lg shadow-[0_0_15px_rgba(56,189,248,0.4)] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="w-full py-2 px-3 bg-[#7E22CE] hover:bg-[#601188] text-white font-black text-xs uppercase tracking-wider rounded-lg shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isGenerating ? 'animate-spin' : ''}`} />
               <span>{isGenerating ? 'Formulating Plan...' : '✨ AI Generate Dynamic Plan'}</span>
@@ -648,7 +650,7 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
         </div>
 
         {/* Custom Clinical Instruction Bar */}
-        <div className="mt-3 pt-3 border-t border-sky-500/20 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+        <div className="mt-3 pt-3 border-t border-purple-200 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <div className="relative flex-1">
             <input
               type="text"
@@ -656,26 +658,26 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
               value={customPrompt}
               onChange={(e) => setCustomPrompt(e.target.value)}
               placeholder="Add patient preference / manual AI guidance (e.g., 'Strict vegetarian', 'Extra high protein for leg days', 'No oats on Wednesday')..."
-              className="w-full bg-[#040817] border border-sky-500/30 rounded-lg px-3 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-sky-400 font-sans"
+              className="w-full bg-white border border-purple-300 rounded-lg px-3 py-1.5 text-xs text-black placeholder-gray-400 focus:outline-none focus:border-[#7E22CE] font-sans font-medium"
             />
           </div>
           <button
             type="button"
             onClick={() => generatePlan(true)}
             disabled={isGenerating}
-            className="py-1.5 px-3 bg-sky-950/80 hover:bg-sky-900 border border-sky-400/50 text-sky-200 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
+            className="py-1.5 px-3 bg-purple-100 hover:bg-purple-200 border border-purple-300 text-purple-900 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shadow-sm"
           >
-            <Sparkles className="w-3.5 h-3.5 text-sky-400" />
+            <Sparkles className="w-3.5 h-3.5 text-[#7E22CE]" />
             <span>AI Regenerate with Instructions</span>
           </button>
         </div>
 
         {/* Loading Progress Indicator */}
         {isGenerating && (
-          <div className="mt-3 p-3 bg-sky-950/70 border border-sky-400/50 rounded-xl flex items-center gap-3">
-            <div className="w-5 h-5 border-2 border-sky-400 border-t-transparent rounded-full animate-spin shrink-0" />
-            <div className="text-xs text-sky-200 font-mono">
-              <span className="font-bold text-sky-400 uppercase">AI Clinical Engine Active: </span>
+          <div className="mt-3 p-3 bg-purple-50 border border-purple-300 rounded-xl flex items-center gap-3">
+            <div className="w-5 h-5 border-2 border-[#7E22CE] border-t-transparent rounded-full animate-spin shrink-0" />
+            <div className="text-xs text-purple-900 font-mono">
+              <span className="font-bold text-[#7E22CE] uppercase">AI Clinical Engine Active: </span>
               <span>{generationStep}</span>
             </div>
           </div>
@@ -686,10 +688,10 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
           <div
             className={`mt-3 p-2.5 rounded-lg text-xs font-bold flex items-center gap-2 ${
               notificationMsg.type === 'success'
-                ? 'bg-emerald-950/90 border border-emerald-400 text-emerald-300'
+                ? 'bg-purple-50 border border-emerald-400 text-emerald-900'
                 : notificationMsg.type === 'error'
-                ? 'bg-red-950/90 border border-red-400 text-red-300'
-                : 'bg-sky-950/90 border border-sky-400 text-sky-300'
+                ? 'bg-red-50 border border-red-400 text-red-900'
+                : 'bg-purple-50 border border-purple-400 text-purple-900'
             }`}
           >
             <Check className="w-4 h-4 shrink-0" />
@@ -699,7 +701,7 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
       </div>
 
       {/* View Mode Switcher Tabs */}
-      <div className="flex items-center justify-between border-b border-white/10 pb-2">
+      <div className="flex items-center justify-between border-b border-purple-200 pb-2">
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -707,8 +709,8 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
             onClick={() => setActiveTab('both')}
             className={`py-1.5 px-3.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
               activeTab === 'both'
-                ? 'bg-[#C5A028] text-black shadow-[0_0_12px_rgba(197,160,40,0.4)]'
-                : 'bg-black/50 text-gray-300 border border-white/10 hover:border-[#C5A028]/40'
+                ? 'bg-[#7E22CE] text-white shadow-sm font-black'
+                : 'bg-white text-gray-700 border border-purple-200 hover:border-[#7E22CE] hover:text-black'
             }`}
           >
             📑 Both Pages (Complete 2-Page Rx)
@@ -719,8 +721,8 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
             onClick={() => setActiveTab('page1')}
             className={`py-1.5 px-3.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
               activeTab === 'page1'
-                ? 'bg-sky-500 text-black font-black shadow-[0_0_12px_rgba(56,189,248,0.4)]'
-                : 'bg-black/50 text-gray-300 border border-white/10 hover:border-sky-500/40'
+                ? 'bg-[#7E22CE] text-white shadow-sm font-black'
+                : 'bg-white text-gray-700 border border-purple-200 hover:border-[#7E22CE] hover:text-black'
             }`}
           >
             📄 Page 1: AI Diet Plan & Guidelines
@@ -731,112 +733,94 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
             onClick={() => setActiveTab('page2')}
             className={`py-1.5 px-3.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
               activeTab === 'page2'
-                ? 'bg-emerald-500 text-black font-black shadow-[0_0_12px_rgba(16,185,129,0.4)]'
-                : 'bg-black/50 text-gray-300 border border-white/10 hover:border-emerald-500/40'
+                ? 'bg-[#7E22CE] text-white shadow-sm font-black'
+                : 'bg-white text-gray-700 border border-purple-200 hover:border-[#7E22CE] hover:text-black'
             }`}
           >
             🏃 Page 2: AI Exercise Schedule & Dr. Bharathkumar
           </button>
         </div>
 
-        <div className="text-[11px] text-gray-400 font-mono hidden sm:flex items-center gap-3">
+        <div className="text-[11px] text-gray-700 font-mono hidden sm:flex items-center gap-3">
           <span>💡 Click any meal or exercise card to edit inline</span>
-          <span className="text-[#C5A028] font-bold">Target: {nutritionSummary.avgKcal} kcal/day</span>
+          <span className="text-[#7E22CE] font-bold">Target: {nutritionSummary.avgKcal} kcal/day</span>
         </div>
       </div>
 
       {/* ========================================================================= */}
       {/* PAGE 1: 7-DAY DIET PLAN + DEMOGRAPHICS + DIET GUIDELINES                   */}
       {/* ========================================================================= */}
+      {/* PAGE 1: 7-DAY DIET PRESCRIPTION & CLINICAL GUIDELINES                     */}
+      {/* ========================================================================= */}
       {(activeTab === 'both' || activeTab === 'page1') && (
         <div
           id="prescription-page-1"
-          className="bg-[#0b0f14] border-2 border-[#C5A028]/40 rounded-2xl p-6 shadow-2xl space-y-5 print:border-none print:p-0 print:m-0 print:shadow-none print:break-after-page"
+          className="bg-white border-2 border-[#D9C4A5] rounded-2xl p-6 shadow-xl space-y-5 print:border-none print:p-0 print:m-0 print:shadow-none print:break-after-page text-black"
         >
-          {/* Header Banner Page 1 */}
-          <div className="bg-gradient-to-r from-[#12161b] via-[#1a1f26] to-[#12161b] border border-[#C5A028]/60 rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <ElshaLogo className="w-10 h-10 shrink-0" />
-              <div>
-                <h1 className="text-xl sm:text-2xl font-serif font-bold text-[#f7d88c] tracking-wider uppercase">
-                  ŽIATHLON SPORTS MEDICINE CLINIC
-                </h1>
-                <div className="text-xs text-gray-300 font-mono flex items-center gap-2">
-                  <span>ELSHA CLINICAL NUTRITION AI</span>
-                  <span>•</span>
-                  <span>PERSONALIZED 7-DAY THERAPEUTIC DIET PRESCRIPTION</span>
-                </div>
-                <div className="text-[10px] text-gray-400">
-                  Department of Clinical Dietetics & Sports Endocrinology • Certified Prescription
-                </div>
-              </div>
-            </div>
+          {/* Official Letterhead Header Page 1 */}
+          <ZiathlonLetterheadHeader
+            pageNumber="PAGE 1 OF 2"
+            rxNumber={`Rx ID: ZIA-RX-${String(generalInfo.name || 'PAT').slice(0, 4).toUpperCase()}-2026`}
+            date={new Date().toLocaleDateString('en-GB')}
+          />
 
-            <div className="flex items-center gap-2 bg-[#251e08] border border-[#C5A028] px-3.5 py-2 rounded-xl text-center">
-              <div>
-                <span className="text-[9px] font-mono text-[#f7d88c] uppercase tracking-widest block">
-                  PRESCRIPTION
-                </span>
-                <span className="text-sm font-black text-white font-mono">PAGE 1 OF 2</span>
-              </div>
+          {/* Patient Demographics & Domain Banner (Light Sandalwood Palette) */}
+          <div className="bg-[#FAF6ED] border border-[#D9C4A5] rounded-xl p-3.5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs font-mono text-black">
+            <div className="border-r border-[#E3D4C0] pr-2">
+              <span className="text-[#8C5E28] block text-[10px] uppercase font-bold">PATIENT NAME</span>
+              <span className="text-[#2E1C07] font-extrabold text-sm">{generalInfo.name || 'Kiruthika'}</span>
+              <span className="text-gray-600 block text-[10px] font-medium">{generalInfo.age || 38} Yrs • {generalInfo.sex || 'Female'}</span>
             </div>
-          </div>
-
-          {/* Patient Demographics & Domain Banner (Exact match to User Reference) */}
-          <div className="bg-[#11161d] border border-white/10 rounded-xl p-3.5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs font-mono">
-            <div className="border-r border-white/10 pr-2">
-              <span className="text-gray-400 block text-[10px] uppercase">PATIENT NAME</span>
-              <span className="text-white font-bold text-sm">{generalInfo.name || 'Kiruthika'}</span>
-              <span className="text-gray-400 block text-[10px]">{generalInfo.age || 22} Yrs • {generalInfo.sex || 'Female'}</span>
-            </div>
-            <div className="border-r border-white/10 pr-2">
-              <span className="text-gray-400 block text-[10px] uppercase">CONDITION DOMAIN</span>
-              <span className="text-[#f7d88c] font-bold block truncate" title={currentDomainObj.name}>
+            <div className="border-r border-[#E3D4C0] pr-2">
+              <span className="text-[#8C5E28] block text-[10px] uppercase font-bold">CONDITION DOMAIN</span>
+              <span className="text-[#8C5E28] font-bold block truncate" title={currentDomainObj.name}>
                 {currentDomainObj.name}
               </span>
-              <span className="text-[10px] text-emerald-400">{currentDietDomainObj.name.split('(')[0]}</span>
+              <span className="text-[10px] text-[#5C3A14] font-bold">{currentDietDomainObj.name?.split('(')[0] || ''}</span>
             </div>
-            <div className="border-r border-white/10 pr-2">
-              <span className="text-gray-400 block text-[10px] uppercase">WEIGHT / HEIGHT</span>
-              <span className="text-white font-bold">{generalInfo.weight || 62} kg • {generalInfo.height || 165} cm</span>
-              <span className="text-sky-300 block text-[10px]">BMI: {calculations.bmi || '22.8'} ({calculations.bmiCategory || 'Normal'})</span>
+            <div className="border-r border-[#E3D4C0] pr-2">
+              <span className="text-[#8C5E28] block text-[10px] uppercase font-bold">WEIGHT / HEIGHT</span>
+              <span className="text-black font-extrabold">{generalInfo.weight || 64} kg • {generalInfo.height || 162} cm</span>
+              <span className="text-[#5C3A14] block text-[10px] font-bold">BMI: {calculations.bmi || '24.4'} ({calculations.bmiCategory || 'Normal'})</span>
             </div>
-            <div className="border-r border-white/10 pr-2">
-              <span className="text-gray-400 block text-[10px] uppercase">MAINTENANCE (TDEE)</span>
-              <span className="text-white font-bold">{calculations.tdee || 1950} kcal</span>
-              <span className="text-gray-400 block text-[10px]">BMR: {calculations.bmr || 1350} kcal</span>
+            <div className="border-r border-[#E3D4C0] pr-2">
+              <span className="text-[#8C5E28] block text-[10px] uppercase font-bold">MAINTENANCE (TDEE)</span>
+              <span className="text-black font-extrabold">{calculations.tdee || 1850} kcal</span>
+              <span className="text-gray-600 block text-[10px] font-medium">BMR: {calculations.bmr || 1350} kcal</span>
             </div>
-            <div className="border-r border-white/10 pr-2">
-              <span className="text-gray-400 block text-[10px] uppercase">AI TARGET CALORIES</span>
-              <span className="text-emerald-400 font-bold text-sm">{nutritionSummary.avgKcal} kcal/day</span>
-              <span className="text-[10px] text-emerald-300 font-bold">Therapeutic Deficit</span>
+            <div className="border-r border-[#E3D4C0] pr-2">
+              <span className="text-[#8C5E28] block text-[10px] uppercase font-bold">ACTIVE RDA TARGET</span>
+              <span className="text-[#8C5E28] font-black text-sm">
+                {getActiveRdaTargets(generalInfo, calculations).nutrients.find((n) => n.id === 'energy')?.prescribedTarget || nutritionSummary.avgKcal} kcal/day
+              </span>
+              <span className="text-[10px] text-[#5C3A14] font-bold">ICMR Single Source</span>
             </div>
             <div>
-              <span className="text-gray-400 block text-[10px] uppercase">DAILY MACRO TARGETS</span>
-              <div className="text-[11px] font-bold text-amber-300">
-                P: {nutritionSummary.avgProtein}g | C: {nutritionSummary.avgCarbs}g
+              <span className="text-[#8C5E28] block text-[10px] uppercase font-bold">DAILY MACRO TARGETS</span>
+              <div className="text-[11px] font-black text-[#2E1C07]">
+                P: {getActiveRdaTargets(generalInfo, calculations).nutrients.find((n) => n.id === 'protein')?.prescribedTarget || nutritionSummary.avgProtein}g | C: {getActiveRdaTargets(generalInfo, calculations).nutrients.find((n) => n.id === 'carbohydrates')?.prescribedTarget || nutritionSummary.avgCarbs}g
               </div>
-              <div className="text-[11px] font-bold text-sky-300">
-                F: {nutritionSummary.avgFat}g | Fib: {nutritionSummary.avgFiber}g
+              <div className="text-[11px] font-black text-[#8C5E28]">
+                F: {getActiveRdaTargets(generalInfo, calculations).nutrients.find((n) => n.id === 'fat')?.prescribedTarget || nutritionSummary.avgFat}g | Fib: {getActiveRdaTargets(generalInfo, calculations).nutrients.find((n) => n.id === 'fibre')?.prescribedTarget || nutritionSummary.avgFiber}g
               </div>
             </div>
           </div>
 
-          {/* 7-DAY DIET MATRIX TABLE (Matches User Image 1) */}
-          <div className="overflow-x-auto border border-[#C5A028]/40 rounded-xl shadow-lg bg-[#090d12]">
+          {/* 7-DAY DIET MATRIX TABLE */}
+          <div className="overflow-x-auto border-2 border-[#D9C4A5] rounded-xl shadow-md bg-white">
             <table className="w-full text-left border-collapse min-w-[980px]">
               {/* Header Row */}
               <thead>
-                <tr className="bg-gradient-to-r from-[#221a08] to-[#151208] border-b border-[#C5A028]/60 text-[11px] font-mono text-[#f7d88c] uppercase tracking-wider">
-                  <th className="py-2.5 px-3 border-r border-[#C5A028]/30 w-36 font-bold">
+                <tr className="bg-[#8C5E28] border-b border-[#724B1E] text-[11px] font-mono text-white uppercase tracking-wider">
+                  <th className="py-2.5 px-3 border-r border-[#A87B41] w-36 font-black">
                     Timings & Meals
                   </th>
                   {daysOfWeek.map((day, idx) => {
                     const dayKcal = dietPlans[idx]?.targetCalories || nutritionSummary.avgKcal;
                     return (
-                      <th key={day} className="py-2.5 px-2.5 border-r border-[#C5A028]/20 text-center font-bold">
-                        <div className="text-white text-xs">{day}</div>
-                        <div className="text-[10px] text-emerald-400 font-mono">{dayKcal} kcal</div>
+                      <th key={day} className="py-2.5 px-2.5 border-r border-purple-400/40 text-center font-bold">
+                        <div className="text-white text-xs font-black">{day}</div>
+                        <div className="text-[10px] text-purple-200 font-mono font-bold">{dayKcal} kcal</div>
                       </th>
                     );
                   })}
@@ -844,19 +828,18 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
               </thead>
 
               {/* Table Body */}
-              <tbody className="divide-y divide-white/5 text-[11px]">
+              <tbody className="divide-y divide-purple-100 text-[11px]">
                 {mealSlotsConfig.map((slotConf, sIdx) => (
-                  <tr key={slotConf.label} className={sIdx % 2 === 0 ? 'bg-[#0b0f14]' : 'bg-[#0f141a]'}>
+                  <tr key={slotConf.label} className={sIdx % 2 === 0 ? 'bg-white' : 'bg-purple-50/30'}>
                     {/* Time Slot Label Cell */}
-                    <td className="py-2.5 px-3 border-r border-[#C5A028]/30 bg-[#141a22] font-mono">
-                      <div className="font-bold text-white text-xs">{slotConf.label}</div>
-                      <div className="text-[10px] text-[#C5A028]">{slotConf.timing}</div>
+                    <td className="py-2.5 px-3 border-r border-purple-200 bg-purple-100/60 font-mono">
+                      <div className="font-extrabold text-black text-xs">{slotConf.label}</div>
+                      <div className="text-[10px] text-purple-800 font-bold">{slotConf.timing}</div>
                     </td>
 
                     {/* Day Cells (Monday through Sunday) */}
                     {daysOfWeek.map((day, dIdx) => {
                       const dayPlan = dietPlans[dIdx];
-                      // Match slot by id or name
                       const matchingSlot =
                         dayPlan?.slots?.find((s) => s.slotName.toLowerCase().includes(slotConf.match)) ||
                         dayPlan?.slots?.[sIdx];
@@ -877,27 +860,27 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
                               });
                             }
                           }}
-                          className="py-2 px-2.5 border-r border-white/5 align-top hover:bg-[#1f2733] transition-colors cursor-pointer group relative"
+                          className="py-2 px-2.5 border-r border-purple-100 align-top hover:bg-purple-100/50 transition-colors cursor-pointer group relative"
                         >
                           {firstItem ? (
                             <div className="space-y-1">
-                              <div className="font-semibold text-gray-100 group-hover:text-amber-300 transition-colors leading-tight">
+                              <div className="font-bold text-black group-hover:text-purple-900 transition-colors leading-tight">
                                 {firstItem.dishName}
                               </div>
-                              <div className="text-[10px] text-gray-400">
+                              <div className="text-[10px] text-gray-600 font-medium">
                                 {firstItem.portionHousehold}
                               </div>
                               <div className="flex items-center justify-between text-[10px] font-mono pt-0.5">
-                                <span className="text-amber-300/90 font-bold">{firstItem.calories} kcal</span>
-                                <span className="text-emerald-400/80">P:{firstItem.protein}g</span>
+                                <span className="text-[#7E22CE] font-black">{firstItem.calories} kcal</span>
+                                <span className="text-purple-900 font-extrabold">P:{firstItem.protein}g</span>
                               </div>
                               {/* Hover Edit Pencil */}
-                              <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 bg-black/70 rounded text-amber-300">
+                              <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 bg-[#7E22CE] rounded text-white shadow-sm">
                                 <Edit3 className="w-3 h-3" />
                               </div>
                             </div>
                           ) : (
-                            <span className="text-gray-600 italic">No prescription</span>
+                            <span className="text-gray-400 italic">No prescription</span>
                           )}
                         </td>
                       );
@@ -906,14 +889,14 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
                 ))}
 
                 {/* Total Energy Row */}
-                <tr className="bg-[#1c1607] border-t-2 border-[#C5A028]/60 font-mono text-xs">
-                  <td className="py-2.5 px-3 border-r border-[#C5A028]/30 font-bold text-[#f7d88c]">
+                <tr className="bg-purple-900 border-t-2 border-purple-950 font-mono text-xs text-white">
+                  <td className="py-2.5 px-3 border-r border-purple-700 font-black text-white">
                     TOTAL DAILY ENERGY
                   </td>
                   {daysOfWeek.map((day, dIdx) => {
                     const dayKcal = dietPlans[dIdx]?.targetCalories || nutritionSummary.avgKcal;
                     return (
-                      <td key={`total-${day}`} className="py-2.5 px-2.5 border-r border-[#C5A028]/20 text-center font-bold text-emerald-400">
+                      <td key={`total-${day}`} className="py-2.5 px-2.5 border-r border-purple-700 text-center font-black text-white">
                         {dayKcal} kcal
                       </td>
                     );
@@ -923,90 +906,90 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
             </table>
           </div>
 
-          {/* Bottom 3 Summary Boxes (Exact match to User Reference Images 1 & 2) */}
+          {/* Bottom 3 Summary Boxes */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
             {/* 1. Daily Nutrition Summary Box */}
-            <div className="bg-[#11161d] border border-[#C5A028]/40 rounded-xl p-4 space-y-3">
-              <div className="flex items-center gap-2 border-b border-white/10 pb-2">
-                <PieChart className="w-4 h-4 text-[#C5A028]" />
-                <h3 className="text-xs font-bold uppercase tracking-wider text-[#f7d88c] font-mono">
+            <div className="bg-white border-2 border-purple-200 rounded-xl p-4 space-y-3 text-black shadow-sm">
+              <div className="flex items-center gap-2 border-b border-purple-100 pb-2">
+                <PieChart className="w-4 h-4 text-[#7E22CE]" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-purple-900 font-mono">
                   Nutrition Summary
                 </h3>
               </div>
               <div className="space-y-2 text-xs font-mono">
-                <div className="flex justify-between items-center py-1 border-b border-white/5">
-                  <span className="text-gray-400">Target Calories</span>
-                  <span className="text-emerald-400 font-bold text-sm">{nutritionSummary.avgKcal} kcal</span>
+                <div className="flex justify-between items-center py-1 border-b border-purple-100">
+                  <span className="text-gray-600 font-medium">Target Calories</span>
+                  <span className="text-[#7E22CE] font-black text-sm">{nutritionSummary.avgKcal} kcal</span>
                 </div>
-                <div className="flex justify-between items-center py-1 border-b border-white/5">
-                  <span className="text-gray-400">Protein Target</span>
-                  <span className="text-amber-300 font-bold">{nutritionSummary.avgProtein}g / day</span>
+                <div className="flex justify-between items-center py-1 border-b border-purple-100">
+                  <span className="text-gray-600 font-medium">Protein Target</span>
+                  <span className="text-black font-extrabold">{nutritionSummary.avgProtein}g / day</span>
                 </div>
-                <div className="flex justify-between items-center py-1 border-b border-white/5">
-                  <span className="text-gray-400">Carbohydrates</span>
-                  <span className="text-sky-300 font-bold">{nutritionSummary.avgCarbs}g / day</span>
+                <div className="flex justify-between items-center py-1 border-b border-purple-100">
+                  <span className="text-gray-600 font-medium">Carbohydrates</span>
+                  <span className="text-black font-extrabold">{nutritionSummary.avgCarbs}g / day</span>
                 </div>
-                <div className="flex justify-between items-center py-1 border-b border-white/5">
-                  <span className="text-gray-400">Healthy Fats</span>
-                  <span className="text-gray-200 font-bold">{nutritionSummary.avgFat}g / day</span>
+                <div className="flex justify-between items-center py-1 border-b border-purple-100">
+                  <span className="text-gray-600 font-medium">Healthy Fats</span>
+                  <span className="text-black font-extrabold">{nutritionSummary.avgFat}g / day</span>
                 </div>
                 <div className="flex justify-between items-center py-1">
-                  <span className="text-gray-400">Dietary Fiber</span>
-                  <span className="text-emerald-300 font-bold">{nutritionSummary.avgFiber}g / day</span>
+                  <span className="text-gray-600 font-medium">Dietary Fiber</span>
+                  <span className="text-[#7E22CE] font-extrabold">{nutritionSummary.avgFiber}g / day</span>
                 </div>
               </div>
             </div>
 
             {/* 2. Meal Timings & Circadian Window */}
-            <div className="bg-[#11161d] border border-[#C5A028]/40 rounded-xl p-4 space-y-3">
-              <div className="flex items-center gap-2 border-b border-white/10 pb-2">
-                <Clock className="w-4 h-4 text-[#C5A028]" />
-                <h3 className="text-xs font-bold uppercase tracking-wider text-[#f7d88c] font-mono">
+            <div className="bg-white border-2 border-purple-200 rounded-xl p-4 space-y-3 text-black shadow-sm">
+              <div className="flex items-center gap-2 border-b border-purple-100 pb-2">
+                <Clock className="w-4 h-4 text-[#7E22CE]" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-purple-900 font-mono">
                   Meal Timings & Fasting
                 </h3>
               </div>
-              <div className="space-y-2 text-[11px] text-gray-300">
+              <div className="space-y-2 text-[11px] text-gray-800">
                 <div className="flex items-start gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 mt-1 shrink-0" />
+                  <span className="w-2 h-2 rounded-full bg-[#7E22CE] mt-1 shrink-0" />
                   <span>
-                    <strong className="text-white">Early Dinner Rule:</strong> Complete dinner between 7:30 - 8:30 PM to optimize overnight insulin clearance.
+                    <strong className="text-black">Early Dinner Rule:</strong> Complete dinner between 7:30 - 8:30 PM to optimize overnight insulin clearance.
                   </span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <span className="w-2 h-2 rounded-full bg-sky-400 mt-1 shrink-0" />
+                  <span className="w-2 h-2 rounded-full bg-purple-700 mt-1 shrink-0" />
                   <span>
-                    <strong className="text-white">Circadian Fasting:</strong> Maintain 12 hours between dinner and breakfast (8 PM to 8 AM).
+                    <strong className="text-black">Circadian Fasting:</strong> Maintain 12 hours between dinner and breakfast (8 PM to 8 AM).
                   </span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <span className="w-2 h-2 rounded-full bg-amber-400 mt-1 shrink-0" />
+                  <span className="w-2 h-2 rounded-full bg-purple-900 mt-1 shrink-0" />
                   <span>
-                    <strong className="text-white">Hydration Target:</strong> {dietGuidelines.hydrationTarget} between meals (avoid during meals).
+                    <strong className="text-black">Hydration Target:</strong> {dietGuidelines.hydrationTarget} between meals (avoid during meals).
                   </span>
                 </div>
               </div>
             </div>
 
             {/* 3. Clinical Diet Guidelines (Do's & Don'ts) */}
-            <div className="bg-[#11161d] border border-[#C5A028]/40 rounded-xl p-4 space-y-3">
-              <div className="flex items-center gap-2 border-b border-white/10 pb-2">
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-300 font-mono">
+            <div className="bg-white border-2 border-purple-200 rounded-xl p-4 space-y-3 text-black shadow-sm">
+              <div className="flex items-center gap-2 border-b border-purple-100 pb-2">
+                <ShieldCheck className="w-4 h-4 text-[#7E22CE]" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-purple-900 font-mono">
                   Clinical Diet Guidelines
                 </h3>
               </div>
               <div className="space-y-1.5 text-[11px]">
-                <div className="text-emerald-400 font-bold uppercase text-[10px]">Condition Do's:</div>
+                <div className="text-emerald-700 font-bold uppercase text-[10px]">Condition Do's:</div>
                 {dietGuidelines.dos.slice(0, 3).map((dItem, idx) => (
-                  <div key={idx} className="flex items-start gap-1.5 text-gray-300">
-                    <Check className="w-3 h-3 text-emerald-400 mt-0.5 shrink-0" />
+                  <div key={idx} className="flex items-start gap-1.5 text-gray-800">
+                    <Check className="w-3 h-3 text-emerald-600 mt-0.5 shrink-0" />
                     <span className="line-clamp-2">{dItem}</span>
                   </div>
                 ))}
-                <div className="text-rose-400 font-bold uppercase text-[10px] pt-1">Condition Don'ts:</div>
+                <div className="text-rose-700 font-bold uppercase text-[10px] pt-1">Condition Don'ts:</div>
                 {dietGuidelines.donts.slice(0, 2).map((dnItem, idx) => (
-                  <div key={idx} className="flex items-start gap-1.5 text-gray-300">
-                    <X className="w-3 h-3 text-rose-400 mt-0.5 shrink-0" />
+                  <div key={idx} className="flex items-start gap-1.5 text-gray-800">
+                    <X className="w-3 h-3 text-rose-600 mt-0.5 shrink-0" />
                     <span className="line-clamp-2">{dnItem}</span>
                   </div>
                 ))}
@@ -1022,62 +1005,40 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
       {(activeTab === 'both' || activeTab === 'page2') && (
         <div
           id="prescription-page-2"
-          className="bg-[#0b0f14] border-2 border-emerald-500/40 rounded-2xl p-6 shadow-2xl space-y-5 print:border-none print:p-0 print:m-0 print:shadow-none print:break-after-page"
+          className="bg-white border-2 border-[#7E22CE] rounded-2xl p-6 shadow-xl space-y-5 print:border-none print:p-0 print:m-0 print:shadow-none print:break-after-page text-black"
         >
-          {/* Header Banner Page 2 */}
-          <div className="bg-gradient-to-r from-[#12161b] via-[#1a1f26] to-[#12161b] border border-[#C5A028]/60 rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <DrBharathkumarSportsMedicineLogo className="w-10 h-10 shrink-0" />
-              <div>
-                <h1 className="text-xl sm:text-2xl font-serif font-bold text-[#f7d88c] tracking-wider uppercase">
-                  ŽIATHLON SPORTS MEDICINE CLINIC
-                </h1>
-                <div className="text-xs text-emerald-300 font-mono flex items-center gap-2">
-                  <span>DEPARTMENT OF CLINICAL EXERCISE PHYSIOLOGY</span>
-                  <span>•</span>
-                  <span>7-DAY SPORTS MEDICINE PROTOCOL</span>
-                </div>
-                <div className="text-[10px] text-gray-400">
-                  Physiological Exercise Prescription calibrated to metabolic biomarkers, joint mechanics & domain
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 bg-[#092215] border border-emerald-400 px-3.5 py-2 rounded-xl text-center">
-              <div>
-                <span className="text-[9px] font-mono text-emerald-400 uppercase tracking-widest block">
-                  PRESCRIPTION
-                </span>
-                <span className="text-sm font-black text-white font-mono">PAGE 2 OF 2</span>
-              </div>
-            </div>
-          </div>
+          {/* Official Letterhead Header Page 2 */}
+          <ZiathlonLetterheadHeader
+            pageNumber="PAGE 2 OF 2"
+            rxNumber={`Rx ID: ZIA-RX-${String(generalInfo.name || 'PAT').slice(0, 4).toUpperCase()}-2026`}
+            date={new Date().toLocaleDateString('en-GB')}
+          />
 
           {/* Patient Conditioning Profile Banner */}
-          <div className="bg-[#11161d] border border-emerald-500/30 rounded-xl p-3.5 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">
-            <div className="border-r border-white/10 pr-2">
-              <span className="text-gray-400 block text-[10px] uppercase">PATIENT PROFILE</span>
-              <span className="text-white font-bold">{generalInfo.name || 'Kiruthika'} ({generalInfo.age || 22}y)</span>
-              <span className="text-emerald-400 block text-[10px]">{currentDomainObj.name}</span>
+          <div className="bg-purple-50/60 border border-purple-200 rounded-xl p-3.5 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono text-black">
+            <div className="border-r border-purple-200 pr-2">
+              <span className="text-purple-700 block text-[10px] uppercase font-bold">PATIENT PROFILE</span>
+              <span className="text-black font-extrabold">{generalInfo.name || 'Kiruthika'} ({generalInfo.age || 22}y)</span>
+              <span className="text-[#7E22CE] block text-[10px] font-bold">{currentDomainObj.name}</span>
             </div>
-            <div className="border-r border-white/10 pr-2">
-              <span className="text-gray-400 block text-[10px] uppercase">WEEKLY MOVEMENT GOAL</span>
-              <span className="text-emerald-400 font-bold">{exerciseGuidelines.weeklyTarget}</span>
-              <span className="text-gray-400 block text-[10px]">Zone 2 Aerobic + Functional Strength</span>
+            <div className="border-r border-purple-200 pr-2">
+              <span className="text-purple-700 block text-[10px] uppercase font-bold">WEEKLY MOVEMENT GOAL</span>
+              <span className="text-[#7E22CE] font-black">{exerciseGuidelines.weeklyTarget}</span>
+              <span className="text-gray-600 block text-[10px] font-medium">Zone 2 Aerobic + Functional Strength</span>
             </div>
-            <div className="border-r border-white/10 pr-2">
-              <span className="text-gray-400 block text-[10px] uppercase">TARGET HEART RATE</span>
-              <span className="text-sky-300 font-bold">115 - 138 BPM (Zone 2-3)</span>
-              <span className="text-gray-400 block text-[10px]">Max HR: {220 - (Number(generalInfo.age) || 22)} BPM</span>
+            <div className="border-r border-purple-200 pr-2">
+              <span className="text-purple-700 block text-[10px] uppercase font-bold">TARGET HEART RATE</span>
+              <span className="text-purple-950 font-bold">115 - 138 BPM (Zone 2-3)</span>
+              <span className="text-gray-600 block text-[10px] font-medium">Max HR: {220 - (Number(generalInfo.age) || 22)} BPM</span>
             </div>
             <div>
-              <span className="text-gray-400 block text-[10px] uppercase">SUPERVISING CLINICIAN</span>
-              <span className="text-amber-300 font-bold block">Dr. Bharathkumar</span>
-              <span className="text-[10px] text-gray-400">Sports Medicine Specialist</span>
+              <span className="text-purple-700 block text-[10px] uppercase font-bold">SUPERVISING CLINICIAN</span>
+              <span className="text-black font-black block">Dr. Bharathkumar</span>
+              <span className="text-[10px] text-[#7E22CE] font-bold">Sports Medicine Specialist</span>
             </div>
           </div>
 
-          {/* 7-Day Exercise Schedule Grid (Monday to Sunday) - Matches User Image 2 & 5 */}
+          {/* 7-Day Exercise Schedule Grid (Monday to Sunday) */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-3">
             {daysOfWeek.map((day, idx) => {
               const ex = exercisePlans[idx] || {
@@ -1099,43 +1060,43 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
                 <div
                   key={day}
                   onClick={() => setEditingExerciseDay({ dayIdx: idx, exercise: { ...ex } })}
-                  className="bg-[#11161d] border border-white/10 hover:border-emerald-400 rounded-xl p-3 flex flex-col justify-between space-y-2 transition-all cursor-pointer group relative shadow-md"
+                  className="bg-white border-2 border-purple-200 hover:border-[#7E22CE] rounded-xl p-3 flex flex-col justify-between space-y-2 transition-all cursor-pointer group relative shadow-sm text-black"
                 >
                   <div className="space-y-1">
-                    <div className="flex items-center justify-between border-b border-white/10 pb-1">
-                      <span className="font-bold text-white text-xs font-mono">{day}</span>
-                      <span className="px-1.5 py-0.5 bg-emerald-950 text-emerald-300 rounded text-[9px] font-bold font-mono">
+                    <div className="flex items-center justify-between border-b border-purple-100 pb-1">
+                      <span className="font-extrabold text-black text-xs font-mono">{day}</span>
+                      <span className="px-1.5 py-0.5 bg-purple-100 text-purple-900 rounded text-[9px] font-bold font-mono">
                         {ex.durationMins || 40}m
                       </span>
                     </div>
 
-                    <div className="text-[11px] font-bold text-[#f7d88c] group-hover:text-emerald-300 transition-colors line-clamp-2">
+                    <div className="text-[11px] font-bold text-purple-950 group-hover:text-[#7E22CE] transition-colors line-clamp-2">
                       {ex.protocolTitle}
                     </div>
 
-                    <div className="text-[10px] text-sky-300 font-mono">
+                    <div className="text-[10px] text-[#7E22CE] font-mono font-bold">
                       {ex.focusArea}
                     </div>
 
                     {/* Movement Items */}
                     <div className="space-y-1 pt-1">
                       {ex.movements?.slice(0, 2).map((mv, mIdx) => (
-                        <div key={mIdx} className="text-[10px] bg-black/40 p-1 rounded border border-white/5">
-                          <div className="font-semibold text-gray-200">{mv.name}</div>
-                          <div className="text-gray-400 font-mono text-[9px]">{mv.setsAndReps}</div>
+                        <div key={mIdx} className="text-[10px] bg-purple-50/70 p-1.5 rounded border border-purple-100">
+                          <div className="font-bold text-black">{mv.name}</div>
+                          <div className="text-gray-600 font-mono text-[9px] font-medium">{mv.setsAndReps}</div>
                         </div>
                       ))}
                     </div>
                   </div>
 
                   {/* Recovery Footer */}
-                  <div className="pt-2 border-t border-white/5 text-[9px] text-gray-400">
-                    <span className="text-emerald-400 font-bold block">Recovery:</span>
-                    <span className="line-clamp-2">{ex.postWorkoutRecovery || 'Hydration & stretching'}</span>
+                  <div className="pt-2 border-t border-purple-100 text-[9px] text-gray-700">
+                    <span className="text-[#7E22CE] font-bold block">Recovery:</span>
+                    <span className="line-clamp-2 font-medium">{ex.postWorkoutRecovery || 'Hydration & stretching'}</span>
                   </div>
 
                   {/* Hover Edit Pencil */}
-                  <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 bg-black/70 rounded text-emerald-400">
+                  <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 bg-[#7E22CE] rounded text-white shadow-sm">
                     <Edit3 className="w-3 h-3" />
                   </div>
                 </div>
@@ -1146,17 +1107,17 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
           {/* Bottom Cards Page 2: Exercise Do's & Don'ts + Dr. Bharathkumar Official Clinical Sign-off */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 pt-2">
             {/* 1. Sports Medicine Exercise Do's */}
-            <div className="bg-[#11161d] border border-emerald-500/40 rounded-xl p-4 space-y-3">
-              <div className="flex items-center gap-2 border-b border-white/10 pb-2">
-                <Check className="w-4 h-4 text-emerald-400" />
-                <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-300 font-mono">
+            <div className="bg-white border-2 border-purple-200 rounded-xl p-4 space-y-3 text-black shadow-sm">
+              <div className="flex items-center gap-2 border-b border-purple-100 pb-2">
+                <Check className="w-4 h-4 text-emerald-600" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-800 font-mono">
                   Sports Medicine Exercise Do's
                 </h3>
               </div>
-              <div className="space-y-2 text-[11px] text-gray-300">
+              <div className="space-y-2 text-[11px] text-gray-800">
                 {exerciseGuidelines.dos.slice(0, 5).map((doItem, idx) => (
                   <div key={idx} className="flex items-start gap-2">
-                    <span className="text-emerald-400 font-bold mt-0.5">•</span>
+                    <span className="text-emerald-600 font-bold mt-0.5">•</span>
                     <span>{doItem}</span>
                   </div>
                 ))}
@@ -1164,17 +1125,17 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
             </div>
 
             {/* 2. Exercise Don'ts / Contraindications */}
-            <div className="bg-[#11161d] border border-rose-500/40 rounded-xl p-4 space-y-3">
-              <div className="flex items-center gap-2 border-b border-white/10 pb-2">
-                <AlertTriangle className="w-4 h-4 text-rose-400" />
-                <h3 className="text-xs font-bold uppercase tracking-wider text-rose-300 font-mono">
+            <div className="bg-white border-2 border-purple-200 rounded-xl p-4 space-y-3 text-black shadow-sm">
+              <div className="flex items-center gap-2 border-b border-purple-100 pb-2">
+                <AlertTriangle className="w-4 h-4 text-rose-600" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-rose-800 font-mono">
                   Exercise Don'ts & Safety
                 </h3>
               </div>
-              <div className="space-y-2 text-[11px] text-gray-300">
+              <div className="space-y-2 text-[11px] text-gray-800">
                 {exerciseGuidelines.donts.slice(0, 5).map((dontItem, idx) => (
                   <div key={idx} className="flex items-start gap-2">
-                    <span className="text-rose-400 font-bold mt-0.5">•</span>
+                    <span className="text-rose-600 font-bold mt-0.5">•</span>
                     <span>{dontItem}</span>
                   </div>
                 ))}
@@ -1182,46 +1143,46 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
             </div>
 
             {/* 3. Official Dr. Bharathkumar Sports Medicine Clinical Sign-off Note & Seal */}
-            <div className="bg-gradient-to-br from-[#12161b] to-[#1c1809] border-2 border-[#C5A028] rounded-xl p-4 space-y-3 flex flex-col justify-between">
+            <div className="bg-purple-50/60 border-2 border-[#7E22CE] rounded-xl p-4 space-y-3 flex flex-col justify-between text-black shadow-sm">
               <div>
-                <div className="flex items-center justify-between border-b border-[#C5A028]/40 pb-2">
+                <div className="flex items-center justify-between border-b border-purple-200 pb-2">
                   <div className="flex items-center gap-2">
-                    <Award className="w-4 h-4 text-[#C5A028]" />
-                    <span className="text-xs font-bold uppercase tracking-wider text-[#f7d88c] font-mono">
+                    <Award className="w-4 h-4 text-[#7E22CE]" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-purple-900 font-mono">
                       Clinical Sign-Off & Rx Seal
                     </span>
                   </div>
-                  <span className="px-2 py-0.5 bg-[#C5A028]/20 border border-[#C5A028] text-[#f7d88c] text-[9px] font-mono font-bold rounded">
+                  <span className="px-2 py-0.5 bg-purple-100 border border-purple-300 text-purple-900 text-[9px] font-mono font-bold rounded">
                     VERIFIED
                   </span>
                 </div>
 
-                <div className="mt-3 space-y-1.5 text-xs text-gray-300">
-                  <div className="font-serif font-bold text-white text-sm">
+                <div className="mt-3 space-y-1.5 text-xs text-gray-800">
+                  <div className="font-serif font-black text-black text-base">
                     Dr. Bharathkumar
                   </div>
-                  <div className="text-[11px] text-[#C5A028] font-medium">
+                  <div className="text-[11px] text-[#7E22CE] font-bold">
                     MBBS, Sports Medicine Specialist
                   </div>
-                  <div className="text-[10px] text-gray-400 font-mono">
+                  <div className="text-[10px] text-gray-600 font-mono font-medium">
                     Director of Sports Endocrinology & Clinical Performance
                   </div>
-                  <div className="text-[10px] text-gray-400 font-mono">
+                  <div className="text-[10px] text-gray-600 font-mono font-medium">
                     Reg. No: KMC-74829 • Žiathlon Sports Medicine Clinic
                   </div>
-                  <p className="text-[10px] text-gray-400 italic pt-1 leading-relaxed">
+                  <p className="text-[10px] text-gray-700 italic pt-1 leading-relaxed">
                     "This 7-day therapeutic nutrition and progressive exercise protocol is medically approved for {generalInfo.name || 'the patient'} based on blood biomarker parameters."
                   </p>
                 </div>
               </div>
 
               {/* Verified Digital Seal & Signature */}
-              <div className="pt-3 border-t border-[#C5A028]/30 flex items-center justify-between">
-                <div className="text-[9px] text-emerald-400 font-mono font-bold flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3" />
+              <div className="pt-3 border-t border-purple-200 flex items-center justify-between">
+                <div className="text-[9px] text-[#7E22CE] font-mono font-bold flex items-center gap-1">
+                  <ShieldCheck className="w-3.5 h-3.5" />
                   <span>Digitally Certified</span>
                 </div>
-                <div className="font-serif italic text-sm text-[#f7d88c] tracking-widest border-b border-dashed border-[#C5A028] px-2">
+                <div className="font-serif italic text-sm text-[#7E22CE] font-black tracking-widest border-b border-dashed border-[#7E22CE] px-2">
                   Dr. Bharathkumar
                 </div>
               </div>
@@ -1234,17 +1195,17 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
       {/* INLINE MODAL 1: EDIT MEAL CELL                                            */}
       {/* ========================================================================= */}
       {editingMealCell && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#0e141c] border-2 border-[#C5A028] rounded-2xl p-6 max-w-lg w-full space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <div className="flex items-center gap-2 text-sm font-bold text-white">
-                <Edit3 className="w-4 h-4 text-[#C5A028]" />
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white border-2 border-[#7E22CE] rounded-2xl p-6 max-w-lg w-full space-y-4 shadow-2xl text-black">
+            <div className="flex items-center justify-between border-b border-purple-200 pb-3">
+              <div className="flex items-center gap-2 text-sm font-black text-black">
+                <Edit3 className="w-4 h-4 text-[#7E22CE]" />
                 <span>Edit Meal: {editingMealCell.dayName} • {editingMealCell.slotName}</span>
               </div>
               <button
                 type="button"
                 onClick={() => setEditingMealCell(null)}
-                className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 cursor-pointer"
+                className="p-1 rounded-lg text-gray-500 hover:text-black hover:bg-purple-50 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1252,7 +1213,7 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
 
             <div className="space-y-3 text-xs">
               <div>
-                <label className="text-gray-300 font-bold block mb-1">Dish Name & Description:</label>
+                <label className="text-gray-900 font-bold block mb-1">Dish Name & Description:</label>
                 <input
                   type="text"
                   value={editingMealCell.item.dishName}
@@ -1262,12 +1223,12 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
                       item: { ...editingMealCell.item, dishName: e.target.value },
                     })
                   }
-                  className="w-full bg-black/60 border border-white/20 rounded-lg px-3 py-2 text-white font-medium focus:outline-none focus:border-[#C5A028]"
+                  className="w-full bg-white border border-purple-300 rounded-lg px-3 py-2 text-black font-semibold focus:outline-none focus:border-[#7E22CE]"
                 />
               </div>
 
               <div>
-                <label className="text-gray-300 font-bold block mb-1">Portion / Household Measure:</label>
+                <label className="text-gray-900 font-bold block mb-1">Portion / Household Measure:</label>
                 <input
                   type="text"
                   value={editingMealCell.item.portionHousehold}
@@ -1277,13 +1238,13 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
                       item: { ...editingMealCell.item, portionHousehold: e.target.value },
                     })
                   }
-                  className="w-full bg-black/60 border border-white/20 rounded-lg px-3 py-2 text-white font-medium focus:outline-none focus:border-[#C5A028]"
+                  className="w-full bg-white border border-purple-300 rounded-lg px-3 py-2 text-black font-medium focus:outline-none focus:border-[#7E22CE]"
                 />
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <div>
-                  <label className="text-gray-400 text-[10px] uppercase block mb-1">Calories (kcal):</label>
+                  <label className="text-gray-600 text-[10px] uppercase font-bold block mb-1">Calories (kcal):</label>
                   <input
                     type="number"
                     value={editingMealCell.item.calories}
@@ -1293,11 +1254,11 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
                         item: { ...editingMealCell.item, calories: Number(e.target.value) || 0 },
                       })
                     }
-                    className="w-full bg-black/60 border border-white/20 rounded-lg px-2.5 py-1.5 text-amber-300 font-mono font-bold"
+                    className="w-full bg-purple-50/50 border border-purple-300 rounded-lg px-2.5 py-1.5 text-[#7E22CE] font-mono font-black"
                   />
                 </div>
                 <div>
-                  <label className="text-gray-400 text-[10px] uppercase block mb-1">Protein (g):</label>
+                  <label className="text-gray-600 text-[10px] uppercase font-bold block mb-1">Protein (g):</label>
                   <input
                     type="number"
                     value={editingMealCell.item.protein}
@@ -1307,11 +1268,11 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
                         item: { ...editingMealCell.item, protein: Number(e.target.value) || 0 },
                       })
                     }
-                    className="w-full bg-black/60 border border-white/20 rounded-lg px-2.5 py-1.5 text-emerald-400 font-mono font-bold"
+                    className="w-full bg-purple-50/50 border border-purple-300 rounded-lg px-2.5 py-1.5 text-purple-900 font-mono font-black"
                   />
                 </div>
                 <div>
-                  <label className="text-gray-400 text-[10px] uppercase block mb-1">Carbs (g):</label>
+                  <label className="text-gray-600 text-[10px] uppercase font-bold block mb-1">Carbs (g):</label>
                   <input
                     type="number"
                     value={editingMealCell.item.carbs}
@@ -1321,11 +1282,11 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
                         item: { ...editingMealCell.item, carbs: Number(e.target.value) || 0 },
                       })
                     }
-                    className="w-full bg-black/60 border border-white/20 rounded-lg px-2.5 py-1.5 text-sky-400 font-mono font-bold"
+                    className="w-full bg-purple-50/50 border border-purple-300 rounded-lg px-2.5 py-1.5 text-black font-mono font-bold"
                   />
                 </div>
                 <div>
-                  <label className="text-gray-400 text-[10px] uppercase block mb-1">Fat (g):</label>
+                  <label className="text-gray-600 text-[10px] uppercase font-bold block mb-1">Fat (g):</label>
                   <input
                     type="number"
                     value={editingMealCell.item.fat}
@@ -1335,26 +1296,26 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
                         item: { ...editingMealCell.item, fat: Number(e.target.value) || 0 },
                       })
                     }
-                    className="w-full bg-black/60 border border-white/20 rounded-lg px-2.5 py-1.5 text-gray-300 font-mono font-bold"
+                    className="w-full bg-purple-50/50 border border-purple-300 rounded-lg px-2.5 py-1.5 text-black font-mono font-bold"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-white/10">
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-purple-200">
               <button
                 type="button"
                 onClick={() => setEditingMealCell(null)}
-                className="py-2 px-4 rounded-xl text-xs text-gray-400 hover:text-white cursor-pointer"
+                className="py-2 px-4 rounded-xl text-xs text-gray-600 hover:text-black hover:bg-gray-100 cursor-pointer font-semibold"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleSaveMealCell}
-                className="py-2 px-4 bg-[#C5A028] hover:bg-amber-400 text-black text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-lg flex items-center gap-1.5"
+                className="py-2 px-4 bg-[#7E22CE] hover:bg-[#601188] text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-md flex items-center gap-1.5"
               >
-                <Save className="w-3.5 h-3.5 text-black" />
+                <Save className="w-3.5 h-3.5 text-white" />
                 <span>Save Changes & Recalculate</span>
               </button>
             </div>
@@ -1366,17 +1327,17 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
       {/* INLINE MODAL 2: EDIT EXERCISE DAY                                         */}
       {/* ========================================================================= */}
       {editingExerciseDay && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#0e141c] border-2 border-emerald-500 rounded-2xl p-6 max-w-lg w-full space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <div className="flex items-center gap-2 text-sm font-bold text-white">
-                <Dumbbell className="w-4 h-4 text-emerald-400" />
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white border-2 border-[#7E22CE] rounded-2xl p-6 max-w-lg w-full space-y-4 shadow-2xl text-black">
+            <div className="flex items-center justify-between border-b border-purple-200 pb-3">
+              <div className="flex items-center gap-2 text-sm font-black text-black">
+                <Dumbbell className="w-4 h-4 text-[#7E22CE]" />
                 <span>Edit Exercise Protocol: {editingExerciseDay.exercise.dayName}</span>
               </div>
               <button
                 type="button"
                 onClick={() => setEditingExerciseDay(null)}
-                className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 cursor-pointer"
+                className="p-1 rounded-lg text-gray-500 hover:text-black hover:bg-purple-50 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1384,7 +1345,7 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
 
             <div className="space-y-3 text-xs">
               <div>
-                <label className="text-gray-300 font-bold block mb-1">Protocol Title:</label>
+                <label className="text-gray-900 font-bold block mb-1">Protocol Title:</label>
                 <input
                   type="text"
                   value={editingExerciseDay.exercise.protocolTitle}
@@ -1394,12 +1355,12 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
                       exercise: { ...editingExerciseDay.exercise, protocolTitle: e.target.value },
                     })
                   }
-                  className="w-full bg-black/60 border border-white/20 rounded-lg px-3 py-2 text-white font-medium focus:outline-none focus:border-emerald-400"
+                  className="w-full bg-white border border-purple-300 rounded-lg px-3 py-2 text-black font-semibold focus:outline-none focus:border-[#7E22CE]"
                 />
               </div>
 
               <div>
-                <label className="text-gray-300 font-bold block mb-1">Focus Area:</label>
+                <label className="text-gray-900 font-bold block mb-1">Focus Area:</label>
                 <input
                   type="text"
                   value={editingExerciseDay.exercise.focusArea}
@@ -1409,13 +1370,13 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
                       exercise: { ...editingExerciseDay.exercise, focusArea: e.target.value },
                     })
                   }
-                  className="w-full bg-black/60 border border-white/20 rounded-lg px-3 py-2 text-white font-medium focus:outline-none focus:border-emerald-400"
+                  className="w-full bg-white border border-purple-300 rounded-lg px-3 py-2 text-black font-medium focus:outline-none focus:border-[#7E22CE]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-gray-400 text-[10px] uppercase block mb-1">Duration (Mins):</label>
+                  <label className="text-gray-600 text-[10px] uppercase font-bold block mb-1">Duration (Mins):</label>
                   <input
                     type="number"
                     value={editingExerciseDay.exercise.durationMins}
@@ -1425,11 +1386,11 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
                         exercise: { ...editingExerciseDay.exercise, durationMins: Number(e.target.value) || 0 },
                       })
                     }
-                    className="w-full bg-black/60 border border-white/20 rounded-lg px-3 py-2 text-emerald-400 font-mono font-bold"
+                    className="w-full bg-purple-50/50 border border-purple-300 rounded-lg px-3 py-2 text-purple-900 font-mono font-black"
                   />
                 </div>
                 <div>
-                  <label className="text-gray-400 text-[10px] uppercase block mb-1">Target Heart Rate:</label>
+                  <label className="text-gray-600 text-[10px] uppercase font-bold block mb-1">Target Heart Rate:</label>
                   <input
                     type="text"
                     value={editingExerciseDay.exercise.targetHeartRate}
@@ -1439,13 +1400,13 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
                         exercise: { ...editingExerciseDay.exercise, targetHeartRate: e.target.value },
                       })
                     }
-                    className="w-full bg-black/60 border border-white/20 rounded-lg px-3 py-2 text-sky-300 font-mono font-bold"
+                    className="w-full bg-purple-50/50 border border-purple-300 rounded-lg px-3 py-2 text-black font-mono font-bold"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-gray-300 font-bold block mb-1">Post-Workout Recovery:</label>
+                <label className="text-gray-900 font-bold block mb-1">Post-Workout Recovery:</label>
                 <input
                   type="text"
                   value={editingExerciseDay.exercise.postWorkoutRecovery}
@@ -1455,25 +1416,25 @@ export const AiPersonalized2PagePlanView: React.FC<AiPersonalized2PagePlanViewPr
                       exercise: { ...editingExerciseDay.exercise, postWorkoutRecovery: e.target.value },
                     })
                   }
-                  className="w-full bg-black/60 border border-white/20 rounded-lg px-3 py-2 text-white font-medium focus:outline-none focus:border-emerald-400"
+                  className="w-full bg-white border border-purple-300 rounded-lg px-3 py-2 text-black font-medium focus:outline-none focus:border-[#7E22CE]"
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-white/10">
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-purple-200">
               <button
                 type="button"
                 onClick={() => setEditingExerciseDay(null)}
-                className="py-2 px-4 rounded-xl text-xs text-gray-400 hover:text-white cursor-pointer"
+                className="py-2 px-4 rounded-xl text-xs text-gray-600 hover:text-black hover:bg-gray-100 cursor-pointer font-semibold"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleSaveExerciseDay}
-                className="py-2 px-4 bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-lg flex items-center gap-1.5"
+                className="py-2 px-4 bg-[#7E22CE] hover:bg-[#601188] text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-md flex items-center gap-1.5"
               >
-                <Save className="w-3.5 h-3.5 text-black" />
+                <Save className="w-3.5 h-3.5 text-white" />
                 <span>Save Exercise Protocol</span>
               </button>
             </div>

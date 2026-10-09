@@ -697,7 +697,7 @@ export const ConditionRecipePosterTable: React.FC<ConditionRecipePosterTableProp
         {/* Condition Chips inside Active Group */}
         <div className="pt-2 flex flex-wrap gap-1.5">
           {MASTER_DOMAIN_CATEGORY_GROUPS.find((g) => g.groupId === activeGroup)?.items.map((cat) => {
-            const isSelected = selectedCondition.toLowerCase() === cat.toLowerCase();
+            const isSelected = selectedCondition?.toLowerCase() === (cat || '').toLowerCase();
             return (
               <button
                 key={cat}

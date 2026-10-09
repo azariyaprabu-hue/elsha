@@ -27,21 +27,21 @@ export const FoodFrequencySection: React.FC<FoodFrequencySectionProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-gray-900">
       {/* Header */}
-      <div className="border-b-2 border-[#7E22CE] pb-4 flex flex-wrap items-center justify-between gap-3">
+      <div className="border-b-2 border-purple-200 pb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <span className="text-[10px] uppercase font-bold tracking-[0.4em] text-[#A855F7]">
+          <span className="text-[10px] uppercase font-bold tracking-[0.4em] text-[#7E22CE]">
             Module 13 • Dietary Habit Quantification
           </span>
-          <h2 className="text-2xl font-black tracking-tight text-white uppercase mt-0.5">
+          <h2 className="text-2xl font-black tracking-tight text-gray-950 uppercase mt-0.5">
             Food Frequency Assessment (FFQ)
           </h2>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-gray-600">
             Audit recurring consumption frequencies across 10 major food categories.
           </p>
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-[#A855F7] bg-[#0d0617] px-3.5 py-1.5 border border-[#7E22CE]">
+        <div className="flex items-center gap-1.5 text-xs text-[#7E22CE] bg-purple-50 px-3.5 py-1.5 border border-purple-200 rounded-lg">
           <ListFilter className="w-3.5 h-3.5" />
           <span className="font-bold uppercase tracking-wider">10 Major Food Groups Classified</span>
         </div>
@@ -52,13 +52,13 @@ export const FoodFrequencySection: React.FC<FoodFrequencySectionProps> = ({
         {categories.map((cat) => (
           <div
             key={cat.id}
-            className="p-5 bg-[#0d0617] border border-[#7E22CE]/60 hover:border-[#7E22CE] space-y-4 transition-all"
+            className="p-5 bg-white border-2 border-purple-200 hover:border-[#7E22CE] rounded-xl shadow-xs space-y-4 transition-all"
           >
             {/* Category Title & Add Button */}
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+            <div className="flex items-center justify-between border-b border-purple-100 pb-3">
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 bg-[#7E22CE]" />
-                <h3 className="text-xs uppercase font-black tracking-widest text-white">
+                <span className="w-2.5 h-2.5 bg-[#7E22CE] rounded-full" />
+                <h3 className="text-xs uppercase font-black tracking-widest text-gray-950">
                   {cat.title}
                 </h3>
               </div>
@@ -69,7 +69,7 @@ export const FoodFrequencySection: React.FC<FoodFrequencySectionProps> = ({
                   setActiveNewItemInput(activeNewItemInput === cat.id ? null : cat.id);
                   setNewFoodName('');
                 }}
-                className="py-1 px-3 border border-[#7E22CE] text-[#C084FC] hover:bg-[#7E22CE] hover:text-white text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer"
+                className="py-1 px-3 border border-purple-200 bg-purple-50 text-[#7E22CE] hover:bg-[#7E22CE] hover:text-white rounded-lg text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>+ ADD FOOD</span>
@@ -78,7 +78,7 @@ export const FoodFrequencySection: React.FC<FoodFrequencySectionProps> = ({
 
             {/* Quick Add Inline Form */}
             {activeNewItemInput === cat.id && (
-              <div className="p-3 bg-black border border-[#7E22CE] flex items-center gap-2">
+              <div className="p-3 bg-purple-50 border border-purple-200 rounded-xl flex items-center gap-2">
                 <input
                   type="text"
                   value={newFoodName ?? ''}
@@ -87,20 +87,20 @@ export const FoodFrequencySection: React.FC<FoodFrequencySectionProps> = ({
                     if (e.key === 'Enter') handleAddSubmit(cat.id);
                   }}
                   placeholder={`Enter food item for ${cat.title}...`}
-                  className="flex-1 bg-[#0d0617] border border-white/20 focus:border-[#7E22CE] py-1.5 px-3 text-xs text-white focus:outline-none"
+                  className="flex-1 bg-white border border-purple-200 focus:border-[#7E22CE] py-1.5 px-3 text-xs text-gray-950 placeholder:text-gray-400 focus:outline-none rounded-lg"
                   autoFocus
                 />
                 <button
                   type="button"
                   onClick={() => handleAddSubmit(cat.id)}
-                  className="py-1.5 px-4 bg-[#7E22CE] text-white text-xs font-bold uppercase cursor-pointer hover:bg-[#9333EA]"
+                  className="py-1.5 px-4 bg-[#7E22CE] text-white text-xs font-bold uppercase cursor-pointer hover:bg-[#6b1dae] rounded-lg"
                 >
                   Save
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveNewItemInput(null)}
-                  className="text-gray-400 hover:text-white text-xs px-2 cursor-pointer"
+                  className="text-gray-500 hover:text-gray-950 text-xs px-2 cursor-pointer font-bold"
                 >
                   Cancel
                 </button>
@@ -112,17 +112,17 @@ export const FoodFrequencySection: React.FC<FoodFrequencySectionProps> = ({
               {cat.items.map((item) => (
                 <div
                   key={item.id}
-                  className="p-3 bg-black border border-white/10 hover:border-[#7E22CE]/60 transition-all flex flex-col justify-between space-y-2 group"
+                  className="p-3 bg-purple-50/70 border border-purple-200 hover:border-[#7E22CE] rounded-xl transition-all flex flex-col justify-between space-y-2 group"
                 >
                   <div className="flex items-start justify-between gap-1">
-                    <span className="text-[11px] font-bold text-gray-200 tracking-wider uppercase leading-tight">
+                    <span className="text-[11px] font-bold text-gray-950 tracking-wider uppercase leading-tight">
                       {item.name}
                     </span>
                     {cat.items.length > 5 && (
                       <button
                         type="button"
                         onClick={() => onRemoveFoodItem(cat.id, item.id)}
-                        className="text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-0.5"
+                        className="text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 cursor-pointer"
                         title="Remove item"
                       >
                         <Trash2 className="w-3 h-3" />
@@ -138,7 +138,7 @@ export const FoodFrequencySection: React.FC<FoodFrequencySectionProps> = ({
                         value={item.frequency ?? ''}
                         onChange={(e) => onUpdateItemFrequency(cat.id, item.id, e.target.value)}
                         placeholder="Type frequency (e.g. 4/Week)..."
-                        className="w-full bg-[#0d0617] border border-white/15 focus:border-[#7E22CE] py-1 px-2 text-[11px] text-[#C084FC] font-mono placeholder:text-gray-600 focus:outline-none transition-all"
+                        className="w-full bg-white border border-purple-200 focus:border-[#7E22CE] py-1 px-2 text-[11px] text-gray-950 font-mono placeholder:text-gray-400 focus:outline-none transition-all rounded-md"
                       />
                     </div>
 
@@ -151,10 +151,10 @@ export const FoodFrequencySection: React.FC<FoodFrequencySectionProps> = ({
                             key={opt}
                             type="button"
                             onClick={() => onUpdateItemFrequency(cat.id, item.id, opt)}
-                            className={`px-1.5 py-0.5 text-[9px] font-mono font-bold tracking-wider uppercase transition-colors cursor-pointer border ${
+                            className={`px-1.5 py-0.5 text-[9px] font-mono font-bold tracking-wider uppercase transition-colors cursor-pointer border rounded ${
                               isSelected
-                                ? 'bg-[#7E22CE] text-white border-[#A855F7] shadow-[0_0_8px_rgba(168,85,247,0.4)]'
-                                : 'bg-black/60 text-gray-400 border-white/10 hover:text-white hover:border-[#7E22CE]/60'
+                                ? 'bg-[#7E22CE] text-white border-[#7E22CE] shadow-2xs'
+                                : 'bg-white text-gray-700 border-purple-200 hover:border-[#7E22CE]'
                             }`}
                           >
                             {opt}

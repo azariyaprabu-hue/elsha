@@ -1,6 +1,6 @@
 {
-  "name": "ELSHA Nutrition",
-  "description": "ŽIATHLON Sports Medicine Clinic personal nutrition AI and clinical dietetics platform with real-time patient AI consultation, smart plate scanning, diabetic-safe meal swaps, end-to-end encrypted health records, and metabolic prescriptions.",
-  "requestFramePermissions": ["camera"],
+  "name": "WhatsApp Customizer & Settings Studio",
+  "description": "Comprehensive WhatsApp Web client with full chat folders management, complete WhatsApp settings suite, and deep color theme customization for WhatsApp functions and settings.",
+  "requestFramePermissions": ["camera", "microphone"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

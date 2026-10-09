@@ -8,61 +8,42 @@
   </defs>
 
   <!-- SHIELD EMBLEM -->
-  <g transform="translate(195, 10)">
-    <!-- Top Shield Segment -->
+  <g transform="translate(185, 20) scale(1.15)">
+    <!-- 1. Top Shield Segment -->
     <path
-      d="M 5,20 
-         L 85,20 
-         L 83,28 
-         L 6.5,53 
-         C 5.8,42 5.3,31 5,20 Z"
-      fill="url(#ziathlonPurple)"
+      d="M 18,34 L 81,34 L 20,53 Z"
+      fill="#7016B7"
     />
 
-    <!-- Middle Shield Segment (Dynamic Z-Slash) -->
+    <!-- 2. Middle Dynamic Diagonal Segment -->
     <path
-      d="M 8.5,63 
-         L 81,37 
-         L 75,70 
-         L 13,95 
-         C 11,84 9.5,73 8.5,63 Z"
-      fill="url(#ziathlonPurple)"
+      d="M 22,62 L 81,38 L 76,60 L 28,78 Z"
+      fill="#7016B7"
     />
 
-    <!-- Bottom Shield Segment (Pointed Tip) -->
+    <!-- 3. Bottom Shield Apex Tip Segment -->
     <path
-      d="M 16,104 
-         L 70,80 
-         C 63,105 52,125 45,138 
-         C 38,125 24,116 16,104 Z"
-      fill="url(#ziathlonPurple)"
+      d="M 34,85 L 69,73 L 49,103 Z"
+      fill="#7016B7"
     />
 
-    <!-- Top-Right Cross (+) -->
-    <g transform="translate(86, 2) scale(0.85)">
-      <!-- Vertical bar with beveled ends -->
-      <path
-        d="M 9,-6 
-           L 15,-6 
-           L 18,-3 
-           L 18,27 
-           L 15,30 
-           L 9,30 
-           L 6,27 
-           L 6,-3 Z"
-        fill="#000000"
+    <!-- 4. Top-Right Floating Medical Cross (+) -->
+    <g transform="translate(84, 15)">
+      <rect
+        x="0"
+        y="6.2"
+        width="19"
+        height="6.6"
+        rx="1.8"
+        fill="#191826"
       />
-      <!-- Horizontal bar with beveled ends -->
-      <path
-        d="M -6,9 
-           L -6,15 
-           L -3,18 
-           L 27,18 
-           L 30,15 
-           L 30,9 
-           L 27,6 
-           L -3,6 Z"
-        fill="#000000"
+      <rect
+        x="6.2"
+        y="0"
+        width="6.6"
+        height="19"
+        rx="1.8"
+        fill="#191826"
       />
     </g>
   </g>

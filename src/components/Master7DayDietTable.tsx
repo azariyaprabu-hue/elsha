@@ -243,8 +243,8 @@ export const Master7DayDietTable: React.FC<Master7DayDietTableProps> = ({
         {/* Action Controls */}
         <div className="flex flex-wrap items-center gap-2">
           {lastSavedTime && (
-            <span className="text-[11px] font-mono text-emerald-400 bg-emerald-950/40 border border-emerald-500/40 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="text-[11px] font-mono text-emerald-800 bg-emerald-100 border border-emerald-300 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
               <span>Saved: {lastSavedTime}</span>
             </span>
           )}
@@ -252,7 +252,7 @@ export const Master7DayDietTable: React.FC<Master7DayDietTableProps> = ({
           <button
             type="button"
             onClick={handleSavePlan}
-            className="px-3.5 py-1.5 bg-[#7E22CE] hover:bg-[#9333EA] text-white text-xs font-black uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shadow-[0_0_15px_rgba(126,34,206,0.6)]"
+            className="px-3.5 py-1.5 bg-[#8C5E28] hover:bg-[#724B1E] text-white text-xs font-black uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
           >
             <Save className="w-3.5 h-3.5" />
             <span>Save 7-Day Plan</span>
@@ -261,16 +261,16 @@ export const Master7DayDietTable: React.FC<Master7DayDietTableProps> = ({
           <button
             type="button"
             onClick={handlePrint}
-            className="px-3 py-1.5 bg-black border border-white/20 hover:border-[#7E22CE] text-gray-200 hover:text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+            className="px-3 py-1.5 bg-white border border-[#D9C4A5] hover:border-[#8C5E28] text-[#5C3A14] hover:text-[#2E1C07] text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
           >
-            <Printer className="w-3.5 h-3.5 text-[#C084FC]" />
+            <Printer className="w-3.5 h-3.5 text-[#8C5E28]" />
             <span>Print Table</span>
           </button>
 
           <button
             type="button"
             onClick={handleSendToWhatsApp}
-            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black uppercase tracking-wider rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer shadow-[0_0_12px_rgba(16,185,129,0.4)]"
+            className="px-3 py-1.5 bg-[#25D366] hover:bg-[#1EBE5D] text-white text-xs font-black uppercase tracking-wider rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
           >
             <Share2 className="w-3.5 h-3.5" />
             <span>WhatsApp Table</span>
@@ -280,61 +280,59 @@ export const Master7DayDietTable: React.FC<Master7DayDietTableProps> = ({
 
       {/* Save Success Notice Banner */}
       {saveSuccessNotice && (
-        <div className="p-3 bg-emerald-950/80 border-2 border-emerald-500 rounded-xl flex items-center justify-between text-xs text-emerald-200 animate-fadeIn">
+        <div className="p-3 bg-emerald-50 border-2 border-emerald-400 rounded-xl flex items-center justify-between text-xs text-emerald-900 animate-fadeIn">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <span className="font-bold">
               ✓ Whole 7-Day Diet Plan has been successfully saved to Patient Medical File & Storage!
             </span>
           </div>
-          <span className="text-[10px] font-mono text-emerald-300">Auto-Synced</span>
+          <span className="text-[10px] font-mono text-emerald-700">Auto-Synced</span>
         </div>
       )}
 
       {/* Quick Guide Note */}
-      <div className="flex items-center justify-between text-[11px] text-gray-300 bg-purple-950/30 border border-[#7E22CE]/40 px-3 py-2 rounded-lg">
+      <div className="flex items-center justify-between text-[11px] text-[#5C3A14] bg-[#FAF6ED] border border-[#D9C4A5] px-3 py-2 rounded-lg">
         <div className="flex items-center gap-2">
-          <Info className="w-4 h-4 text-[#C084FC] shrink-0" />
+          <Info className="w-4 h-4 text-[#8C5E28] shrink-0" />
           <span>
             Click any cell to edit food items & portion sizes. After modifications, click <strong>Save 7-Day Plan</strong> to persist.
           </span>
         </div>
-        <span className="text-gray-400 font-mono text-[10px]">Method: ICMR-NIN Low-GI Protocol</span>
+        <span className="text-[#8C5E28] font-mono text-[10px]">Method: ICMR-NIN Low-GI Protocol</span>
       </div>
 
       {/* THE CONSOLIDATED 7-DAY TABLE (As Hand-Drawn Specification) */}
-      <div className="overflow-x-auto rounded-xl border-2 border-[#7E22CE]/80 shadow-2xl bg-black">
+      <div className="overflow-x-auto rounded-xl border-2 border-[#D9C4A5] shadow-xs bg-[#FFFDF9]">
         <table className="w-full text-left border-collapse min-w-[960px]">
           <thead>
-            <tr className="bg-gradient-to-r from-[#2e0854] via-[#1a0533] to-[#2e0854] border-b-2 border-[#7E22CE]">
-              <th className="py-3 px-3 text-xs font-black uppercase tracking-wider text-yellow-300 border-r border-[#7E22CE] w-[140px] sticky left-0 bg-[#2e0854] z-10">
+            <tr className="bg-[#8C5E28] text-white border-b-2 border-[#724B1E]">
+              <th className="py-3 px-3 text-xs font-black uppercase tracking-wider text-white border-r border-[#A87B41] w-[140px] sticky left-0 bg-[#8C5E28] z-10">
                 Meal Frequency
               </th>
               {dayNames.map((day, idx) => (
                 <th
                   key={day}
-                  className={`py-3 px-2.5 text-xs font-black uppercase tracking-wider border-r border-white/10 text-center ${
-                    idx % 2 === 0 ? 'text-white' : 'text-[#C084FC]'
-                  }`}
+                  className="py-3 px-2.5 text-xs font-black uppercase tracking-wider border-r border-[#A87B41] text-center text-white"
                 >
-                  <div className="text-[10px] text-gray-400 font-mono">Day {idx + 1}</div>
+                  <div className="text-[10px] text-[#FAF6ED] font-mono">Day {idx + 1}</div>
                   <div className="text-xs font-black">{day}</div>
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/10 text-xs">
+          <tbody className="divide-y divide-[#E3D4C0] text-xs">
             {MEAL_FREQUENCIES.map((freq, fIdx) => (
               <tr
                 key={freq.id}
-                className={fIdx % 2 === 0 ? 'bg-[#0d0317] hover:bg-[#180629]' : 'bg-black hover:bg-[#180629]'}
+                className={fIdx % 2 === 0 ? 'bg-[#FFFDF9] hover:bg-[#FAF6ED]' : 'bg-[#FAF6ED]/60 hover:bg-[#FAF6ED]'}
               >
                 {/* Frequency Column (Left sticky header) */}
-                <td className="py-3 px-3 border-r-2 border-[#7E22CE] font-bold text-white sticky left-0 bg-[#120421] z-10 shadow-sm">
-                  <span className="text-xs text-[#C084FC] block font-black uppercase tracking-wide">
+                <td className="py-3 px-3 border-r-2 border-[#D9C4A5] font-bold text-[#2E1C07] sticky left-0 bg-[#FAF6ED] z-10 shadow-2xs">
+                  <span className="text-xs text-[#8C5E28] block font-black uppercase tracking-wide">
                     {freq.name}
                   </span>
-                  <span className="text-[10px] text-gray-400 font-mono block">
+                  <span className="text-[10px] text-[#5C3A14] font-mono block">
                     {freq.timing}
                   </span>
                 </td>
@@ -342,22 +340,20 @@ export const Master7DayDietTable: React.FC<Master7DayDietTableProps> = ({
                 {/* 7 Days Columns: Monday through Sunday */}
                 {dayNames.map((_, dayIdx) => {
                   const content = getCellContent(dayIdx, freq.name);
-                  const isEarlyMorning = freq.name === 'Early Morning';
-                  const isBreakfast = freq.name === 'Breakfast';
 
                   return (
                     <td
                       key={dayIdx}
                       onClick={() => handleStartEdit(dayIdx, freq.name)}
-                      className="py-2.5 px-2.5 border-r border-white/10 align-top cursor-pointer hover:bg-purple-900/30 transition-colors group relative"
+                      className="py-2.5 px-2.5 border-r border-[#E3D4C0] align-top cursor-pointer hover:bg-[#EEDEC8]/40 transition-colors group relative"
                       title="Click to edit meal"
                     >
-                      <div className="text-[11px] leading-relaxed text-gray-200">
+                      <div className="text-[11px] leading-relaxed text-[#2E1C07]">
                         {content}
                       </div>
 
                       {/* Hover Edit Icon */}
-                      <span className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-[#C084FC]">
+                      <span className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-[#8C5E28]">
                         <Edit3 className="w-3 h-3 inline" />
                       </span>
                     </td>
@@ -367,17 +363,17 @@ export const Master7DayDietTable: React.FC<Master7DayDietTableProps> = ({
             ))}
 
             {/* Calories & Protein Summary Row */}
-            <tr className="bg-[#1b0633] border-t-2 border-[#7E22CE] font-mono text-[11px]">
-              <td className="py-2.5 px-3 border-r-2 border-[#7E22CE] font-black text-yellow-400 sticky left-0 bg-[#1b0633] z-10">
+            <tr className="bg-[#EEDEC8] border-t-2 border-[#8C5E28] font-mono text-[11px] text-[#2E1C07]">
+              <td className="py-2.5 px-3 border-r-2 border-[#D9C4A5] font-black text-[#8C5E28] sticky left-0 bg-[#EEDEC8] z-10">
                 Daily Totals:
               </td>
               {dayNames.map((_, dayIdx) => {
                 const totalKcal = getDayTotalCalories(dayIdx);
                 const totalProtein = getDayTotalProtein(dayIdx);
                 return (
-                  <td key={dayIdx} className="py-2.5 px-2 border-r border-white/10 text-center">
-                    <div className="text-emerald-400 font-bold text-xs">{totalKcal || 1500} kcal</div>
-                    <div className="text-purple-300 text-[10px]">{Math.round(totalProtein) || 58}g Protein</div>
+                  <td key={dayIdx} className="py-2.5 px-2 border-r border-[#D9C4A5] text-center">
+                    <div className="text-[#8C5E28] font-bold text-xs">{totalKcal || 1500} kcal</div>
+                    <div className="text-[#5C3A14] text-[10px]">{Math.round(totalProtein) || 58}g Protein</div>
                   </td>
                 );
               })}
@@ -388,28 +384,28 @@ export const Master7DayDietTable: React.FC<Master7DayDietTableProps> = ({
 
       {/* Inline Cell Edit Modal */}
       {editingCell && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-[#0e031a] border-2 border-[#7E22CE] rounded-2xl p-5 space-y-4 shadow-[0_0_40px_rgba(126,34,206,0.6)]">
-            <div className="flex items-center justify-between border-b border-white/10 pb-2">
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-[#FFFDF9] border-2 border-[#D9C4A5] rounded-2xl p-5 space-y-4 shadow-2xl text-[#2E1C07]">
+            <div className="flex items-center justify-between border-b border-[#E3D4C0] pb-2">
               <div>
-                <span className="text-[10px] font-mono uppercase text-[#C084FC] tracking-widest font-bold">
+                <span className="text-[10px] font-mono uppercase text-[#8C5E28] tracking-widest font-bold">
                   EDIT 7-DAY DIET TABLE CELL
                 </span>
-                <h4 className="text-sm font-black text-white">
+                <h4 className="text-sm font-black text-[#2E1C07]">
                   Day {editingCell.dayIdx + 1} ({dayNames[editingCell.dayIdx]}) • {editingCell.freqName}
                 </h4>
               </div>
               <button
                 type="button"
                 onClick={() => setEditingCell(null)}
-                className="text-gray-400 hover:text-white text-xs cursor-pointer"
+                className="text-gray-400 hover:text-gray-700 text-xs cursor-pointer p-1 rounded"
               >
                 ✕ Cancel
               </button>
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs text-gray-300 font-bold block">
+              <label className="text-xs text-[#42280C] font-bold block">
                 Prescribed Dish & Portion (e.g. "Milk (150ml) + Sprouted (30g)"):
               </label>
               <textarea
@@ -417,22 +413,22 @@ export const Master7DayDietTable: React.FC<Master7DayDietTableProps> = ({
                 value={editInputValue}
                 onChange={(e) => setEditInputValue(e.target.value)}
                 placeholder="Enter meal dishes and portions..."
-                className="w-full p-2.5 bg-black border border-[#7E22CE] text-white text-xs rounded-lg focus:outline-none focus:ring-1 focus:ring-[#C084FC]"
+                className="w-full p-2.5 bg-white border border-[#D9C4A5] text-[#2E1C07] text-xs rounded-lg focus:outline-none focus:border-[#8C5E28]"
               />
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/10">
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#E3D4C0]">
               <button
                 type="button"
                 onClick={() => setEditingCell(null)}
-                className="px-3 py-1.5 text-xs text-gray-400 hover:text-white cursor-pointer"
+                className="px-3 py-1.5 text-xs text-[#5C3A14] hover:text-[#2E1C07] cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleSaveCellEdit}
-                className="px-4 py-1.5 bg-[#7E22CE] hover:bg-[#9333EA] text-white text-xs font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer shadow-[0_0_12px_rgba(126,34,206,0.6)]"
+                className="px-4 py-1.5 bg-[#8C5E28] hover:bg-[#724B1E] text-white text-xs font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer shadow-xs"
               >
                 Update & Save
               </button>

@@ -20,6 +20,7 @@ import {
   UploadedReport,
   RecipeIngredientItem,
   ClinicalRecipe,
+  ExtractedPatientDossier,
 } from './types';
 
 // Mock & Initial Data
@@ -68,8 +69,13 @@ import { NutritionPrescriptionModal } from './components/NutritionPrescriptionMo
 import { PersonalNutritionAiDrawer } from './components/PersonalNutritionAiDrawer';
 
 // 20 Core Modules Requested by User
+import { FrontPageZiathlon } from './components/FrontPageZiathlon';
+import { MainFoldersDashboard } from './components/MainFoldersDashboard';
+import { NutritionSection } from './components/NutritionSection';
+import { MedicinalSection } from './components/MedicinalSection';
 import { OverviewFrontPage } from './components/OverviewFrontPage';
-import { GeneralInfoSection } from './components/GeneralInfoSection'; // 01
+import { ProfileSection } from './components/ProfileSection'; // 01
+import { GeneralInfoSection } from './components/GeneralInfoSection'; // 02
 import { DomainSelectorSection } from './components/DomainSelectorSection'; // 02
 import { SymptomsAssessmentSection } from './components/SymptomsAssessmentSection'; // 03
 import { MedicalHistorySection } from './components/MedicalHistorySection'; // 04
@@ -90,20 +96,30 @@ import { RecipesGuidelinesSection } from './components/RecipesGuidelinesSection'
 import { ClientFolderSection } from './components/ClientFolderSection'; // 20
 import { BodyCompositionTrackerSection } from './components/BodyCompositionTrackerSection'; // 21
 import { FitnessGuidelinesSection } from './components/FitnessGuidelinesSection'; // 22
+import { SportsMedicineBannerBackground } from './components/SportsMedicineBannerBackground';
 
 // Advanced AI & Clinical Suites
 import { PersonalNutritionAiSection } from './components/PersonalNutritionAiSection';
-import { WhatsAppDietAiSection } from './components/WhatsAppDietAiSection';
+import { WhatsAppHubSection } from './components/WhatsAppHubSection';
 import { AiDietPlanSection } from './components/AiDietPlanSection';
 import { Custom7DayPlanStudio } from './components/Custom7DayPlanStudio';
 import { ClinicalNotesSection } from './components/ClinicalNotesSection';
 import { CustomDayPlan, INITIAL_7_DAY_STUDIO_PLAN } from './data/customStudio7DayPlans';
+import { DocumentVerificationSection } from './components/DocumentVerificationSection';
+
+// ELSHA Security & Access Control Suite
+import { ElshaLoginScreen } from './components/ElshaLoginScreen';
+import { FolderPasswordPrompt } from './components/FolderPasswordPrompt';
+import { SecuritySettingsView } from './components/SecuritySettingsView';
+import { elshaSecurity } from './services/elshaSecurityClient';
+import { CANONICAL_FOLDERS } from './types/securityTypes';
 
 import {
   ShieldCheck,
   Lock,
   UserCheck,
   ChevronRight,
+  ChevronLeft,
   Menu,
   X,
   Printer,
@@ -116,7 +132,11 @@ import {
   LayoutDashboard,
   Sun,
   Moon,
+  Calculator,
+  LogOut,
+  ShieldAlert,
 } from 'lucide-react';
+import { ElshaIfctCalculatorModal } from './components/ElshaIfctCalculatorModal';
 
 export default function App() {
   // --- Core State with Durable Storage Persistence ---
@@ -240,42 +260,99 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<string>('overview');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // --- ELSHA Security & Authentication State ---
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => elshaSecurity.isAuthenticated());
+  const [isCheckingAuth, setIsCheckingAuth] = useState<boolean>(true);
+  const [unlockedFolders, setUnlockedFolders] = useState<Set<string>>(new Set());
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState<boolean>(false);
+
+  // Validate server session on initial load and handle browser refresh
+  useEffect(() => {
+    let isMounted = true;
+    elshaSecurity.checkStatus().then((status) => {
+      if (!isMounted) return;
+      setIsAuthenticated(status.isAuthenticated);
+      setUnlockedFolders(new Set(status.unlockedFolders || []));
+      setIsCheckingAuth(false);
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Map any sub-tab or view ID to its canonical folder identifier
+  const getCanonicalFolderForTab = (tabId: string): string | null => {
+    if (tabId === 'overview' || tabId === 'workspace' || tabId === 'security-settings') {
+      return null; // Public / Dashboard views within authenticated session
+    }
+    if (['profile', 'general', 'domains', 'symptoms', 'medical-history', 'parent-history', 'upload-files'].includes(tabId)) {
+      return 'profile';
+    }
+    if (['biometrics', 'biometrics-scanner', 'biometrics-progress'].includes(tabId)) {
+      return 'biometrics';
+    }
+    if (['medicinal'].includes(tabId)) {
+      return 'medicinal';
+    }
+    if (tabId === 'anthropometry') return 'anthropometry';
+    if (tabId === 'rda') return 'rda';
+    if (['7-day-diet-plan', 'dietplan', 'custom-plan-studio'].includes(tabId)) return '7-day-diet-plan';
+    if (['nutrition', 'lifestyle', 'mental-assessment', 'gut-health', 'nutritional-assessment', 'micronutrients', 'daily-routine', 'food-frequency', 'dietary-recall', 'nutritional-gap', 'diet-domains', 'ingredients-ayurveda', 'recipes-guidelines', 'nutrition-ai'].includes(tabId)) {
+      return 'nutrition';
+    }
+    if (['exercise'].includes(tabId)) return 'exercise';
+    if (['fitness-guidelines', 'physiotherapy'].includes(tabId)) return 'physiotherapy';
+    if (['client-folder', 'client-folders'].includes(tabId)) return 'client-folder';
+    if (['whatsapp'].includes(tabId)) return 'whatsapp';
+    if (['document-verification'].includes(tabId)) return 'document-verification';
+    if (['clinicalnotes'].includes(tabId)) return 'clinicalnotes';
+    return null;
+  };
+
+  // Safe navigation handler that locks previously opened folder when navigating away
+  const handleNavigateToTab = (newTabId: string) => {
+    const currentFolder = getCanonicalFolderForTab(activeTab);
+    const targetFolder = getCanonicalFolderForTab(newTabId);
+
+    // If navigating away from a protected folder to a different folder or dashboard, remove active temporary grant
+    if (currentFolder && currentFolder !== targetFolder) {
+      elshaSecurity.lockFolder(currentFolder);
+      setUnlockedFolders((prev) => {
+        const next = new Set(prev);
+        next.delete(currentFolder);
+        return next;
+      });
+    }
+
+    setActiveTab(newTabId);
+  };
+
+  // Perform full explicit logout
+  const handleLogout = async () => {
+    await elshaSecurity.logout();
+    setIsAuthenticated(false);
+    setUnlockedFolders(new Set());
+    setActiveTab('overview');
+    setShowLogoutConfirm(false);
+  };
+
   // --- Modals & Views ---
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isE2EEOpen, setIsE2EEOpen] = useState(false);
   const [isPrescriptionOpen, setIsPrescriptionOpen] = useState(false);
+  const [isElshaModalOpen, setIsElshaModalOpen] = useState(false);
   const [isAiDrawerOpen, setIsAiDrawerOpen] = useState(false);
   const [deviceMode, setDeviceMode] = useState<DeviceMode>('responsive');
 
-  // Theme Mode: 'purple-white' (Default) | 'purple-dark'
-  const [themeMode, setThemeMode] = useState<'purple-white' | 'purple-dark'>(() => {
-    try {
-      const saved = localStorage.getItem('ELSHA_THEME_PREFERENCE');
-      if (saved === 'purple-dark' || saved === 'purple-white') return saved;
-    } catch {}
-    return 'purple-white'; // Purple with White theme by default!
-  });
+  // Purple & White Theme with Sandal & Black Accents
+  const themeMode: string = 'purple-white';
 
   useEffect(() => {
-    try {
-      localStorage.setItem('ELSHA_THEME_PREFERENCE', themeMode);
-    } catch {}
-    if (themeMode === 'purple-white') {
-      document.documentElement.classList.add('theme-purple-white');
-      document.documentElement.classList.remove('theme-purple-dark');
-      document.body.classList.add('theme-purple-white');
-      document.body.classList.remove('theme-purple-dark');
-    } else {
-      document.documentElement.classList.add('theme-purple-dark');
-      document.documentElement.classList.remove('theme-purple-white');
-      document.body.classList.add('theme-purple-dark');
-      document.body.classList.remove('theme-purple-white');
-    }
-  }, [themeMode]);
-
-  const toggleTheme = () => {
-    setThemeMode((prev) => (prev === 'purple-white' ? 'purple-dark' : 'purple-white'));
-  };
+    document.documentElement.classList.remove('theme-black-white', 'theme-purple-dark');
+    document.documentElement.classList.add('theme-purple-white');
+    document.body.classList.remove('theme-black-white', 'theme-purple-dark');
+    document.body.classList.add('theme-purple-white');
+  }, []);
 
   // 7-Day Diet Plan Studio state synchronized with Rx Prescription
   const [customStudioPlans, setCustomStudioPlans] = useState<CustomDayPlan[]>(() => {
@@ -369,30 +446,17 @@ export default function App() {
     setTimeout(() => setSaveSuccessNotification(false), 3500);
   };
 
-  // --- Exact 20-Order Navigation Specified by User ---
+  // --- 7 FOLDERS NAVIGATION AS SPECIFIED BY USER ---
   const navTabs = [
-    { id: 'general', label: '1. General Information [Demographics]', short: '01. Demographics' },
-    { id: 'domains', label: '2. Domain of Disease, Disorder, Fitness, Performance', short: '02. Disease Domains' },
-    { id: 'symptoms', label: '3. Symptoms Assessment', short: '03. Symptoms' },
-    { id: 'medical-history', label: '4. Medical History, Past Procedures', short: '04. Medical History' },
-    { id: 'parent-history', label: '5. Parent Medical History', short: '05. Parent History' },
-    { id: 'upload-files', label: '6. Upload Files', short: '06. Upload Files' },
-    { id: 'lifestyle', label: '7. Lifestyle Assessment', short: '07. Lifestyle' },
-    { id: 'mental-assessment', label: '8. Neuro Emotional Assessment (15 Scientific Questions)', short: '08. Neuro-Emotional' },
-    { id: 'gut-health', label: '9. Gut Health Assessment', short: '09. Gut Health' },
-    { id: 'nutritional-assessment', label: '10. Nutritional Assessment', short: '10. Nutrition' },
-    { id: 'micronutrients', label: '11. Micronutrient Assessment', short: '11. Micronutrients' },
-    { id: 'daily-routine', label: '12. Daily Routine', short: '12. Daily Routine' },
-    { id: 'food-frequency', label: '13. Food Frequency', short: '13. Food Frequency' },
-    { id: 'dietary-recall', label: '14. 24 Recall Method', short: '14. 24-Hr Recall' },
-    { id: 'nutritional-gap', label: '15. Nutritional Gap', short: '15. Nutritional Gap' },
-    { id: 'diet-domains', label: '16. Domain of Diet (Gut Cleanse & Elimination Diet)', short: '16. Diet Domains' },
-    { id: 'ingredients-ayurveda', label: '17. Ingredient Guidelines + Ayurvedic Siddha Functional Food Guidelines', short: '17. Ingredients & Ayur-Siddha' },
-    { id: 'recipes-guidelines', label: '18. Recipes Guidelines', short: '18. Recipes Guidelines' },
-    { id: 'custom-plan-studio', label: '19. 7-Day Diet Plan (ICMR AI)', short: '19. 7-Day Diet Plan' },
-    { id: 'fitness-guidelines', label: '20. Exercise Guidelines', short: '20. Exercise Guidelines' },
-    { id: 'client-folder', label: '21. Save and Creating a Folder for the Client', short: '21. Client Folder' },
-    { id: 'biometrics', label: '22. Progress Tracking (Biometric Data Tracking Automated)', short: '22. Biometric Progress' },
+    { id: 'workspace', label: '📁', short: '📁' },
+    { id: 'profile', label: '1 PROFILE', short: '1. PROFILE' },
+    { id: 'biometrics', label: '2 BIOMETRIC', short: '2. BIOMETRIC' },
+    { id: 'medicinal', label: '3 MEDICAL', short: '3. MEDICAL' },
+    { id: 'nutrition', label: '4 NUTRITION', short: '4. NUTRITION' },
+    { id: 'exercise', label: '5 EXERCISE', short: '5. EXERCISE' },
+    { id: 'client-folder', label: '6 CLIENT FOLDER', short: '6. CLIENT FOLDER' },
+    { id: 'whatsapp', label: '7 WHATSAPP', short: '7. WHATSAPP' },
+    { id: 'document-verification', label: '📄 DOC VERIFICATION', short: 'DOC VERIFY' },
   ];
 
   // Handlers
@@ -402,6 +466,10 @@ export default function App() {
 
   const handleUpdateSymptom = (id: string, updated: Partial<SymptomAssessmentItem>) => {
     setSymptoms((prev) => prev.map((s) => (s.id === id ? { ...s, ...updated } : s)));
+  };
+
+  const handleDeleteSymptom = (id: string) => {
+    setSymptoms((prev) => prev.filter((s) => s.id !== id));
   };
 
   const handleAddSymptom = () => {
@@ -545,273 +613,281 @@ export default function App() {
     setClinicalNotes((prev) => prev.filter((n) => n.id !== id));
   };
 
+  // Automated Patient Ingestion from Medical Records / Lab Reports / Slips
+  const handleApplyExtractedPatientDossier = (dossier: ExtractedPatientDossier) => {
+    // 1. Update Profile & Demographics
+    setGeneralInfo((prev) => {
+      const updated = { ...prev };
+      if (dossier.name) updated.name = dossier.name;
+      if (dossier.age !== undefined && dossier.age !== null) updated.age = dossier.age;
+      if (dossier.sex) updated.sex = dossier.sex;
+      if (dossier.dateOfBirth) updated.dateOfBirth = dossier.dateOfBirth;
+      if (dossier.place) updated.place = dossier.place;
+      if (dossier.phone) updated.phone = dossier.phone;
+      if (dossier.email) updated.email = dossier.email;
+      if (dossier.height) updated.height = dossier.height;
+      if (dossier.weight) updated.weight = dossier.weight;
+      if (dossier.waistCircumference) updated.waistCircumference = dossier.waistCircumference;
+      if (dossier.hipCircumference) updated.hipCircumference = dossier.hipCircumference;
+      if (dossier.tag) updated.tag = dossier.tag;
+      if (dossier.customTag) updated.customTag = dossier.customTag;
+      if (dossier.activityLevel) updated.activityLevel = dossier.activityLevel;
+      return updated;
+    });
+
+    // 2. Clinical Domain & Category
+    if (dossier.domain && ['diseases', 'disorders', 'performance', 'fitness'].includes(dossier.domain)) {
+      setSelectedDomain(dossier.domain as MajorDomainId);
+    }
+    if (dossier.category) setSelectedCategory(dossier.category);
+
+    // 3. Symptoms Questionnaire Auto-Fill
+    if (dossier.symptoms && Array.isArray(dossier.symptoms) && dossier.symptoms.length > 0) {
+      const newSymptoms: SymptomAssessmentItem[] = dossier.symptoms.map((s, idx) => ({
+        id: `sym-extracted-${Date.now()}-${idx}`,
+        symptom: s.symptom,
+        duration: s.duration || 'Reported on document',
+        severity: (s.severity as any) || 'Moderate',
+      }));
+      setSymptoms(newSymptoms);
+    }
+
+    // 4. Medical History & Medications
+    if (dossier.medications && Array.isArray(dossier.medications) && dossier.medications.length > 0) {
+      setMedicalHistory((prev) => ({
+        ...prev,
+        medications: dossier.medications!.map((m, idx) => ({
+          id: `med-extracted-${Date.now()}-${idx}`,
+          name: m.name,
+          dosage: m.dosage || 'Prescribed dose',
+          frequency: m.frequency || 'Daily',
+          timing: m.timing || 'Morning',
+          howLongTaken: m.duration || 'Current',
+        })),
+      }));
+    }
+
+    // 5. Daily Routine Schedule Auto-Fill
+    if (dossier.dailyRoutine && Array.isArray(dossier.dailyRoutine) && dossier.dailyRoutine.length > 0) {
+      setDailyRoutine(
+        dossier.dailyRoutine.map((r, idx) => ({
+          id: `routine-extracted-${Date.now()}-${idx}`,
+          activity: r.activity,
+          patientResponseTime: r.time,
+        }))
+      );
+    }
+
+    // 6. 24-Hour Recall Auto-Fill
+    if (dossier.dietaryRecall && Array.isArray(dossier.dietaryRecall) && dossier.dietaryRecall.length > 0) {
+      setDietaryRecall(
+        dossier.dietaryRecall.map((rec, idx) => ({
+          id: `rec-extracted-${Date.now()}-${idx}`,
+          mealTime: rec.mealTime,
+          foodItemsConsumed: rec.foodItemsConsumed,
+          quantity: rec.quantity,
+        }))
+      );
+    }
+
+    // 7. Auto-generate consultation note
+    if (dossier.clinicalSummary || dossier.name) {
+      const newNote: ClinicalConsultationNote = {
+        id: `note-extracted-${Date.now()}`,
+        sessionDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+        sessionTime: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+        clinicianName: 'AI Clinical Vision Parser',
+        consultationType: 'Initial Assessment',
+        categoryTag: 'Initial Assessment',
+        patientAdherence: 'Moderate (50-79%)',
+        chiefComplaintsObservations: `Patient Intake Slip / Lab File scanned. Auto-populated details for ${dossier.name || 'Patient'}.`,
+        objectiveVitalsFindings: {
+          bloodPressure: dossier.bloodPressure,
+          hba1cEst: dossier.hba1c,
+          bloodGlucoseFasting: dossier.fastingGlucose,
+          currentWeight: dossier.weight ? `${dossier.weight} kg` : undefined,
+        },
+        dietaryComplianceNotes: 'Baseline 24-hour recall captured and calibrated with ICMR 2024 benchmarks.',
+        privateClinicalAssessment: dossier.clinicalSummary || `Identified focus: ${dossier.tag || 'Clinical Management'}.`,
+        actionPlanNextSteps: `Initiate ICMR 2024 calibrated medical nutrition therapy based on extracted clinical profile.`,
+        isConfidential: true,
+        encryptedAt: new Date().toISOString(),
+      };
+      setClinicalNotes((prev) => [newNote, ...prev]);
+    }
+
+    setSaveSuccessNotification(true);
+    setTimeout(() => setSaveSuccessNotification(false), 3500);
+  };
+
+  // Listen to cross-component dossier extraction event
+  useEffect(() => {
+    const handleDossierEvent = (e: Event) => {
+      const customEvent = e as CustomEvent<ExtractedPatientDossier>;
+      if (customEvent.detail) {
+        handleApplyExtractedPatientDossier(customEvent.detail);
+      }
+    };
+    window.addEventListener('elsha-dossier-loaded', handleDossierEvent);
+    return () => window.removeEventListener('elsha-dossier-loaded', handleDossierEvent);
+  }, []);
+
   const currentDayPlan = dietPlanDays[0];
+
+  // 1. UNAUTHENTICATED GATE: Dedicated ELSHA Common Password Login Screen
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen w-full bg-[#0B0826] flex items-center justify-center p-6 text-white font-sans">
+        <div className="text-center space-y-3">
+          <div className="w-10 h-10 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto" />
+          <div className="text-xs uppercase tracking-widest text-purple-300 font-bold">
+            Verifying ELSHA Security Credentials...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <ElshaLoginScreen
+        onLoginSuccess={() => {
+          setIsAuthenticated(true);
+          setActiveTab('overview');
+        }}
+        onLogin={async (password) => {
+          const res = await elshaSecurity.login(password);
+          if (res.success) {
+            setIsAuthenticated(true);
+          }
+          return res;
+        }}
+      />
+    );
+  }
+
+  // 2. CHECK IF CURRENT TARGET TAB REQUIRES INDIVIDUAL FOLDER UNLOCK
+  const activeCanonicalFolderId = getCanonicalFolderForTab(activeTab);
+  const isTargetFolderLocked =
+    activeCanonicalFolderId !== null && !unlockedFolders.has(activeCanonicalFolderId);
+  const targetFolderMeta = CANONICAL_FOLDERS.find((f) => f.id === activeCanonicalFolderId);
 
   return (
     <DeviceFrame deviceMode={deviceMode} onSelectDeviceMode={setDeviceMode}>
-      <div className={`min-h-screen ${
-        themeMode === 'purple-white'
-          ? 'theme-purple-white bg-[#FAF7FD] text-[#1E1136]'
-          : 'theme-purple-dark bg-[#000000] text-white'
-      } flex flex-col selection:bg-[#7E22CE] selection:text-white font-sans transition-colors duration-200`}>
-        {/* TOP PERSISTENT CLINICAL HEADER - Žiathlon Signature Purple Theme */}
-        <header className={`sticky top-0 z-40 border-b-2 border-[#7E22CE] transition-colors ${
-          themeMode === 'purple-white' ? 'bg-white text-[#1E1136] shadow-sm' : 'bg-[#000000] text-white'
-        }`}>
-          <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex items-center justify-between gap-3">
-            {/* Logo & Brand title */}
-            <div className="flex items-center gap-3">
-              <ZiathlonLogo
-                size="md"
-                variant="horizontal"
-                showSubtitle={true}
-                theme={themeMode === 'purple-white' ? 'light' : 'dark'}
-                onClick={() => setActiveTab('overview')}
-              />
-              <div className={`hidden xl:block border-l pl-3 ${
-                themeMode === 'purple-white' ? 'border-purple-200' : 'border-white/20'
-              }`}>
-                <p className={`text-[10px] font-mono ${
-                  themeMode === 'purple-white' ? 'text-gray-600' : 'text-gray-400'
-                }`}>
-                  PATIENT: <span className="text-[#7E22CE] font-bold">{generalInfo.name || 'Kiruthika'}</span> • {selectedCategory}
-                </p>
-                <p className={`text-[9px] font-mono ${
-                  themeMode === 'purple-white' ? 'text-gray-500' : 'text-gray-500'
-                }`}>
-                  BMI: {calculations.bmi} • BMR: {calculations.bmr} kcal • TDEE: {calculations.tdee} kcal
-                </p>
+      <div className="min-h-screen theme-purple-white bg-transparent text-[#0F172A] flex flex-col selection:bg-[#8C5E28] selection:text-white font-sans transition-colors duration-200 relative">
+        {/* Fixed Sports Clinic Fullscreen Background from Folder 1 to Last Page */}
+        {activeTab !== 'overview' && <SportsMedicineBannerBackground subtleOpacity={false} />}
+
+        {/* TOP PERSISTENT CLINICAL HEADER - Žiathlon Signature Sandalwood Theme (Shown on Workspace / Clinical Folders) */}
+        {activeTab !== 'overview' && (
+          <header className="sticky top-0 z-40 border-b-2 border-[#D9C4A5] bg-[#FAF6ED]/95 backdrop-blur-md text-[#2E1C07] shadow-xs">
+            <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex items-center justify-between gap-3">
+              {/* Left Upper Corner ⌂ Symbol for Front Page & Logo */}
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  id="btn-front-page-home"
+                  onClick={() => handleNavigateToTab('overview')}
+                  className={`w-8 h-8 rounded-lg border flex items-center justify-center font-sans text-base font-black transition-all cursor-pointer ${
+                    activeTab === 'overview'
+                      ? 'bg-[#8C5E28] text-white border-[#8C5E28] shadow-xs'
+                      : 'bg-[#F7F3EA] text-[#5C3A14] border-[#D9C4A5] hover:bg-[#8C5E28] hover:text-white'
+                  }`}
+                  title="Front Page (⌂)"
+                >
+                  ⌂
+                </button>
+
+                <ZiathlonLogo
+                  size="md"
+                  variant="horizontal"
+                  showSubtitle={true}
+                  theme="light"
+                  onClick={() => handleNavigateToTab('overview')}
+                />
+              </div>
+
+              {/* Quick Action Clinical Toolbar */}
+              <div className="flex items-center gap-2">
+                {/* Official Final Nutrition Prescription */}
+                <button
+                  type="button"
+                  id="btn-prescription-doc"
+                  onClick={() => setIsPrescriptionOpen(true)}
+                  className="py-1.5 px-3 bg-[#8C5E28] hover:bg-[#724B1E] text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-xs transition-all rounded-lg"
+                  title="Open Official Clinical Nutrition Prescription"
+                >
+                  <Printer className="w-3.5 h-3.5 text-white" />
+                  <span className="hidden sm:inline">Rx Prescription</span>
+                </button>
+
+                {/* 📁 Symbol Button for 7 Folders Dashboard */}
+                <button
+                  type="button"
+                  id="btn-nav-folders"
+                  onClick={() => handleNavigateToTab('workspace')}
+                  className="py-1.5 px-3 bg-white border-2 border-[#8C5E28] text-[#8C5E28] hover:bg-[#8C5E28] hover:text-white text-xs font-black uppercase tracking-wider flex items-center justify-center cursor-pointer shadow-xs transition-all rounded-lg"
+                  title="7 Folders Dashboard (📁)"
+                >
+                  📁
+                </button>
+
+                {/* Security Settings Button */}
+                <button
+                  type="button"
+                  id="btn-security-settings"
+                  onClick={() => handleNavigateToTab('security-settings')}
+                  className={`py-1.5 px-2.5 rounded-lg border text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-xs transition-all ${
+                    activeTab === 'security-settings'
+                      ? 'bg-[#7016B7] text-white border-[#7016B7]'
+                      : 'bg-purple-50 text-[#7016B7] border-purple-200 hover:bg-purple-100'
+                  }`}
+                  title="ELSHA Security Settings & Password Studio"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span className="hidden md:inline">Security</span>
+                </button>
+
+                {/* Explicit Logout Button */}
+                <button
+                  type="button"
+                  id="btn-app-logout"
+                  onClick={() => setShowLogoutConfirm(true)}
+                  className="py-1.5 px-2.5 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-xs transition-all"
+                  title="Logout from ELSHA"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span className="hidden md:inline">Logout</span>
+                </button>
+
+                {/* Mobile Menu Toggle */}
+                <button
+                  type="button"
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="p-2 border md:hidden cursor-pointer bg-white border-[#D9C4A5] text-[#8C5E28]"
+                >
+                  {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+                </button>
               </div>
             </div>
-
-            {/* Quick Action Clinical Toolbar */}
-            <div className="flex items-center gap-2">
-              {/* Theme Toggle Button (Purple & White / Purple Dark) */}
-              <button
-                type="button"
-                id="btn-theme-toggle"
-                onClick={toggleTheme}
-                className={`py-1.5 px-2.5 border text-xs font-black uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition-all ${
-                  themeMode === 'purple-white'
-                    ? 'bg-purple-100 text-purple-900 border-purple-400 hover:bg-purple-200 shadow-sm'
-                    : 'bg-[#0d0617] text-[#C084FC] border-[#7E22CE] hover:bg-[#7E22CE] hover:text-white'
-                }`}
-                title="Toggle Theme: Purple & White / Purple Dark"
-              >
-                {themeMode === 'purple-white' ? (
-                  <>
-                    <Sun className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                    <span className="hidden sm:inline">Purple & White</span>
-                  </>
-                ) : (
-                  <>
-                    <Moon className="w-3.5 h-3.5 text-purple-300 fill-purple-300" />
-                    <span className="hidden sm:inline">Purple Dark</span>
-                  </>
-                )}
-              </button>
-
-              {/* Front Page Dashboard Button */}
-              <button
-                type="button"
-                onClick={() => setActiveTab('overview')}
-                className={`py-1.5 px-3 border text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition-all ${
-                  activeTab === 'overview'
-                    ? 'bg-[#7E22CE] text-white border-[#7E22CE] shadow-[0_0_12px_rgba(126,34,206,0.5)]'
-                    : themeMode === 'purple-white'
-                    ? 'bg-white text-[#7E22CE] border-purple-300 hover:bg-purple-50'
-                    : 'bg-[#0d0617] text-[#C084FC] border-[#7E22CE] hover:bg-[#7E22CE] hover:text-white'
-                }`}
-                title="Open ŽIATHLON Clinical Front Page Dashboard"
-              >
-                <LayoutDashboard className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Front Page</span>
-              </button>
-
-              {/* Personal Nutrition AI Button */}
-              <button
-                type="button"
-                onClick={() => setActiveTab('nutrition-ai')}
-                className={`py-1.5 px-3 border text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition-all ${
-                  activeTab === 'nutrition-ai'
-                    ? 'bg-[#7E22CE] text-white border-[#7E22CE] shadow-[0_0_12px_rgba(126,34,206,0.5)]'
-                    : themeMode === 'purple-white'
-                    ? 'bg-white text-[#7E22CE] border-purple-300 hover:bg-purple-50'
-                    : 'bg-[#0d0617] text-[#C084FC] border-[#7E22CE] hover:bg-[#7E22CE] hover:text-white'
-                }`}
-                title="Open Personal Nutrition AI Consultation Assistant"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-                <span className="hidden sm:inline">Nutrition AI</span>
-              </button>
-
-              {/* WhatsApp AI Tool */}
-              <button
-                type="button"
-                onClick={() => setActiveTab('whatsapp-ai')}
-                className={`py-1.5 px-3 border text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition-all ${
-                  activeTab === 'whatsapp-ai'
-                    ? 'bg-[#7E22CE] text-white border-[#7E22CE]'
-                    : themeMode === 'purple-white'
-                    ? 'bg-white text-gray-700 border-purple-200 hover:border-[#7E22CE] hover:text-[#7E22CE]'
-                    : 'bg-[#0d0617] text-gray-300 border-white/20 hover:border-[#7E22CE] hover:text-white'
-                }`}
-                title="WhatsApp Patient Communication Bot"
-              >
-                <Smartphone className="w-3.5 h-3.5 text-emerald-500" />
-                <span className="hidden sm:inline">WhatsApp AI</span>
-              </button>
-
-              {/* Custom 7-Day Plan Studio */}
-              <button
-                type="button"
-                onClick={() => setActiveTab('custom-plan-studio')}
-                className={`py-1.5 px-3 border text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition-all ${
-                  activeTab === 'custom-plan-studio'
-                    ? 'bg-[#7E22CE] text-white border-[#7E22CE] shadow-[0_0_10px_rgba(126,34,206,0.5)]'
-                    : themeMode === 'purple-white'
-                    ? 'bg-white text-gray-700 border-purple-200 hover:border-[#7E22CE] hover:text-[#7E22CE]'
-                    : 'bg-[#0d0617] text-gray-300 border-white/20 hover:border-[#7E22CE] hover:text-white'
-                }`}
-                title="Alter 7-Day Plan, Custom Recipes & Automated ICMR Portion Sizing"
-              >
-                <CalendarDays className="w-3.5 h-3.5 text-purple-600" />
-                <span className="hidden sm:inline">7-Day Studio</span>
-              </button>
-
-              {/* AI Diet Plan 7 Days */}
-              <button
-                type="button"
-                onClick={() => setActiveTab('dietplan')}
-                className={`py-1.5 px-3 border text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition-all ${
-                  activeTab === 'dietplan'
-                    ? 'bg-[#7E22CE] text-white border-[#7E22CE]'
-                    : themeMode === 'purple-white'
-                    ? 'bg-white text-gray-700 border-purple-200 hover:border-[#7E22CE] hover:text-[#7E22CE]'
-                    : 'bg-[#0d0617] text-gray-300 border-white/20 hover:border-[#7E22CE] hover:text-white'
-                }`}
-                title="7-Day Therapeutic Diet Plan"
-              >
-                <CalendarDays className="w-3.5 h-3.5 text-[#7E22CE]" />
-                <span className="hidden sm:inline">Diet Matrix</span>
-              </button>
-
-              {/* Official Final Nutrition Prescription */}
-              <button
-                type="button"
-                id="btn-prescription-doc"
-                onClick={() => setIsPrescriptionOpen(true)}
-                className="py-1.5 px-3 bg-[#7E22CE] hover:bg-[#9333EA] border border-purple-400 text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-[0_0_12px_rgba(126,34,206,0.4)] transition-all"
-                title="Open Official Clinical Nutrition Prescription (Purple & White Theme)"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Rx Prescription</span>
-              </button>
-
-              {/* WhatsApp Linked Status Indicator */}
-              <button
-                type="button"
-                id="btn-whatsapp-linked"
-                onClick={() => setActiveTab('whatsapp-ai')}
-                className={`py-1.5 px-2.5 border text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-                  themeMode === 'purple-white'
-                    ? 'bg-emerald-50 border-emerald-400 text-emerald-800 shadow-sm'
-                    : 'bg-[#0a1e14] border-[#25D366] text-emerald-300 shadow-[0_0_8px_rgba(37,211,102,0.3)]'
-                }`}
-                title="WhatsApp Linked (Click to open WhatsApp Hub)"
-              >
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="hidden sm:inline">WA Linked</span>
-              </button>
-
-              {/* E2EE Vault Pill */}
-              <button
-                type="button"
-                id="btn-e2ee-vault"
-                onClick={() => setIsE2EEOpen(true)}
-                className={`py-1.5 px-3 border text-xs flex items-center gap-1.5 transition-colors cursor-pointer ${
-                  themeMode === 'purple-white'
-                    ? 'bg-purple-50 border-purple-300 text-purple-900 hover:bg-[#7E22CE] hover:text-white'
-                    : 'bg-[#0d0617] border-[#7E22CE] text-gray-200 hover:bg-[#7E22CE] hover:text-white'
-                }`}
-                title="Hardware AES-GCM-256 E2EE Vault Status"
-              >
-                <Lock className="w-3.5 h-3.5 text-[#7E22CE]" />
-                <span className="font-mono text-[10px] hidden md:inline">E2EE VAULT</span>
-              </button>
-
-              {/* Clinician Session Login Pill */}
-              <button
-                type="button"
-                id="btn-auth-session"
-                onClick={() => setIsAuthOpen(true)}
-                className={`py-1.5 px-3 border text-xs flex items-center gap-1.5 transition-colors cursor-pointer ${
-                  themeMode === 'purple-white'
-                    ? 'bg-white border-purple-300 text-purple-900 hover:border-[#7E22CE] hover:bg-purple-50'
-                    : 'bg-[#0d0617] border-white/20 text-gray-300 hover:border-[#7E22CE] hover:text-[#C084FC]'
-                }`}
-                title="Clinician Authentication & Biometrics"
-              >
-                <UserCheck className="w-3.5 h-3.5 text-[#7E22CE]" />
-                <span className="text-[10px] uppercase font-bold tracking-wider hidden md:inline">
-                  {clinicianRole.split(' ')[0]}
-                </span>
-              </button>
-
-              {/* Mobile Menu Toggle */}
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className={`p-2 border md:hidden cursor-pointer ${
-                  themeMode === 'purple-white'
-                    ? 'bg-white border-purple-300 text-[#7E22CE]'
-                    : 'bg-[#0d0617] border-[#7E22CE] text-[#C084FC]'
-                }`}
-              >
-                {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-              </button>
-            </div>
-          </div>
-
-          {/* 20 Horizontal Navigation Tabs in Exact Sequence */}
-          <div className={`hidden md:block border-t transition-colors ${
-            themeMode === 'purple-white'
-              ? 'bg-[#581C87] border-purple-700'
-              : 'bg-[#000000] border-white/10'
-          }`}>
-            <div className="max-w-7xl mx-auto px-4 overflow-x-auto scrollbar-none flex items-center gap-1.5 py-2">
-              {navTabs.map((tab) => {
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider whitespace-nowrap transition-all border cursor-pointer ${
-                      isActive
-                        ? themeMode === 'purple-white'
-                          ? 'bg-white text-[#581C87] border-white shadow-md font-black'
-                          : 'bg-[#7E22CE] text-white border-[#7E22CE] shadow-[0_0_10px_rgba(126,34,206,0.6)]'
-                        : themeMode === 'purple-white'
-                        ? 'border-transparent text-purple-200 hover:text-white hover:bg-purple-800/60'
-                        : 'border-transparent text-gray-400 hover:text-white hover:border-white/20'
-                    }`}
-                  >
-                    <span>{tab.short}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </header>
+          </header>
+        )}
 
         {/* Mobile Dropdown Drawer */}
         {mobileMenuOpen && (
-          <div className={`md:hidden border-b-2 border-[#7E22CE] p-4 space-y-2 z-30 transition-colors ${
-            themeMode === 'purple-white' ? 'bg-white shadow-lg' : 'bg-[#0d0617]'
-          }`}>
-            <div className="text-[10px] uppercase font-mono tracking-widest text-[#7E22CE] mb-2 font-bold">
-              All 20 Clinical Assessment Modules
+          <div className="md:hidden border-b-2 border-[#D9C4A5] bg-[#FAF6ED] p-4 space-y-2 z-30 transition-colors shadow-lg">
+            <div className="text-[10px] uppercase font-mono tracking-widest text-[#8C5E28] mb-2 font-bold flex items-center justify-between">
+              <span>Ziathlon 7 Clinical Folders</span>
+              <button
+                type="button"
+                onClick={() => {
+                  handleNavigateToTab('overview');
+                  setMobileMenuOpen(false);
+                }}
+                className="text-[10px] text-[#8C5E28] underline uppercase"
+              >
+                Front Page
+              </button>
             </div>
             <div className="grid grid-cols-2 gap-1.5">
               {navTabs.map((tab) => (
@@ -819,15 +895,13 @@ export default function App() {
                   key={tab.id}
                   type="button"
                   onClick={() => {
-                    setActiveTab(tab.id);
+                    handleNavigateToTab(tab.id);
                     setMobileMenuOpen(false);
                   }}
                   className={`text-left p-2 text-[11px] font-bold uppercase tracking-wider transition-colors border ${
                     activeTab === tab.id
-                      ? 'bg-[#7E22CE] text-white border-[#7E22CE]'
-                      : themeMode === 'purple-white'
-                      ? 'bg-purple-50/50 border-purple-200 text-purple-900 hover:border-[#7E22CE]'
-                      : 'bg-black border-white/10 text-gray-300 hover:border-[#7E22CE]'
+                      ? 'bg-[#8C5E28] text-white border-[#8C5E28]'
+                      : 'bg-[#FFFDF9] border-[#D9C4A5] text-[#5C3A14] hover:border-[#8C5E28]'
                   }`}
                 >
                   {tab.short}
@@ -839,11 +913,11 @@ export default function App() {
 
         {/* Save Toast Notification */}
         {saveSuccessNotification && (
-          <div className="fixed bottom-6 right-6 z-50 bg-[#0d0617] border-2 border-[#7E22CE] p-4 shadow-[0_10px_40px_rgba(0,0,0,0.8)] flex items-center gap-3 text-white text-xs animate-in fade-in slide-in-from-bottom">
-            <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
+          <div className="fixed bottom-6 right-6 z-50 bg-[#FAF6ED] border-2 border-[#D9C4A5] p-4 shadow-xl flex items-center gap-3 text-[#2E1C07] text-xs animate-in fade-in slide-in-from-bottom rounded-xl">
+            <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
             <div>
-              <div className="font-bold text-[#C084FC]">Patient Record Synchronized</div>
-              <div className="text-[11px] text-gray-400 font-mono">
+              <div className="font-bold text-[#7E22CE]">Patient Record Synchronized</div>
+              <div className="text-[11px] text-gray-600 font-mono">
                 AES-GCM-256 encrypted • Fingerprint: {keyFingerprint.slice(0, 14)}...
               </div>
             </div>
@@ -851,248 +925,249 @@ export default function App() {
         )}
 
         {/* Main Content Area */}
-        <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-6 space-y-8">
-          {/* 00. OVERVIEW FRONT PAGE DASHBOARD (ŽIATHLON CENTRAL LAUNCHER) */}
-          {activeTab === 'overview' && (
-            <OverviewFrontPage
-              generalInfo={generalInfo}
-              calculations={calculations}
-              onNavigate={(tabId) => {
-                if (tabId === 'client-folders') {
-                  setActiveTab('client-folder');
-                } else {
-                  setActiveTab(tabId);
+        <main
+          className={
+            activeTab === 'overview'
+              ? 'w-full min-h-screen h-screen p-0 m-0 overflow-hidden'
+              : activeTab === 'workspace' ||
+                activeTab === 'security-settings' ||
+                activeTab === 'medicinal' ||
+                activeTab === 'profile' ||
+                activeTab === 'biometrics' ||
+                activeTab === 'biometrics-scanner' ||
+                activeTab === 'biometrics-progress' ||
+                activeTab === 'exercise' ||
+                activeTab === 'client-folder' ||
+                activeTab === 'whatsapp' ||
+                activeTab === 'nutrition' ||
+                activeTab === 'general' ||
+                activeTab === 'domains' ||
+                activeTab === 'symptoms' ||
+                activeTab === 'medical-history' ||
+                activeTab === 'parent-history' ||
+                activeTab === 'upload-files' ||
+                activeTab === 'lifestyle' ||
+                activeTab === 'mental-assessment' ||
+                activeTab === 'gut-health' ||
+                activeTab === 'nutritional-assessment' ||
+                activeTab === 'micronutrients' ||
+                activeTab === 'daily-routine' ||
+                activeTab === 'food-frequency' ||
+                activeTab === 'dietary-recall' ||
+                activeTab === 'nutritional-gap' ||
+                activeTab === 'diet-domains' ||
+                activeTab === 'ingredients-ayurveda' ||
+                activeTab === 'recipes-guidelines' ||
+                activeTab === 'custom-plan-studio' ||
+                activeTab === 'dietplan' ||
+                activeTab === 'nutrition-ai'
+              ? 'flex-1 w-full max-w-[1920px] mx-auto px-1 sm:px-3 lg:px-4 py-2 space-y-4 relative z-10'
+              : 'flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-6 space-y-8 relative z-10'
+          }
+        >
+          {/* INDIVIDUAL FOLDER PASSWORD GATE: SHOWN IF TARGET FOLDER IS LOCKED */}
+          {isTargetFolderLocked ? (
+            <FolderPasswordPrompt
+              folderId={activeCanonicalFolderId!}
+              folderName={targetFolderMeta?.name || 'Protected Folder'}
+              categoryName={targetFolderMeta?.category}
+              onUnlockSuccess={() => {
+                setUnlockedFolders((prev) => new Set([...prev, activeCanonicalFolderId!]));
+              }}
+              onCancel={() => {
+                setActiveTab('workspace');
+              }}
+              onUnlock={async (pwd) => {
+                const res = await elshaSecurity.unlockFolder(activeCanonicalFolderId!, pwd);
+                if (res.success) {
+                  setUnlockedFolders((prev) => new Set([...prev, activeCanonicalFolderId!]));
                 }
-              }}
-              onOpenPrescription={() => setIsPrescriptionOpen(true)}
-              onLoadPatientData={(pat) => {
-                setGeneralInfo((prev) => ({ ...prev, ...pat }));
-                setActiveTab('general');
+                return res;
               }}
             />
-          )}
+          ) : (
+            <>
+              {/* 00. FRONT PAGE: ONLY LOGO ZIATHLON SPORT MEDICINE CLINIC & ENTER BUTTON */}
+              {activeTab === 'overview' && (
+                <FrontPageZiathlon
+                  onEnterWorkspace={() => handleNavigateToTab('workspace')}
+                  onSelectFolder={(folderId) => handleNavigateToTab(folderId)}
+                  themeMode={themeMode}
+                />
+              )}
 
-          {/* 01. GENERAL INFORMATION [DEMOGRAPHICS] */}
-          {activeTab === 'general' && (
-            <GeneralInfoSection
+              {/* 00-B. MAIN FOLDERS DASHBOARD (7 FOLDERS DIRECTORY) */}
+              {activeTab === 'workspace' && (
+                <MainFoldersDashboard
+                  onSelectFolder={(folderId) => handleNavigateToTab(folderId)}
+                  onBackToFrontPage={() => handleNavigateToTab('overview')}
+                  onOpenSecuritySettings={() => handleNavigateToTab('security-settings')}
+                  themeMode={themeMode}
+                  patientName={generalInfo.name || 'Kiruthika'}
+                  patientCondition={selectedCategory || 'Metabolic Health & Sports Medicine'}
+                  generalInfo={generalInfo}
+                  calculations={calculations}
+                  medicalHistory={medicalHistory}
+                />
+              )}
+
+              {/* SECURITY SETTINGS & PASSWORD MANAGEMENT VIEW */}
+              {activeTab === 'security-settings' && (
+                <SecuritySettingsView onBackToDashboard={() => handleNavigateToTab('workspace')} />
+              )}
+
+          {/* 1. FOLDER 1: PROFILE (Demographics, Disease Domain, Symptoms, Medical History, Parent History, Upload Folder, Prescription) */}
+          {(activeTab === 'profile' ||
+            activeTab === 'general' ||
+            activeTab === 'domains' ||
+            activeTab === 'symptoms' ||
+            activeTab === 'medical-history' ||
+            activeTab === 'parent-history' ||
+            activeTab === 'upload-files') && (
+            <ProfileSection
               generalInfo={generalInfo}
-              calculations={calculations}
               onChange={handleUpdateGeneralInfo}
-              onNavigateToBodyComposition={() => setActiveTab('biometrics')}
-            />
-          )}
-
-          {/* 02. DOMAIN OF DISEASE, DISORDER, FITNESS, PERFORMANCE */}
-          {activeTab === 'domains' && (
-            <DomainSelectorSection
-              domains={majorDomainsData}
               selectedDomain={selectedDomain}
-              selectedCategory={selectedCategory}
               onSelectDomain={setSelectedDomain}
+              selectedCategory={selectedCategory}
               onSelectCategory={setSelectedCategory}
-              onNavigateToRecipes={() => setActiveTab('recipes-guidelines')}
-            />
-          )}
-
-          {/* 03. SYMPTOMS ASSESSMENT */}
-          {activeTab === 'symptoms' && (
-            <SymptomsAssessmentSection
               symptoms={symptoms}
-              domainName="Diseases"
-              categoryName={selectedCategory}
               onUpdateSymptom={handleUpdateSymptom}
               onAddSymptom={handleAddSymptom}
+              onDeleteSymptom={handleDeleteSymptom}
+              onUpdateAllSymptoms={(items) => setSymptoms(items)}
+              medicalHistory={medicalHistory}
+              onUpdateMedicalHistory={(field, value) => setMedicalHistory((prev) => ({ ...prev, [field]: value }))}
+              onBackToMainFolders={() => setActiveTab('workspace')}
+              onNavigateToClientFolder={() => setActiveTab('client-folder')}
+              onLoadExtractedDossier={handleApplyExtractedPatientDossier}
             />
           )}
 
-          {/* 04. MEDICAL HISTORY ,PAST PROCEDURES */}
-          {activeTab === 'medical-history' && (
-            <MedicalHistorySection />
+          {/* 2. FOLDER 2: BIOMETRICS (ONLY TWO SUBFOLDERS: SCANNER & PROGRESS) */}
+          {(activeTab === 'biometrics' || activeTab === 'biometrics-scanner' || activeTab === 'biometrics-progress') && (
+            <BodyCompositionTrackerSection
+              patientName={generalInfo.name || 'Kiruthika'}
+              initialSubfolder={activeTab === 'biometrics-progress' ? 'progress' : 'scanner'}
+              onBackToMainFolders={() => setActiveTab('workspace')}
+            />
           )}
 
-          {/* 05. PARENT MEDICAL HISTORY */}
-          {activeTab === 'parent-history' && (
-            <ParentMedicalHistorySection />
-          )}
-
-          {/* 06. UPLOAD FILES */}
-          {activeTab === 'upload-files' && (
-            <ReportsUploadSection />
-          )}
-
-          {/* 07. LIFESTYLE ASSESSMENT */}
-          {activeTab === 'lifestyle' && (
-            <LifestyleAssessmentSection
+          {/* 3. FOLDER 3: MEDICAL (5 Folders: Preview, Medical Records Split Screen, Prescription, Goals, Diagnostics) */}
+          {activeTab === 'medicinal' && (
+            <MedicinalSection
+              generalInfo={generalInfo}
+              calculations={calculations}
+              medicalHistory={medicalHistory}
+              symptoms={symptoms}
               lifestyleItems={lifestyleItems}
-              onUpdateItem={handleUpdateLifestyle}
+              dailyRoutine={dailyRoutine}
+              foodHabits={foodHabits}
+              dietaryRecall={dietaryRecall}
+              selectedCategory={selectedCategory}
+              selectedDomain={selectedDomain}
+              onBackToMainFolders={() => setActiveTab('workspace')}
+              themeMode={themeMode}
+              onUpdateGeneralInfo={handleUpdateGeneralInfo}
+              onUpdateMedicalHistory={(field, value) => setMedicalHistory((prev) => ({ ...prev, [field]: value }))}
+              onUpdateSymptoms={(items) => setSymptoms(items)}
+              onUpdateCalculations={(updated) => setCalculations((prev) => ({ ...prev, ...updated }))}
             />
           )}
 
-          {/* 08. MENTAL ASSESSMENT BASED ON 15 SCIENTIFIC QUESTIONS */}
-          {activeTab === 'mental-assessment' && (
-            <MentalAssessmentSection />
-          )}
-
-          {/* 09. GUT HEALTH ASSESSMENT */}
-          {activeTab === 'gut-health' && (
-            <GutHealthSection />
-          )}
-
-          {/* 10. NUTRITIONAL ASSESSMENT */}
-          {activeTab === 'nutritional-assessment' && (
-            <NutritionAssessmentSection
-              habits={foodHabits}
-              onUpdateHabits={(updated) => setFoodHabits((prev) => ({ ...prev, ...updated }))}
-            />
-          )}
-
-          {/* 11. MICRONUTRIENT ASSESSMENT */}
-          {activeTab === 'micronutrients' && (
-            <MicronutrientAssessmentSection
-              selectedDomain={selectedCategory}
-            />
-          )}
-
-          {/* 12. DAILY ROUTINE */}
-          {activeTab === 'daily-routine' && (
-            <DailyRoutineSection
-              routineItems={dailyRoutine}
-              onUpdateRoutine={handleUpdateRoutine}
-              onAddRoutineItem={handleAddRoutineItem}
-            />
-          )}
-
-          {/* 13. FOOD FREQUENCY */}
-          {activeTab === 'food-frequency' && (
-            <FoodFrequencySection
-              categories={ffqCategories}
-              onUpdateItemFrequency={handleUpdateItemFrequency}
+          {/* 4. FOLDER 4: NUTRITION (15 Folders + Nutrition History Archive) */}
+          {(activeTab === 'anthropometry' ||
+            activeTab === 'nutrition' ||
+            activeTab === 'lifestyle' ||
+            activeTab === 'rda' ||
+            activeTab === 'mental-assessment' ||
+            activeTab === 'gut-health' ||
+            activeTab === 'nutritional-assessment' ||
+            activeTab === 'micronutrients' ||
+            activeTab === 'daily-routine' ||
+            activeTab === 'food-frequency' ||
+            activeTab === 'dietary-recall' ||
+            activeTab === 'nutritional-gap' ||
+            activeTab === 'diet-domains' ||
+            activeTab === 'ingredients-ayurveda' ||
+            activeTab === 'recipes-guidelines' ||
+            activeTab === 'custom-plan-studio' ||
+            activeTab === 'dietplan' ||
+            activeTab === 'nutrition-ai') && (
+            <NutritionSection
+              generalInfo={generalInfo}
+              calculations={calculations}
+              selectedDomain={selectedDomain}
+              onSelectDomain={setSelectedDomain}
+              selectedCategory={selectedCategory}
+              onSelectCategory={setSelectedCategory}
+              initialSubfolder={activeTab === 'rda' ? 'rda' : activeTab === 'lifestyle' ? 'lifestyle' : 'anthropometry'}
+              lifestyleItems={lifestyleItems}
+              onUpdateLifestyleItem={handleUpdateLifestyle}
+              dailyRoutine={dailyRoutine}
+              onUpdateDailyRoutine={handleUpdateRoutine}
+              ffqCategories={ffqCategories}
+              onUpdateFrequency={handleUpdateItemFrequency}
               onAddFoodItem={handleAddFoodItem}
               onRemoveFoodItem={handleRemoveFoodItem}
-            />
-          )}
-
-          {/* 14. 24 RECALL METHOD */}
-          {activeTab === 'dietary-recall' && (
-            <DietaryRecallSection
-              recallItems={dietaryRecall}
+              dietaryRecall={dietaryRecall}
               onUpdateRecall={handleUpdateRecall}
               onAddRecallRow={handleAddRecallRow}
               onDeleteRecallRow={handleDeleteRecallRow}
-              onNavigateToGap={() => setActiveTab('nutritional-gap')}
-            />
-          )}
-
-          {/* 15. NUTRITIONAL GAP */}
-          {activeTab === 'nutritional-gap' && (
-            <NutritionalGapSection
-              dietaryRecall={dietaryRecall}
-              generalInfo={generalInfo}
-              onNavigateToRecall={() => setActiveTab('dietary-recall')}
-            />
-          )}
-
-          {/* 16. DOMAIN OF DIET LIKE GUT CLEANSE & ELIMINATION DIET */}
-          {activeTab === 'diet-domains' && (
-            <DietDomainsAndPlanSection />
-          )}
-
-          {/* 17. INGREDIENT GUIDELINES + AYURVEDIC SIDDHA FUNCTIONAL FOOD GUIDELINES */}
-          {activeTab === 'ingredients-ayurveda' && (
-            <IngredientAndAyurSiddhaSection
-              selectedDomain={selectedDomain}
-              selectedCategory={selectedCategory}
-              generalInfo={generalInfo}
-              calculations={calculations}
-              onSelectCategory={(cat) => setSelectedCategory(cat)}
-              onOpenRx={() => setIsPrescriptionOpen(true)}
-            />
-          )}
-
-          {/* 18. RECIPES GUIDELINES */}
-          {activeTab === 'recipes-guidelines' && (
-            <RecipesGuidelinesSection
-              selectedDomain={selectedDomain}
-              selectedCategory={selectedCategory}
-              generalInfo={generalInfo}
-              calculations={calculations}
-              dietaryRecall={dietaryRecall}
-              onSelectCategory={(cat) => setSelectedCategory(cat)}
-              onOpenRx={() => setIsPrescriptionOpen(true)}
-            />
-          )}
-
-          {/* 19. 7-Day Diet Plan */}
-          {activeTab === 'custom-plan-studio' && (
-            <Custom7DayPlanStudio
-              generalInfo={generalInfo}
-              calculations={calculations}
-              selectedDomain={selectedDomain}
-              selectedCategory={selectedCategory}
-              onSelectCategory={(cat) => setSelectedCategory(cat)}
-              onSendToWhatsApp={(text) => {
-                setActiveTab('whatsapp-ai');
-              }}
-              onOpenFinalPrescription={() => setIsPrescriptionOpen(true)}
-            />
-          )}
-
-          {/* 20. EXERCISE GUIDELINES */}
-          {activeTab === 'fitness-guidelines' && (
-            <FitnessGuidelinesSection
-              exercisePlans={initialExercisePlan}
-            />
-          )}
-
-          {/* 21. SAVE AND CREATING A FOLDER FOR THE CLIENT */}
-          {activeTab === 'client-folder' && (
-            <ClientFolderSection
-              clientName={generalInfo.name || 'Kiruthika'}
-              primaryCondition={selectedCategory}
-              onOpenRx={() => setIsPrescriptionOpen(true)}
-            />
-          )}
-
-          {/* 22. PROGRESS TRACKING LIKE BIOMETRIC DATA TRACKING AUTOMATED */}
-          {activeTab === 'biometrics' && (
-            <BodyCompositionTrackerSection
-              patientName={generalInfo.name || 'Kiruthika'}
-            />
-          )}
-
-          {/* ADVANCED AI CONSULTATION & CLINICAL EXTENSIONS */}
-          {activeTab === 'nutrition-ai' && (
-            <PersonalNutritionAiSection
-              generalInfo={generalInfo}
-              calculations={calculations}
-              selectedCategory={selectedCategory}
-              selectedDomain={selectedDomain}
-              medicalHistory={medicalHistory}
-              dietaryRecall={dietaryRecall}
-              onAddClinicalNote={handleAddClinicalNote}
-              onAddRecallItem={(item) => setDietaryRecall((prev) => [...prev, item])}
-              onOpenPrescription={() => setIsPrescriptionOpen(true)}
-            />
-          )}
-
-          {activeTab === 'whatsapp-ai' && (
-            <WhatsAppDietAiSection
-              patientName={generalInfo.name || 'Kiruthika'}
-              phone={generalInfo.phone || ''}
-            />
-          )}
-
-          {activeTab === 'dietplan' && (
-            <AiDietPlanSection
-              days={dietPlanDays}
-              generalInfo={generalInfo}
+              dietPlanDays={dietPlanDays}
               onRegenerateMeal={handleRegenerateMeal}
               onUpdateMealItem={handleUpdateMealItem}
-              onOpenNutritionAi={() => setActiveTab('nutrition-ai')}
               onAddIngredientToMeal={handleAddIngredientToMeal}
               onAddRecipeToMeal={handleAddRecipeToMeal}
               onRemoveIngredientFromMeal={handleRemoveIngredientFromMeal}
+              onBackToMainFolders={() => setActiveTab('workspace')}
+              themeMode={themeMode}
+              onUpdateGeneralInfo={handleUpdateGeneralInfo}
+              onUpdateCalculations={(updated) => setCalculations((prev) => ({ ...prev, ...updated }))}
             />
+          )}
+
+          {/* 5. FOLDER 5: EXERCISE (7-Day Periodized Guidelines with In-Cell Editing & AI) */}
+          {(activeTab === 'exercise' || activeTab === 'fitness-guidelines') && (
+            <FitnessGuidelinesSection
+              exercisePlans={initialExercisePlan}
+              patientName={generalInfo.name || 'Kiruthika'}
+              patientCondition={selectedCategory}
+              onBackToMainFolders={() => setActiveTab('workspace')}
+            />
+          )}
+
+          {/* 6. FOLDER 6: CLIENT FOLDER (Dossiers, Search by Name, Re-Edit Option) */}
+          {(activeTab === 'client-folder' || activeTab === 'client-folders') && (
+            <ClientFolderSection
+              clientName={generalInfo.name || 'Kiruthika'}
+              currentPatientAge={generalInfo.age || 38}
+              currentPatientGender={generalInfo.sex || 'Female'}
+              currentPatientPhone={generalInfo.phone || ''}
+              currentPatientEmail={generalInfo.email || ''}
+              currentPatientHeight={generalInfo.height || 162}
+              currentPatientWeight={generalInfo.weight || 64}
+              primaryCondition={selectedCategory || 'Diabetes Mellitus'}
+              currentDomain={selectedDomain}
+              generalInfo={generalInfo}
+              onOpenRx={() => setIsPrescriptionOpen(true)}
+              onLoadClientData={handleApplyExtractedPatientDossier}
+              onNavigateToProfile={() => setActiveTab('profile')}
+              onBackToMainFolders={() => setActiveTab('workspace')}
+            />
+          )}
+
+          {/* 7. FOLDER 7: WHATSAPP (Real WhatsApp Multi-Device Inbox) */}
+          {activeTab === 'whatsapp' && (
+            <WhatsAppHubSection
+              patientName={generalInfo.name || 'Kiruthika'}
+              phone={generalInfo.phone || ''}
+              onBackToMainFolders={() => setActiveTab('workspace')}
+            />
+          )}
+
+          {activeTab === 'document-verification' && (
+            <DocumentVerificationSection />
           )}
 
           {activeTab === 'clinicalnotes' && (
@@ -1106,76 +1181,121 @@ export default function App() {
             />
           )}
 
-          {/* Bottom Workflow Action Bar */}
-          <div className="pt-6 border-t-2 border-[#7E22CE] flex flex-wrap items-center justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={handleManualSaveEncrypted}
-                className="py-2.5 px-6 bg-[#7E22CE] text-white text-xs font-black uppercase tracking-widest cursor-pointer hover:bg-[#9333EA] transition-all flex items-center gap-2 shadow-[0_0_15px_rgba(126,34,206,0.5)]"
-              >
-                <Lock className="w-3.5 h-3.5" />
-                Encrypt & Persist Assessment
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsPrescriptionOpen(true)}
-                className={`py-2.5 px-5 border text-xs font-bold uppercase tracking-wider cursor-pointer transition-colors flex items-center gap-2 ${
-                  themeMode === 'purple-white'
-                    ? 'bg-white border-[#7E22CE] text-[#7E22CE] hover:bg-purple-50'
-                    : 'bg-[#0d0617] border-[#7E22CE] text-[#C084FC] hover:bg-[#7E22CE] hover:text-white'
-                }`}
-              >
-                <Printer className="w-3.5 h-3.5" />
-                Generate Patient Prescription
-              </button>
-            </div>
+          {/* Bottom Workflow Action Bar (Shown only inside Clinical Folders, not Front Page) */}
+          {activeTab !== 'overview' && (
+            <div className="pt-6 border-t-2 border-[#7E22CE] flex flex-wrap items-center justify-between gap-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleManualSaveEncrypted}
+                  className="py-2.5 px-6 bg-[#8C5E28] hover:bg-[#724B1E] text-white text-xs font-black uppercase tracking-widest cursor-pointer transition-all flex items-center gap-2 shadow-xs"
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  Encrypt & Persist Assessment
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsPrescriptionOpen(true)}
+                  className="py-2.5 px-5 border border-[#8C5E28] text-[#8C5E28] hover:bg-[#FAF6ED] bg-white text-xs font-bold uppercase tracking-wider cursor-pointer transition-colors flex items-center gap-2"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  Generate Patient Prescription
+                </button>
+              </div>
 
-            {/* Next Module Navigation */}
-            <div className="flex items-center gap-2">
-              {(() => {
-                const currentIndex = navTabs.findIndex((t) => t.id === activeTab);
-                const nextTab = navTabs[currentIndex + 1];
-                if (nextTab) {
+              {/* Previous & Next Module Navigation */}
+              <div className="flex items-center gap-2">
+                {(() => {
+                  const currentIndex = navTabs.findIndex((t) => t.id === activeTab);
+                  const prevTab = currentIndex > 0 ? navTabs[currentIndex - 1] : null;
+                  const nextTab = navTabs[currentIndex + 1];
                   return (
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab(nextTab.id)}
-                      className={`py-2.5 px-5 border text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-sm ${
-                        themeMode === 'purple-white'
-                          ? 'bg-purple-50 border-purple-300 text-purple-950 hover:bg-[#7E22CE] hover:text-white'
-                          : 'bg-[#0d0617] border-[#7E22CE]/60 hover:border-[#7E22CE] text-white shadow-[0_0_10px_rgba(126,34,206,0.25)]'
-                      }`}
-                    >
-                      <span>Proceed to {nextTab.short}</span>
-                      <ChevronRight className="w-4 h-4 text-[#7E22CE]" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      {prevTab && (
+                        <button
+                          type="button"
+                          onClick={() => handleNavigateToTab(prevTab.id)}
+                          className="py-2.5 px-4 border border-[#D9C4A5] text-[#5C3A14] bg-[#FFFDF9] hover:bg-[#FAF6ED] hover:border-[#8C5E28] text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer"
+                        >
+                          <ChevronLeft className="w-4 h-4 text-[#8C5E28]" />
+                          <span>Back: {prevTab.short}</span>
+                        </button>
+                      )}
+                      {nextTab && (
+                        <button
+                          type="button"
+                          onClick={() => handleNavigateToTab(nextTab.id)}
+                          className="py-2.5 px-5 border border-[#8C5E28] bg-[#8C5E28] hover:bg-[#724B1E] text-white text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-xs"
+                        >
+                          <span>Proceed to {nextTab.short}</span>
+                          <ChevronRight className="w-4 h-4 text-white" />
+                        </button>
+                      )}
+                    </div>
                   );
-                }
-                return null;
-              })()}
+                })()}
+              </div>
             </div>
-          </div>
+          )}
+          </>
+          )}
         </main>
 
-        {/* Global Footer - Žiathlon Theme */}
-        <footer className={`mt-16 border-t-2 border-[#7E22CE] py-8 px-4 text-center text-xs transition-colors ${
-          themeMode === 'purple-white' ? 'bg-white text-gray-600' : 'bg-[#000000] text-gray-400'
-        }`}>
-          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <ZiathlonLogo size="sm" variant="horizontal" showSubtitle={true} theme={themeMode === 'purple-white' ? 'light' : 'dark'} />
-            </div>
+        {/* LOGOUT CONFIRMATION MODAL */}
+        {showLogoutConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in">
+            <div className="w-full max-w-sm bg-white rounded-2xl p-6 shadow-2xl border-2 border-purple-200 text-center space-y-4">
+              <div className="w-12 h-12 mx-auto rounded-full bg-rose-100 text-rose-600 flex items-center justify-center">
+                <LogOut className="w-6 h-6" />
+              </div>
 
-            <div className={`text-[11px] font-mono ${themeMode === 'purple-white' ? 'text-purple-900 font-semibold' : 'text-gray-400'}`}>
-              Hardware-Accelerated AES-GCM-256 E2EE • Zero-Knowledge Clinical Architecture
-            </div>
+              <div>
+                <h3 className="text-lg font-black text-slate-900 tracking-tight">
+                  Are you sure you want to log out?
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Logging out will end your session and clear all unlocked folder access.
+                </p>
+              </div>
 
-            <div className="text-[10px] text-gray-500 uppercase tracking-wider font-mono">
-              © 2026 ŽIATHLON SPORTS MEDICINE CLINIC • ELSHA NUTRITION AI
+              <div className="flex items-center gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className="w-1/2 py-2.5 px-4 rounded-xl border border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="w-1/2 py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold uppercase tracking-wider shadow-md transition-colors cursor-pointer"
+                >
+                  Log Out
+                </button>
+              </div>
             </div>
           </div>
-        </footer>
+        )}
+
+        {/* Global Footer - Žiathlon Theme (Hidden on Front Page for Clean Full Screen Experience) */}
+        {activeTab !== 'overview' && (
+          <footer className="mt-16 border-t-2 border-[#D9C4A5] bg-[#FAF6ED] py-8 px-4 text-center text-xs transition-colors text-[#5C3A14]">
+            <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <ZiathlonLogo size="sm" variant="horizontal" showSubtitle={true} theme="light" />
+              </div>
+
+              <div className="text-[11px] font-mono text-[#5C3A14] font-semibold">
+                Hardware-Accelerated AES-GCM-256 E2EE • Zero-Knowledge Clinical Architecture
+              </div>
+
+              <div className="text-[10px] text-gray-500 uppercase tracking-wider font-mono">
+                © 2026 ŽIATHLON SPORTS MEDICINE CLINIC • CLINICAL INTELLIGENCE
+              </div>
+            </div>
+          </footer>
+        )}
 
         {/* --- MODALS --- */}
         <AuthModal
@@ -1209,20 +1329,6 @@ export default function App() {
           condition={selectedCategory}
         />
 
-        {/* Floating Nutrition AI Launcher (when on other tabs) */}
-        {activeTab !== 'nutrition-ai' && (
-          <button
-            type="button"
-            id="btn-floating-nutrition-ai"
-            onClick={() => setIsAiDrawerOpen(true)}
-            className="fixed bottom-6 right-6 z-40 py-3 px-4 rounded-full bg-gradient-to-r from-[#6b21a8] to-[#9333ea] text-white font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-[0_4px_25px_rgba(147,51,234,0.6)] hover:scale-105 transition-all cursor-pointer border border-[#c084fc]"
-          >
-            <Sparkles className="w-4 h-4 text-purple-200" />
-            <span className="hidden sm:inline">Ask Nutrition AI</span>
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          </button>
-        )}
-
         {/* Personal Nutrition AI Quick Consultation Drawer */}
         <PersonalNutritionAiDrawer
           isOpen={isAiDrawerOpen}
@@ -1231,6 +1337,14 @@ export default function App() {
           generalInfo={generalInfo}
           calculations={calculations}
           selectedCategory={selectedCategory}
+        />
+
+        {/* ELSHA IFCT 2017 Table 1 Exact Formula Calculator Modal */}
+        <ElshaIfctCalculatorModal
+          isOpen={isElshaModalOpen}
+          onClose={() => setIsElshaModalOpen(false)}
+          initialFoodCode="A015"
+          initialGrams={30}
         />
       </div>
     </DeviceFrame>

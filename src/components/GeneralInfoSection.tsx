@@ -22,6 +22,11 @@ import {
   Upload,
   RefreshCw,
   AlertCircle,
+  User,
+  MapPin,
+  Calendar,
+  Tag,
+  Phone,
 } from 'lucide-react';
 
 export interface MasterSpreadsheetRow {
@@ -46,6 +51,7 @@ interface GeneralInfoSectionProps {
   onChange: (updated: Partial<GeneralInfo>) => void;
   onNavigateToBodyComposition?: () => void;
   onNavigateToTab?: (tabId: string) => void;
+  onNavigateToProfile?: () => void;
 }
 
 export const GeneralInfoSection: React.FC<GeneralInfoSectionProps> = ({
@@ -54,9 +60,11 @@ export const GeneralInfoSection: React.FC<GeneralInfoSectionProps> = ({
   onChange,
   onNavigateToBodyComposition,
   onNavigateToTab,
+  onNavigateToProfile,
 }) => {
   const [isBiometricsFolderOpen, setIsBiometricsFolderOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'form' | 'spreadsheet'>('form');
+  const [showProfileDetails, setShowProfileDetails] = useState(false);
 
   // Document Upload Auto-Fill state
   const [isProcessingDoc, setIsProcessingDoc] = useState(false);
@@ -366,10 +374,12 @@ Clinical Impression: Type 2 Diabetes Mellitus with Metabolic Syndrome`;
 
   // Spreadsheet bottom tabs matching user's document
   const docSubTabs = [
+    { label: 'Profile', tabId: 'profile' },
     { label: 'Demographics', tabId: 'general' },
     { label: 'Nutrition Assessment', tabId: 'nutritional-assessment' },
     { label: 'Biometrics', tabId: 'biometrics' },
     { label: 'Gut Health', tabId: 'gut-health' },
+    { label: 'Anthropometry', tabId: 'anthropometry' },
     { label: 'Lifestyle', tabId: 'lifestyle' },
     { label: 'Medical', tabId: 'medical-history' },
     { label: 'Fitness', tabId: 'domains' },
@@ -377,398 +387,148 @@ Clinical Impression: Type 2 Diabetes Mellitus with Metabolic Syndrome`;
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-gray-900">
       {/* Header Banner */}
-      <div className="border-b-2 border-[#7E22CE] pb-4 flex flex-wrap items-center justify-between gap-3">
+      <div className="border-b-2 border-purple-200 pb-3 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <span className="text-[10px] uppercase font-bold tracking-[0.4em] text-[#A855F7]">
-            Module 01 • Patient Profile & Demographics
+          <span className="text-[10px] uppercase font-bold tracking-[0.4em] text-[#7E22CE]">
+            02 • Demographics
           </span>
-          <h2 className="text-2xl font-black tracking-tight text-white uppercase mt-0.5">
-            General Information & Master File
+          <h2 className="text-xl sm:text-2xl font-black tracking-tight text-gray-950 uppercase mt-0.5">
+            Patient Demographics & Physical Measurements
           </h2>
-          <p className="text-xs text-gray-400">
-            South Someshwar Master Clinical Tracking File with Anthropometric records and body composition progression.
-          </p>
-        </div>
-
-        {/* View Switcher & Action Controls */}
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center border border-[#7E22CE] bg-black p-1 text-xs">
-            <button
-              type="button"
-              onClick={() => setViewMode('spreadsheet')}
-              className={`px-3 py-1 text-[11px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 ${
-                viewMode === 'spreadsheet'
-                  ? 'bg-[#7E22CE] text-white shadow-[0_0_10px_rgba(126,34,206,0.5)]'
-                  : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5" />
-              <span>Master Spreadsheet (Document View)</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('form')}
-              className={`px-3 py-1 text-[11px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 ${
-                viewMode === 'form'
-                  ? 'bg-[#7E22CE] text-white shadow-[0_0_10px_rgba(126,34,206,0.5)]'
-                  : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              <Table className="w-3.5 h-3.5" />
-              <span>Demographic Form</span>
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2 text-xs bg-[#0d0617] px-3.5 py-1.5 border border-[#7E22CE] text-[#A855F7] font-bold uppercase tracking-wider">
-            <HeartPulse className="w-3.5 h-3.5 text-purple-400" />
-            <span>ICMR-NIN 2024 Calibrated</span>
-          </div>
         </div>
       </div>
 
-      {/* DOCUMENT SPREADSHEET VIEW (Matches Page 1 of uploaded PDF) */}
-      {viewMode === 'spreadsheet' && (
-        <div className="space-y-4">
-          {/* Master File Title Banner & Quick Summary */}
-          <div className="p-4 bg-[#0d0617] border border-[#7E22CE] flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-xs font-mono uppercase text-[#A855F7] font-bold">
-                  MASTER FILE: South Someshwar - Master File 4-September-2026
-                </span>
-              </div>
-              <h3 className="text-lg font-black text-white uppercase mt-1">
-                Client Clinical Anthropometry & Body Profile Tracking Sheet
-              </h3>
-              <p className="text-xs text-gray-400">
-                Patient: <span className="text-white font-bold">{generalInfo.name || 'Kiruthika'}</span> • Target Calories: <span className="text-[#C084FC] font-bold">1,500 kcal</span> • Baseline ➔ Current
-              </p>
+      {/* Profile Sync Summary Card (Module 01 Profile Data) */}
+      <div className="p-4 bg-purple-50 border-2 border-[#7E22CE] rounded-xl flex flex-wrap items-center justify-between gap-4 shadow-sm text-gray-900">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-white border border-[#7E22CE] flex items-center justify-center text-[#7E22CE] shrink-0">
+            <User className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[10px] font-bold uppercase text-[#7E22CE] tracking-wider">Patient Profile:</span>
+              <span className="text-sm font-black text-gray-950">{generalInfo.name || 'Kiruthika'}</span>
+              <span className="text-xs text-gray-600 font-mono">
+                ({generalInfo.age || 32} yrs{generalInfo.dateOfBirth ? `, DOB: ${generalInfo.dateOfBirth}` : ''})
+              </span>
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#7E22CE] text-white uppercase tracking-wider">
+                {generalInfo.tag || 'Metabolic Management'}
+              </span>
             </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={handleAddRow}
-                className="px-3.5 py-2 bg-[#7E22CE] hover:bg-[#9333EA] text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>+ Add Progress Entry</span>
-              </button>
-              {onNavigateToBodyComposition && (
-                <button
-                  type="button"
-                  onClick={onNavigateToBodyComposition}
-                  className="px-3 py-2 bg-black border border-white/20 hover:border-[#7E22CE] text-gray-300 hover:text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer"
-                >
-                  <Activity className="w-3.5 h-3.5 text-[#C084FC]" />
-                  <span>Open Module 20 Biometrics</span>
-                </button>
+            <div className="flex flex-wrap items-center gap-x-4 text-[11px] text-gray-600 font-mono mt-0.5">
+              {generalInfo.place && (
+                <span className="flex items-center gap-1">
+                  <MapPin className="w-3 h-3 text-[#7E22CE]" />
+                  Place: <strong className="text-gray-900">{generalInfo.place}</strong>
+                </span>
+              )}
+              {generalInfo.phone && (
+                <span className="flex items-center gap-1">
+                  <Phone className="w-3 h-3 text-emerald-700 font-bold" />
+                  Contact: <strong className="text-emerald-700 font-bold">{generalInfo.phone}</strong>
+                </span>
               )}
             </div>
           </div>
+        </div>
 
-          {/* Interactive Document Spreadsheet Table */}
-          <div className="border border-[#7E22CE] bg-black overflow-x-auto shadow-2xl">
-            <table className="w-full text-left border-collapse min-w-[1050px]">
-              <thead>
-                <tr className="bg-[#1f0d38] border-b-2 border-[#7E22CE] text-[11px] font-black uppercase tracking-wider text-white">
-                  <th className="py-3 px-3 border-r border-[#7E22CE]/60">Date / Milestone</th>
-                  <th className="py-3 px-3 border-r border-[#7E22CE]/60 text-center">Height (cm)</th>
-                  <th className="py-3 px-3 border-r border-[#7E22CE]/60 text-center">Weight (kg)</th>
-                  <th colSpan={3} className="py-2 px-3 border-r border-[#7E22CE]/60 text-center bg-[#29104a]">
-                    Anthropometry
-                    <div className="grid grid-cols-3 text-[9px] font-mono text-purple-200 mt-0.5 border-t border-purple-400/30 pt-1">
-                      <span>WC (cm)</span>
-                      <span>HC (cm)</span>
-                      <span>W:H Ratio</span>
-                    </div>
-                  </th>
-                  <th className="py-3 px-3 border-r border-[#7E22CE]/60 text-center">Visceral Fat</th>
-                  <th colSpan={4} className="py-2 px-3 border-r border-[#7E22CE]/60 text-center bg-[#29104a]">
-                    Body Profile
-                    <div className="grid grid-cols-4 text-[9px] font-mono text-purple-200 mt-0.5 border-t border-purple-400/30 pt-1">
-                      <span>Fat (%)</span>
-                      <span>Muscle (%)</span>
-                      <span>Water (%)</span>
-                      <span>BMR (kcal)</span>
-                    </div>
-                  </th>
-                  <th className="py-3 px-3 border-r border-[#7E22CE]/60">Profile / Clinical Status</th>
-                  <th className="py-3 px-2 text-center">Sync / Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/10 text-xs font-mono">
-                {spreadsheetRows.map((row, idx) => {
-                  const isLast = idx === spreadsheetRows.length - 1;
-                  return (
-                    <tr
-                      key={row.id}
-                      className={`hover:bg-[#150926] transition-colors ${
-                        isLast ? 'bg-[#180a2c]/60' : idx % 2 === 0 ? 'bg-black' : 'bg-[#090412]'
-                      }`}
-                    >
-                      {/* Date */}
-                      <td className="py-2 px-3 border-r border-white/10 font-bold text-white">
-                        <input
-                          type="text"
-                          value={row.date}
-                          onChange={(e) => handleUpdateRow(row.id, 'date', e.target.value)}
-                          className="w-full bg-transparent text-white border-b border-transparent focus:border-[#7E22CE] focus:outline-none"
-                        />
-                      </td>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowProfileDetails(!showProfileDetails)}
+            className="px-3 py-1.5 bg-white border border-purple-200 hover:border-[#7E22CE] text-gray-700 hover:text-gray-900 text-xs font-bold uppercase tracking-wider rounded transition-colors cursor-pointer shadow-2xs"
+          >
+            {showProfileDetails ? 'Hide Profile Details' : 'Quick Edit Profile'}
+          </button>
+          {onNavigateToProfile && (
+            <button
+              type="button"
+              onClick={onNavigateToProfile}
+              className="px-3 py-1.5 bg-[#7E22CE] hover:bg-[#6b1dae] text-white text-xs font-bold uppercase tracking-wider rounded transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
+            >
+              <span>Go to 01. Profile</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+      </div>
 
-                      {/* Height */}
-                      <td className="py-2 px-2 border-r border-white/10 text-center text-gray-300">
-                        <input
-                          type="number"
-                          value={row.heightCm}
-                          onChange={(e) => handleUpdateRow(row.id, 'heightCm', parseFloat(e.target.value) || 0)}
-                          className="w-14 text-center bg-black/60 border border-white/10 text-white py-0.5 focus:border-[#7E22CE] focus:outline-none"
-                        />
-                      </td>
-
-                      {/* Weight */}
-                      <td className="py-2 px-2 border-r border-white/10 text-center">
-                        <input
-                          type="number"
-                          step="0.1"
-                          value={row.weightKg}
-                          onChange={(e) => handleUpdateRow(row.id, 'weightKg', parseFloat(e.target.value) || 0)}
-                          className="w-16 text-center bg-black/60 border border-[#7E22CE]/60 text-[#C084FC] font-bold py-0.5 focus:border-[#7E22CE] focus:outline-none"
-                        />
-                      </td>
-
-                      {/* Anthropometry: WC */}
-                      <td className="py-2 px-1.5 border-r border-white/10 text-center">
-                        <input
-                          type="number"
-                          step="0.5"
-                          value={row.wcCm}
-                          onChange={(e) => handleUpdateRow(row.id, 'wcCm', parseFloat(e.target.value) || 0)}
-                          className="w-12 text-center bg-transparent border-b border-white/10 text-white py-0.5 focus:border-[#7E22CE] focus:outline-none text-[11px]"
-                        />
-                      </td>
-
-                      {/* Anthropometry: HC */}
-                      <td className="py-2 px-1.5 border-r border-white/10 text-center">
-                        <input
-                          type="number"
-                          step="0.5"
-                          value={row.hcCm}
-                          onChange={(e) => handleUpdateRow(row.id, 'hcCm', parseFloat(e.target.value) || 0)}
-                          className="w-12 text-center bg-transparent border-b border-white/10 text-white py-0.5 focus:border-[#7E22CE] focus:outline-none text-[11px]"
-                        />
-                      </td>
-
-                      {/* W:H Ratio */}
-                      <td className="py-2 px-1.5 border-r border-white/10 text-center text-purple-300 font-bold text-[11px]">
-                        {row.whRatio}
-                      </td>
-
-                      {/* Visceral Fat */}
-                      <td className="py-2 px-2 border-r border-white/10 text-center">
-                        <span
-                          className={`px-2 py-0.5 rounded text-[11px] font-bold ${
-                            row.visceralFat <= 8
-                              ? 'bg-emerald-950/70 border border-emerald-500/50 text-emerald-300'
-                              : 'bg-red-950/70 border border-red-500/50 text-red-300'
-                          }`}
-                        >
-                          Level {row.visceralFat}
-                        </span>
-                      </td>
-
-                      {/* Fat % */}
-                      <td className="py-2 px-1.5 border-r border-white/10 text-center">
-                        <input
-                          type="number"
-                          step="0.1"
-                          value={row.fatPercent}
-                          onChange={(e) => handleUpdateRow(row.id, 'fatPercent', parseFloat(e.target.value) || 0)}
-                          className="w-12 text-center bg-transparent border-b border-white/10 text-white py-0.5 focus:border-[#7E22CE] focus:outline-none text-[11px]"
-                        />
-                      </td>
-
-                      {/* Muscle % */}
-                      <td className="py-2 px-1.5 border-r border-white/10 text-center">
-                        <input
-                          type="number"
-                          step="0.1"
-                          value={row.musclePercent}
-                          onChange={(e) => handleUpdateRow(row.id, 'musclePercent', parseFloat(e.target.value) || 0)}
-                          className="w-12 text-center bg-transparent border-b border-white/10 text-emerald-400 py-0.5 focus:border-[#7E22CE] focus:outline-none text-[11px]"
-                        />
-                      </td>
-
-                      {/* Water % */}
-                      <td className="py-2 px-1.5 border-r border-white/10 text-center">
-                        <input
-                          type="number"
-                          step="0.1"
-                          value={row.waterPercent}
-                          onChange={(e) => handleUpdateRow(row.id, 'waterPercent', parseFloat(e.target.value) || 0)}
-                          className="w-12 text-center bg-transparent border-b border-white/10 text-blue-300 py-0.5 focus:border-[#7E22CE] focus:outline-none text-[11px]"
-                        />
-                      </td>
-
-                      {/* BMR */}
-                      <td className="py-2 px-1.5 border-r border-white/10 text-center text-gray-300 text-[11px]">
-                        {row.bmrKcal}
-                      </td>
-
-                      {/* Status */}
-                      <td className="py-2 px-3 border-r border-white/10 font-sans text-xs text-gray-200">
-                        <input
-                          type="text"
-                          value={row.bodyProfile}
-                          onChange={(e) => handleUpdateRow(row.id, 'bodyProfile', e.target.value)}
-                          className="w-full bg-transparent border-b border-transparent focus:border-[#7E22CE] focus:outline-none"
-                        />
-                      </td>
-
-                      {/* Action */}
-                      <td className="py-2 px-2 text-center">
-                        <div className="flex items-center justify-center gap-1.5">
-                          <button
-                            type="button"
-                            title="Apply this measurement to active clinical profile"
-                            onClick={() => handleApplyLatestToProfile(row)}
-                            className="p-1 text-purple-400 hover:text-white bg-purple-950/40 hover:bg-purple-900 border border-purple-500/30 rounded cursor-pointer"
-                          >
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                          </button>
-                          {spreadsheetRows.length > 1 && (
-                            <button
-                              type="button"
-                              title="Delete row"
-                              onClick={() => handleDeleteRow(row.id)}
-                              className="p-1 text-gray-500 hover:text-red-400 cursor-pointer"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-
-            {/* Document Bottom Tabs Bar (Matches bottom tabs in uploaded PDF 1) */}
-            <div className="bg-[#120722] border-t-2 border-[#7E22CE] px-3 py-2 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex flex-wrap items-center gap-1 text-[11px]">
-                <span className="text-[9px] uppercase font-bold text-gray-400 font-mono mr-2">
-                  Document Sheets:
-                </span>
-                {docSubTabs.map((sub, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => onNavigateToTab && onNavigateToTab(sub.tabId)}
-                    className={`px-3 py-1 font-mono font-bold text-[11px] border transition-all cursor-pointer ${
-                      sub.tabId === 'general'
-                        ? 'bg-[#7E22CE] text-white border-[#7E22CE]'
-                        : 'bg-black/60 border-white/10 text-gray-300 hover:text-white hover:border-[#7E22CE]'
-                    }`}
-                  >
-                    {sub.label}
-                  </button>
-                ))}
-              </div>
-
-              <div className="text-[10px] text-gray-400 font-mono">
-                Total Logs: <span className="font-bold text-white">{spreadsheetRows.length} Milestones</span>
-              </div>
+      {/* Optional Collapsible Quick-Edit for Profile Fields */}
+      {showProfileDetails && (
+        <div className="p-4 bg-white border-2 border-purple-200 rounded-lg space-y-3 shadow-sm animate-in fade-in">
+          <div className="flex items-center justify-between border-b border-purple-200 pb-2">
+            <span className="text-[11px] uppercase font-bold text-[#7E22CE] flex items-center gap-1.5">
+              <User className="w-3.5 h-3.5" />
+              Quick Edit Profile (Syncs with Module 01)
+            </span>
+            <span className="text-[10px] text-gray-500">Edits update global patient state</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div>
+              <label className="block text-[9px] uppercase font-bold text-gray-600 mb-1">Name</label>
+              <input
+                type="text"
+                value={generalInfo.name ?? ''}
+                onChange={(e) => onChange({ name: e.target.value })}
+                className="w-full bg-white border border-purple-200 py-1.5 px-2 text-gray-950 text-xs focus:border-[#7E22CE] focus:outline-none rounded"
+              />
+            </div>
+            <div>
+              <label className="block text-[9px] uppercase font-bold text-gray-600 mb-1">DOB</label>
+              <input
+                type="date"
+                value={generalInfo.dateOfBirth ?? ''}
+                onChange={(e) => onChange({ dateOfBirth: e.target.value })}
+                className="w-full bg-white border border-purple-200 py-1 px-2 text-gray-950 text-xs focus:border-[#7E22CE] focus:outline-none rounded"
+              />
+            </div>
+            <div>
+              <label className="block text-[9px] uppercase font-bold text-gray-600 mb-1">Age</label>
+              <input
+                type="number"
+                value={generalInfo.age ?? ''}
+                onChange={(e) => onChange({ age: e.target.value ? Number(e.target.value) : '' })}
+                className="w-full bg-white border border-purple-200 py-1.5 px-2 text-gray-950 text-xs focus:border-[#7E22CE] focus:outline-none rounded"
+              />
+            </div>
+            <div>
+              <label className="block text-[9px] uppercase font-bold text-gray-600 mb-1">Place</label>
+              <input
+                type="text"
+                value={generalInfo.place ?? ''}
+                onChange={(e) => onChange({ place: e.target.value })}
+                className="w-full bg-white border border-purple-200 py-1.5 px-2 text-gray-950 text-xs focus:border-[#7E22CE] focus:outline-none rounded"
+              />
+            </div>
+            <div>
+              <label className="block text-[9px] uppercase font-bold text-gray-600 mb-1">Contact</label>
+              <input
+                type="tel"
+                value={generalInfo.phone ?? ''}
+                onChange={(e) => onChange({ phone: e.target.value })}
+                className="w-full bg-white border border-purple-200 py-1.5 px-2 text-gray-950 text-xs focus:border-[#7E22CE] focus:outline-none rounded"
+              />
+            </div>
+            <div>
+              <label className="block text-[9px] uppercase font-bold text-gray-600 mb-1">Clinical Tag</label>
+              <input
+                type="text"
+                value={generalInfo.tag ?? ''}
+                onChange={(e) => onChange({ tag: e.target.value })}
+                className="w-full bg-white border border-purple-200 py-1.5 px-2 text-gray-950 text-xs focus:border-[#7E22CE] focus:outline-none rounded"
+              />
             </div>
           </div>
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* AI DOCUMENT UPLOAD: Auto-fills Demographics & Symptoms (Remaining manual) */}
-      {/* ========================================================================= */}
-      <div className="p-4 sm:p-5 bg-[#0e071c] border-2 border-[#7E22CE] shadow-2xl rounded-xl space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#7E22CE]/40 pb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#7E22CE]/30 border border-[#7E22CE] flex items-center justify-center text-[#C084FC]">
-              <UploadCloud className="w-4 h-4" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-xs sm:text-sm font-black text-white uppercase tracking-wider">
-                  Upload Medical Document / Lab Report (AI Auto-Fill)
-                </h3>
-                <span className="px-2 py-0.5 bg-[#7E22CE] text-white text-[9px] font-black uppercase tracking-wider rounded">
-                  AI Extraction
-                </span>
-              </div>
-              <p className="text-[11px] text-gray-300">
-                Upload existing patient discharge summary, lab file (.txt, .json, .csv, .pdf) to auto-fill demographics & symptoms. Remaining fields can be entered manually.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleLoadSampleMedicalDoc}
-              className="px-3 py-1.5 bg-black border border-[#7E22CE] text-[#C084FC] hover:bg-[#7E22CE] hover:text-white text-[11px] font-bold uppercase tracking-wider rounded transition-colors cursor-pointer flex items-center gap-1.5"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Load Sample Record</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => docInputRef.current?.click()}
-              disabled={isProcessingDoc}
-              className="px-4 py-1.5 bg-[#7E22CE] hover:bg-[#9333EA] text-white text-[11px] font-black uppercase tracking-wider rounded transition-colors cursor-pointer flex items-center gap-1.5 shadow-[0_0_15px_rgba(126,34,206,0.6)]"
-            >
-              <Upload className="w-3.5 h-3.5" />
-              <span>{isProcessingDoc ? 'Extracting...' : 'Browse File to Auto-Fill'}</span>
-            </button>
-            <input
-              ref={docInputRef}
-              type="file"
-              accept=".txt,.json,.csv,.pdf,.doc,.docx"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-          </div>
-        </div>
-
-        {/* Success / Feedback Banner */}
-        {docUploadSuccess && (
-          <div className="p-3 bg-[#170a2c] border border-emerald-500/80 rounded-lg space-y-2 animate-in fade-in">
-            <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>{docUploadSuccess}</span>
-            </div>
-            {extractedSummary.length > 0 && (
-              <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                <span className="text-[10px] uppercase font-mono text-gray-400 mr-1 font-bold">Extracted:</span>
-                {extractedSummary.map((item, idx) => (
-                  <span
-                    key={idx}
-                    className="px-2 py-0.5 bg-black text-[#C084FC] border border-[#7E22CE]/60 text-[10px] font-mono font-bold rounded"
-                  >
-                    ✓ {item}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
       {/* 1. Demographics & Basic Measurements Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {/* 1. Name */}
-        <div className="p-4 bg-[#0d0617] border border-[#7E22CE]">
-          <label className="block text-[10px] uppercase tracking-widest text-[#A855F7] font-bold mb-2">
+        <div className="p-4 bg-white border-2 border-purple-200 rounded-xl shadow-xs">
+          <label className="block text-[10px] uppercase tracking-widest text-[#7E22CE] font-bold mb-2">
             1. Patient Full Name
           </label>
           <input
@@ -777,13 +537,13 @@ Clinical Impression: Type 2 Diabetes Mellitus with Metabolic Syndrome`;
             value={generalInfo.name ?? ''}
             onChange={(e) => onChange({ name: e.target.value })}
             placeholder="e.g. Kiruthika"
-            className="w-full bg-black border border-white/20 focus:border-[#7E22CE] py-2 px-3 text-white font-medium text-xs focus:outline-none transition-all placeholder:text-gray-600"
+            className="w-full bg-white border border-purple-200 focus:border-[#7E22CE] py-2 px-3 text-gray-950 font-medium text-xs focus:outline-none transition-all placeholder:text-gray-400 rounded-lg"
           />
         </div>
 
         {/* 2. Age */}
-        <div className="p-4 bg-[#0d0617] border border-[#7E22CE]">
-          <label className="block text-[10px] uppercase tracking-widest text-[#A855F7] font-bold mb-2">
+        <div className="p-4 bg-white border-2 border-purple-200 rounded-xl shadow-xs">
+          <label className="block text-[10px] uppercase tracking-widest text-[#7E22CE] font-bold mb-2">
             2. Age (Years)
           </label>
           <input
@@ -792,13 +552,13 @@ Clinical Impression: Type 2 Diabetes Mellitus with Metabolic Syndrome`;
             value={generalInfo.age ?? ''}
             onChange={(e) => onChange({ age: e.target.value })}
             placeholder="34"
-            className="w-full bg-black border border-white/20 focus:border-[#7E22CE] py-2 px-3 text-white font-medium text-xs focus:outline-none transition-all placeholder:text-gray-600"
+            className="w-full bg-white border border-purple-200 focus:border-[#7E22CE] py-2 px-3 text-gray-950 font-medium text-xs focus:outline-none transition-all placeholder:text-gray-400 rounded-lg"
           />
         </div>
 
         {/* 3. Biological Sex */}
-        <div className="p-4 bg-[#0d0617] border border-[#7E22CE]">
-          <label className="block text-[10px] uppercase tracking-widest text-[#A855F7] font-bold mb-2">
+        <div className="p-4 bg-white border-2 border-purple-200 rounded-xl shadow-xs">
+          <label className="block text-[10px] uppercase tracking-widest text-[#7E22CE] font-bold mb-2">
             3. Biological Sex
           </label>
           <div className="grid grid-cols-2 gap-2">
@@ -808,10 +568,10 @@ Clinical Impression: Type 2 Diabetes Mellitus with Metabolic Syndrome`;
                 type="button"
                 id={`btn-sex-${s.toLowerCase()}`}
                 onClick={() => onChange({ sex: s })}
-                className={`py-2 text-xs font-bold uppercase tracking-wider border cursor-pointer transition-colors ${
+                className={`py-2 text-xs font-bold uppercase tracking-wider border rounded-lg cursor-pointer transition-colors ${
                   generalInfo.sex === s
-                    ? 'bg-[#7E22CE] text-white border-[#7E22CE] shadow-[0_0_10px_rgba(126,34,206,0.5)]'
-                    : 'bg-black border-white/20 text-gray-400 hover:border-[#7E22CE]/60'
+                    ? 'bg-[#7E22CE] text-white border-[#7E22CE] shadow-xs'
+                    : 'bg-white border-purple-200 text-gray-600 hover:border-[#7E22CE]/60'
                 }`}
               >
                 {s}
@@ -821,8 +581,8 @@ Clinical Impression: Type 2 Diabetes Mellitus with Metabolic Syndrome`;
         </div>
 
         {/* 4. Height */}
-        <div className="p-4 bg-[#0d0617] border border-[#7E22CE]">
-          <label className="block text-[10px] uppercase tracking-widest text-[#A855F7] font-bold mb-2">
+        <div className="p-4 bg-white border-2 border-purple-200 rounded-xl shadow-xs">
+          <label className="block text-[10px] uppercase tracking-widest text-[#7E22CE] font-bold mb-2">
             4. Height (cm)
           </label>
           <input
@@ -831,13 +591,13 @@ Clinical Impression: Type 2 Diabetes Mellitus with Metabolic Syndrome`;
             value={generalInfo.height ?? ''}
             onChange={(e) => onChange({ height: e.target.value })}
             placeholder="162"
-            className="w-full bg-black border border-white/20 focus:border-[#7E22CE] py-2 px-3 text-white font-medium text-xs focus:outline-none transition-all placeholder:text-gray-600"
+            className="w-full bg-white border border-purple-200 focus:border-[#7E22CE] py-2 px-3 text-gray-950 font-medium text-xs focus:outline-none transition-all placeholder:text-gray-400 rounded-lg"
           />
         </div>
 
         {/* 5. Body Weight */}
-        <div className="p-4 bg-[#0d0617] border border-[#7E22CE]">
-          <label className="block text-[10px] uppercase tracking-widest text-[#A855F7] font-bold mb-2">
+        <div className="p-4 bg-white border-2 border-purple-200 rounded-xl shadow-xs">
+          <label className="block text-[10px] uppercase tracking-widest text-[#7E22CE] font-bold mb-2">
             5. Body Weight (kg)
           </label>
           <input
@@ -846,18 +606,18 @@ Clinical Impression: Type 2 Diabetes Mellitus with Metabolic Syndrome`;
             value={generalInfo.weight ?? ''}
             onChange={(e) => onChange({ weight: e.target.value })}
             placeholder="61.5"
-            className="w-full bg-black border border-white/20 focus:border-[#7E22CE] py-2 px-3 text-white font-medium text-xs focus:outline-none transition-all placeholder:text-gray-600"
+            className="w-full bg-white border border-purple-200 focus:border-[#7E22CE] py-2 px-3 text-gray-950 font-medium text-xs focus:outline-none transition-all placeholder:text-gray-400 rounded-lg"
           />
         </div>
 
         {/* 6. Phone Number */}
-        <div className="p-4 bg-[#0d0617] border border-[#7E22CE]">
+        <div className="p-4 bg-white border-2 border-purple-200 rounded-xl shadow-xs">
           <div className="flex items-center justify-between mb-2">
-            <label className="block text-[10px] uppercase tracking-widest text-[#A855F7] font-bold">
+            <label className="block text-[10px] uppercase tracking-widest text-[#7E22CE] font-bold">
               6. Patient Phone Number (WhatsApp)
             </label>
-            <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-emerald-950 border border-emerald-500 text-emerald-300 font-bold flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-emerald-100 border border-emerald-400 text-emerald-800 font-bold flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
               WA Linked
             </span>
           </div>
@@ -871,14 +631,14 @@ Clinical Impression: Type 2 Diabetes Mellitus with Metabolic Syndrome`;
                 localStorage.setItem('ELSHA_CLIENT_PHONE', e.target.value);
               }}
               placeholder="+91 9876543210"
-              className="flex-1 bg-black border border-white/20 focus:border-[#7E22CE] py-2 px-3 text-white font-medium text-xs focus:outline-none transition-all placeholder:text-gray-600"
+              className="flex-1 bg-white border border-purple-200 focus:border-[#7E22CE] py-2 px-3 text-gray-950 font-medium text-xs focus:outline-none transition-all placeholder:text-gray-400 rounded-lg"
             />
           </div>
         </div>
 
         {/* 7. Email Address */}
-        <div className="p-4 bg-[#0d0617] border border-[#7E22CE]">
-          <label className="block text-[10px] uppercase tracking-widest text-[#A855F7] font-bold mb-2">
+        <div className="p-4 bg-white border-2 border-purple-200 rounded-xl shadow-xs">
+          <label className="block text-[10px] uppercase tracking-widest text-[#7E22CE] font-bold mb-2">
             7. Email Address
           </label>
           <input
@@ -887,20 +647,20 @@ Clinical Impression: Type 2 Diabetes Mellitus with Metabolic Syndrome`;
             value={generalInfo.email ?? ''}
             onChange={(e) => onChange({ email: e.target.value })}
             placeholder="patient@example.com"
-            className="w-full bg-black border border-white/20 focus:border-[#7E22CE] py-2 px-3 text-white font-medium text-xs focus:outline-none transition-all placeholder:text-gray-600"
+            className="w-full bg-white border border-purple-200 focus:border-[#7E22CE] py-2 px-3 text-gray-950 font-medium text-xs focus:outline-none transition-all placeholder:text-gray-400 rounded-lg"
           />
         </div>
 
         {/* 8. Blood Group */}
-        <div className="p-4 bg-[#0d0617] border border-[#7E22CE]">
-          <label className="block text-[10px] uppercase tracking-widest text-[#A855F7] font-bold mb-2">
+        <div className="p-4 bg-white border-2 border-purple-200 rounded-xl shadow-xs">
+          <label className="block text-[10px] uppercase tracking-widest text-[#7E22CE] font-bold mb-2">
             8. Blood Group
           </label>
           <select
             id="select-patient-blood-group"
             value={generalInfo.bloodGroup ?? 'O+ve'}
             onChange={(e) => onChange({ bloodGroup: e.target.value })}
-            className="w-full bg-black border border-white/20 focus:border-[#7E22CE] py-2 px-3 text-white font-medium text-xs focus:outline-none transition-all cursor-pointer"
+            className="w-full bg-white border border-purple-200 focus:border-[#7E22CE] py-2 px-3 text-gray-950 font-medium text-xs focus:outline-none transition-all cursor-pointer rounded-lg"
           >
             {['O+ve', 'O-ve', 'A+ve', 'A-ve', 'B+ve', 'B-ve', 'AB+ve', 'AB-ve'].map((bg) => (
               <option key={bg} value={bg}>{bg}</option>
@@ -909,8 +669,8 @@ Clinical Impression: Type 2 Diabetes Mellitus with Metabolic Syndrome`;
         </div>
 
         {/* 9. Occupation */}
-        <div className="p-4 bg-[#0d0617] border border-[#7E22CE]">
-          <label className="block text-[10px] uppercase tracking-widest text-[#A855F7] font-bold mb-2">
+        <div className="p-4 bg-white border-2 border-purple-200 rounded-xl shadow-xs">
+          <label className="block text-[10px] uppercase tracking-widest text-[#7E22CE] font-bold mb-2">
             9. Occupation
           </label>
           <input
@@ -919,13 +679,13 @@ Clinical Impression: Type 2 Diabetes Mellitus with Metabolic Syndrome`;
             value={generalInfo.occupation ?? ''}
             onChange={(e) => onChange({ occupation: e.target.value })}
             placeholder="e.g. Software Consultant"
-            className="w-full bg-black border border-white/20 focus:border-[#7E22CE] py-2 px-3 text-white font-medium text-xs focus:outline-none transition-all placeholder:text-gray-600"
+            className="w-full bg-white border border-purple-200 focus:border-[#7E22CE] py-2 px-3 text-gray-950 font-medium text-xs focus:outline-none transition-all placeholder:text-gray-400 rounded-lg"
           />
         </div>
 
         {/* 10. Marital Status */}
-        <div className="p-4 bg-[#0d0617] border border-[#7E22CE]">
-          <label className="block text-[10px] uppercase tracking-widest text-[#A855F7] font-bold mb-2">
+        <div className="p-4 bg-white border-2 border-purple-200 rounded-xl shadow-xs">
+          <label className="block text-[10px] uppercase tracking-widest text-[#7E22CE] font-bold mb-2">
             10. Marital Status
           </label>
           <input
@@ -934,13 +694,13 @@ Clinical Impression: Type 2 Diabetes Mellitus with Metabolic Syndrome`;
             value={generalInfo.maritalStatus ?? ''}
             onChange={(e) => onChange({ maritalStatus: e.target.value })}
             placeholder="Married / Single"
-            className="w-full bg-black border border-white/20 focus:border-[#7E22CE] py-2 px-3 text-white font-medium text-xs focus:outline-none transition-all placeholder:text-gray-600"
+            className="w-full bg-white border border-purple-200 focus:border-[#7E22CE] py-2 px-3 text-gray-950 font-medium text-xs focus:outline-none transition-all placeholder:text-gray-400 rounded-lg"
           />
         </div>
 
         {/* 11. Living Circumstances */}
-        <div className="p-4 bg-[#0d0617] border border-[#7E22CE]">
-          <label className="block text-[10px] uppercase tracking-widest text-[#A855F7] font-bold mb-2">
+        <div className="p-4 bg-white border-2 border-purple-200 rounded-xl shadow-xs">
+          <label className="block text-[10px] uppercase tracking-widest text-[#7E22CE] font-bold mb-2">
             11. Living Circumstances
           </label>
           <input
@@ -949,13 +709,13 @@ Clinical Impression: Type 2 Diabetes Mellitus with Metabolic Syndrome`;
             value={generalInfo.livingCircumstances ?? ''}
             onChange={(e) => onChange({ livingCircumstances: e.target.value })}
             placeholder="Nuclear Family / With Parents"
-            className="w-full bg-black border border-white/20 focus:border-[#7E22CE] py-2 px-3 text-white font-medium text-xs focus:outline-none transition-all placeholder:text-gray-600"
+            className="w-full bg-white border border-purple-200 focus:border-[#7E22CE] py-2 px-3 text-gray-950 font-medium text-xs focus:outline-none transition-all placeholder:text-gray-400 rounded-lg"
           />
         </div>
 
         {/* 12. Activity Level */}
-        <div className="p-4 bg-[#0d0617] border border-[#7E22CE]">
-          <label className="block text-[10px] uppercase tracking-widest text-[#A855F7] font-bold mb-2">
+        <div className="p-4 bg-white border-2 border-purple-200 rounded-xl shadow-xs">
+          <label className="block text-[10px] uppercase tracking-widest text-[#7E22CE] font-bold mb-2">
             12. Physical Activity Level (ICMR PAL)
           </label>
           <div className="relative">
@@ -963,14 +723,14 @@ Clinical Impression: Type 2 Diabetes Mellitus with Metabolic Syndrome`;
               id="select-patient-activity-level"
               value={generalInfo.activityLevel ?? 'Sedentary'}
               onChange={(e) => onChange({ activityLevel: e.target.value as ActivityLevel })}
-              className="w-full bg-black border border-white/20 focus:border-[#7E22CE] py-2 px-3 text-white font-medium text-xs focus:outline-none transition-all appearance-none cursor-pointer"
+              className="w-full bg-white border border-purple-200 focus:border-[#7E22CE] py-2 px-3 text-gray-950 font-medium text-xs focus:outline-none transition-all appearance-none cursor-pointer rounded-lg"
             >
               <option value="Sedentary">Sedentary (Desk work, no exercise - 1.2x)</option>
               <option value="Lightly Active">Lightly Active (Walking, 1-3 days/wk - 1.375x)</option>
               <option value="Moderately Active">Moderately Active (Gym/Sports 3-5 days/wk - 1.55x)</option>
               <option value="Very Active">Very Active (Heavy training 6-7 days/wk - 1.725x)</option>
             </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-[#A855F7]">
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-[#7E22CE]">
               ▼
             </div>
           </div>
@@ -978,11 +738,11 @@ Clinical Impression: Type 2 Diabetes Mellitus with Metabolic Syndrome`;
       </div>
 
       {/* 2. BODY COMPOSITION DIRECT ENTRY (Replaces old longitudinal chart as requested by user) */}
-      <div className="bg-[#0d0617] border border-[#7E22CE] p-5 space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-3">
+      <div className="bg-white border-2 border-purple-200 rounded-xl shadow-xs p-5 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-purple-200 pb-3">
           <div className="flex items-center gap-2">
-            <Layers className="w-4 h-4 text-[#A855F7]" />
-            <h3 className="text-xs uppercase font-black tracking-widest text-white">
+            <Layers className="w-4 h-4 text-[#7E22CE]" />
+            <h3 className="text-xs uppercase font-black tracking-widest text-gray-950">
               Primary Body Composition & Tissue Compartments
             </h3>
           </div>
@@ -990,7 +750,7 @@ Clinical Impression: Type 2 Diabetes Mellitus with Metabolic Syndrome`;
             <button
               type="button"
               onClick={onNavigateToBodyComposition}
-              className="text-[11px] font-mono text-[#C084FC] hover:underline flex items-center gap-1 font-bold cursor-pointer"
+              className="text-[11px] font-mono text-[#7E22CE] hover:underline flex items-center gap-1 font-bold cursor-pointer"
             >
               <span>Open Full Multi-Week Automated Biometric Tracker (Module 20)</span>
               <span>→</span>
@@ -1000,8 +760,8 @@ Clinical Impression: Type 2 Diabetes Mellitus with Metabolic Syndrome`;
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {/* Fat Mass */}
-          <div className="p-3 bg-black/60 border border-white/10">
-            <label className="text-[10px] uppercase font-mono text-gray-400 block mb-1">
+          <div className="p-3 bg-purple-50/70 border border-purple-200 rounded-lg">
+            <label className="text-[10px] uppercase font-mono text-gray-600 block mb-1 font-bold">
               Fat Mass (kg)
             </label>
             <input
@@ -1009,14 +769,14 @@ Clinical Impression: Type 2 Diabetes Mellitus with Metabolic Syndrome`;
               step="0.1"
               value={generalInfo.fatMass ?? '16.9'}
               onChange={(e) => onChange({ fatMass: parseFloat(e.target.value) || 0 })}
-              className="w-full bg-black border border-white/20 focus:border-[#7E22CE] px-2 py-1 text-white font-mono text-xs focus:outline-none"
+              className="w-full bg-white border border-purple-200 focus:border-[#7E22CE] px-2 py-1 text-gray-950 font-mono text-xs focus:outline-none rounded"
             />
-            <span className="text-[9px] text-[#A855F7] font-mono mt-1 block">Target: 13.5 kg</span>
+            <span className="text-[9px] text-[#7E22CE] font-mono mt-1 block font-bold">Target: 13.5 kg</span>
           </div>
 
           {/* Fat Percentage */}
-          <div className="p-3 bg-black/60 border border-white/10">
-            <label className="text-[10px] uppercase font-mono text-gray-400 block mb-1">
+          <div className="p-3 bg-purple-50/70 border border-purple-200 rounded-lg">
+            <label className="text-[10px] uppercase font-mono text-gray-600 block mb-1 font-bold">
               Fat Percentage (%)
             </label>
             <input
@@ -1024,14 +784,14 @@ Clinical Impression: Type 2 Diabetes Mellitus with Metabolic Syndrome`;
               step="0.1"
               value={generalInfo.fatPercentage ?? '27.5'}
               onChange={(e) => onChange({ fatPercentage: parseFloat(e.target.value) || 0 })}
-              className="w-full bg-black border border-white/20 focus:border-[#7E22CE] px-2 py-1 text-white font-mono text-xs focus:outline-none"
+              className="w-full bg-white border border-purple-200 focus:border-[#7E22CE] px-2 py-1 text-gray-950 font-mono text-xs focus:outline-none rounded"
             />
-            <span className="text-[9px] text-[#A855F7] font-mono mt-1 block">Goal: &lt;24.0%</span>
+            <span className="text-[9px] text-[#7E22CE] font-mono mt-1 block font-bold">Goal: &lt;24.0%</span>
           </div>
 
           {/* Muscle Mass */}
-          <div className="p-3 bg-black/60 border border-white/10">
-            <label className="text-[10px] uppercase font-mono text-gray-400 block mb-1">
+          <div className="p-3 bg-purple-50/70 border border-purple-200 rounded-lg">
+            <label className="text-[10px] uppercase font-mono text-gray-600 block mb-1 font-bold">
               Muscle Mass (kg)
             </label>
             <input
@@ -1039,14 +799,14 @@ Clinical Impression: Type 2 Diabetes Mellitus with Metabolic Syndrome`;
               step="0.1"
               value={generalInfo.muscleMass ?? '42.4'}
               onChange={(e) => onChange({ muscleMass: parseFloat(e.target.value) || 0 })}
-              className="w-full bg-black border border-white/20 focus:border-[#7E22CE] px-2 py-1 text-white font-mono text-xs focus:outline-none"
+              className="w-full bg-white border border-purple-200 focus:border-[#7E22CE] px-2 py-1 text-gray-950 font-mono text-xs focus:outline-none rounded"
             />
-            <span className="text-[9px] text-emerald-400 font-mono mt-1 block">Optimal Reserve</span>
+            <span className="text-[9px] text-emerald-700 font-mono mt-1 block font-bold">Optimal Reserve</span>
           </div>
 
           {/* Fat Free Mass (FFM) */}
-          <div className="p-3 bg-black/60 border border-white/10">
-            <label className="text-[10px] uppercase font-mono text-gray-400 block mb-1">
+          <div className="p-3 bg-purple-50/70 border border-purple-200 rounded-lg">
+            <label className="text-[10px] uppercase font-mono text-gray-600 block mb-1 font-bold">
               Fat-Free Mass / FFM (kg)
             </label>
             <input
@@ -1054,14 +814,14 @@ Clinical Impression: Type 2 Diabetes Mellitus with Metabolic Syndrome`;
               step="0.1"
               value={generalInfo.ffm ?? '44.6'}
               onChange={(e) => onChange({ ffm: parseFloat(e.target.value) || 0 })}
-              className="w-full bg-black border border-white/20 focus:border-[#7E22CE] px-2 py-1 text-white font-mono text-xs focus:outline-none"
+              className="w-full bg-white border border-purple-200 focus:border-[#7E22CE] px-2 py-1 text-gray-950 font-mono text-xs focus:outline-none rounded"
             />
-            <span className="text-[9px] text-gray-400 font-mono mt-1 block">Lean Body Tissue</span>
+            <span className="text-[9px] text-gray-600 font-mono mt-1 block">Lean Body Tissue</span>
           </div>
 
           {/* Visceral Fat */}
-          <div className="p-3 bg-black/60 border border-white/10">
-            <label className="text-[10px] uppercase font-mono text-gray-400 block mb-1">
+          <div className="p-3 bg-purple-50/70 border border-purple-200 rounded-lg">
+            <label className="text-[10px] uppercase font-mono text-gray-600 block mb-1 font-bold">
               Visceral Fat (Rating)
             </label>
             <input
@@ -1069,9 +829,9 @@ Clinical Impression: Type 2 Diabetes Mellitus with Metabolic Syndrome`;
               step="1"
               value={generalInfo.visceralFat ?? '7'}
               onChange={(e) => onChange({ visceralFat: parseInt(e.target.value) || 0 })}
-              className="w-full bg-black border border-white/20 focus:border-[#7E22CE] px-2 py-1 text-white font-mono text-xs focus:outline-none"
+              className="w-full bg-white border border-purple-200 focus:border-[#7E22CE] px-2 py-1 text-gray-950 font-mono text-xs focus:outline-none rounded"
             />
-            <span className="text-[9px] text-emerald-400 font-mono mt-1 block">Safe Range: 1–9</span>
+            <span className="text-[9px] text-emerald-700 font-mono mt-1 block font-bold">Safe Range: 1–9</span>
           </div>
         </div>
       </div>
@@ -1080,29 +840,29 @@ Clinical Impression: Type 2 Diabetes Mellitus with Metabolic Syndrome`;
       <div className="pt-2">
         <div className="flex items-center gap-3 mb-4">
           <span className="h-0.5 w-8 bg-[#7E22CE]" />
-          <span className="text-xs uppercase font-black tracking-[0.3em] text-[#A855F7]">
+          <span className="text-xs uppercase font-black tracking-[0.3em] text-[#7E22CE]">
             CALCULATIONS & METABOLIC ENERGETICS (ICMR)
           </span>
-          <span className="h-px flex-1 bg-white/10" />
+          <span className="h-px flex-1 bg-purple-200" />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {/* BMI Card */}
-          <div className="bg-[#0d0617] border border-[#7E22CE] p-5 flex flex-col justify-between">
+          <div className="bg-white border-2 border-purple-200 rounded-xl p-5 flex flex-col justify-between shadow-xs">
             <div className="flex items-center justify-between">
-              <p className="text-[#A855F7] text-[10px] uppercase font-bold tracking-widest">Body Mass Index</p>
-              <Scale className="w-4 h-4 text-[#A855F7]" />
+              <p className="text-[#7E22CE] text-[10px] uppercase font-bold tracking-widest">Body Mass Index</p>
+              <Scale className="w-4 h-4 text-[#7E22CE]" />
             </div>
             <div className="text-center my-4">
-              <p className="text-4xl font-bold text-white">{calculations.bmi || '23.4'}</p>
-              <p className="text-[10px] uppercase bg-[#7E22CE] text-white inline-block px-2.5 py-0.5 mt-2 font-bold tracking-wider">
+              <p className="text-4xl font-black text-gray-950">{calculations.bmi || '23.4'}</p>
+              <p className="text-[10px] uppercase bg-[#7E22CE] text-white inline-block px-2.5 py-0.5 mt-2 font-bold tracking-wider rounded">
                 {calculations.bmiCategory || 'Normal'}
               </p>
             </div>
             <div className="space-y-2">
-              <div className="h-1.5 bg-white/20 w-full overflow-hidden">
+              <div className="h-2 bg-purple-100 rounded-full w-full overflow-hidden">
                 <div
-                  className="h-full bg-[#7E22CE]"
+                  className="h-full bg-[#7E22CE] rounded-full"
                   style={{
                     width: `${Math.min(
                       100,
@@ -1111,7 +871,7 @@ Clinical Impression: Type 2 Diabetes Mellitus with Metabolic Syndrome`;
                   }}
                 />
               </div>
-              <div className="flex justify-between text-[9px] text-gray-400 font-mono">
+              <div className="flex justify-between text-[9px] text-gray-500 font-mono">
                 <span>Under (&lt;18.5)</span>
                 <span>Norm (18.5-22.9)</span>
                 <span>Over (&ge;23)</span>
@@ -1120,35 +880,35 @@ Clinical Impression: Type 2 Diabetes Mellitus with Metabolic Syndrome`;
           </div>
 
           {/* BMR Card */}
-          <div className="bg-[#0d0617] border border-[#7E22CE] p-5 flex flex-col justify-between">
+          <div className="bg-white border-2 border-purple-200 rounded-xl p-5 flex flex-col justify-between shadow-xs">
             <div className="flex items-center justify-between">
-              <p className="text-[#A855F7] text-[10px] uppercase font-bold tracking-widest">Basal Metabolic Rate</p>
-              <Flame className="w-4 h-4 text-orange-400" />
+              <p className="text-[#7E22CE] text-[10px] uppercase font-bold tracking-widest">Basal Metabolic Rate</p>
+              <Flame className="w-4 h-4 text-orange-500" />
             </div>
             <div className="text-center my-4">
-              <p className="text-4xl font-bold text-white">{calculations.bmr || '1,320'}</p>
-              <p className="text-[10px] uppercase bg-black text-[#A855F7] border border-[#7E22CE] inline-block px-2.5 py-0.5 mt-2 font-bold tracking-wider">
+              <p className="text-4xl font-black text-gray-950">{calculations.bmr || '1,320'}</p>
+              <p className="text-[10px] uppercase bg-purple-50 text-[#7E22CE] border border-purple-300 inline-block px-2.5 py-0.5 mt-2 font-bold tracking-wider rounded">
                 kcal / day
               </p>
             </div>
-            <p className="text-[10px] text-gray-400 text-center font-mono">
+            <p className="text-[10px] text-gray-500 text-center font-mono">
               Basal energy requirement calculated via Mifflin-St Jeor / ICMR standard.
             </p>
           </div>
 
           {/* TDEE Card */}
-          <div className="bg-[#0d0617] border border-[#7E22CE] p-5 flex flex-col justify-between">
+          <div className="bg-white border-2 border-purple-200 rounded-xl p-5 flex flex-col justify-between shadow-xs">
             <div className="flex items-center justify-between">
-              <p className="text-[#A855F7] text-[10px] uppercase font-bold tracking-widest">Total Daily Energy (TDEE)</p>
-              <Activity className="w-4 h-4 text-[#C084FC]" />
+              <p className="text-[#7E22CE] text-[10px] uppercase font-bold tracking-widest">Total Daily Energy (TDEE)</p>
+              <Activity className="w-4 h-4 text-[#7E22CE]" />
             </div>
             <div className="text-center my-4">
-              <p className="text-4xl font-bold text-white">{calculations.tdee || '1,815'}</p>
-              <p className="text-[10px] uppercase bg-purple-950 text-white border border-[#7E22CE] inline-block px-2.5 py-0.5 mt-2 font-bold tracking-wider">
+              <p className="text-4xl font-black text-gray-950">{calculations.tdee || '1,815'}</p>
+              <p className="text-[10px] uppercase bg-[#7E22CE] text-white border border-[#7E22CE] inline-block px-2.5 py-0.5 mt-2 font-bold tracking-wider rounded">
                 kcal / day
               </p>
             </div>
-            <p className="text-[10px] text-gray-400 text-center font-mono">
+            <p className="text-[10px] text-gray-500 text-center font-mono">
               Includes physical activity coefficient ({generalInfo.activityLevel || 'Sedentary'}).
             </p>
           </div>

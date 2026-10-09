@@ -1,0 +1,242 @@
+{
+  "version": 1,
+  "appPassword": {
+    "salt": "fd2912cee8326408bbf9205a66d3c0b1",
+    "passwordHash": "7708e6dfdc4d9ff1bec1768bab3177fd84257f7ea15b2ec6d2e3e6c75d63e7f67ad94d9c4daabadb453311f3627e79064537c221ab4af5edd062283670adc1db",
+    "isConfigured": true,
+    "updatedAt": "2026-10-09T05:37:48.100Z",
+    "mustChangePassword": false
+  },
+  "folders": {
+    "profile": {
+      "id": "profile",
+      "name": "Profile",
+      "category": "Patient Intake & Clinical History",
+      "salt": "aeed96fc44c1b9812e138453611c1d0a",
+      "passwordHash": "199500816a9adfe85dfd79cfb6635d448279aaf423099d86dc2b848e4c9316c501334bf6c594dfc43402eee5c5c3453ac635f5b5445d26d91a7455d75ff0428f",
+      "isConfigured": true,
+      "updatedAt": "2026-10-09T05:37:47.583Z"
+    },
+    "biometrics": {
+      "id": "biometrics",
+      "name": "Biometric Data",
+      "category": "Vitals & Body Comp",
+      "salt": "f688e201ddc052022a00aa0246ae98d9",
+      "passwordHash": "f6a268ee1df4302ccae3d5b7aee8f787be1d9b48f2a92e1bb6bb4532808deee9dc59fa2a47613dd19878dcd5a8a82a87816bc4ee8232af0da0ce3273f32ee0f4",
+      "isConfigured": true,
+      "updatedAt": "2026-10-09T05:37:47.626Z"
+    },
+    "medicinal": {
+      "id": "medicinal",
+      "name": "Medical Consultation & Records",
+      "category": "Clinical Consultation",
+      "salt": "d72647e31a8a0c0a0e610ae94fabd82d",
+      "passwordHash": "1673bddd03606edccbb69158e65a67a7ebabbf9e0dbc95e1b008f177380f4998ec6ffcb7da0d2f5efc95c154f64916f810805ad19919f5c50c7cb856b7ea68a5",
+      "isConfigured": true,
+      "updatedAt": "2026-10-09T05:37:47.669Z"
+    },
+    "nutrition": {
+      "id": "nutrition",
+      "name": "Nutrition",
+      "category": "Dietary Habits & Protocols",
+      "salt": "d70d0f1b0238df980642a297f42872f4",
+      "passwordHash": "a24445cf59b21a3a50c6c40940b6c21c9d4e8b713a6b8f3060ffe36aded29fcb96068c8c9a8abbc96eed522b068970620b307ef6adfa5a900dacfcd3ec5369ba",
+      "isConfigured": true,
+      "updatedAt": "2026-10-09T05:37:47.712Z"
+    },
+    "anthropometry": {
+      "id": "anthropometry",
+      "name": "Anthropometry",
+      "category": "Body Composition & Energy",
+      "salt": "042ecf4687b97878576881feb8097c52",
+      "passwordHash": "f86c82b499fa8122b799d813ff8c94d30df8260859c6d6b658609324e7e5483c02107f82120f5070a79f9d6698a13698996ad7e16dec62aa5926f5b900161da2",
+      "isConfigured": true,
+      "updatedAt": "2026-10-09T05:37:47.754Z"
+    },
+    "rda": {
+      "id": "rda",
+      "name": "RDA Requirements",
+      "category": "ICMR-NIN Targets",
+      "salt": "1e2cf850093d4f79c37a5ba6a3fc4c71",
+      "passwordHash": "096c0c00b71ffaf981151dec1f439f81fc0003c6ffe9beeefc96ea8be2bab0cd7ee54959cf6b012a17aa619e1b770c04930eb1b76cadfe3d5ef96719b3bdfb23",
+      "isConfigured": true,
+      "updatedAt": "2026-10-09T05:37:47.798Z"
+    },
+    "7-day-diet-plan": {
+      "id": "7-day-diet-plan",
+      "name": "7-Day Diet Plan",
+      "category": "Clinical Meal Plans",
+      "salt": "a20f8283452e3e627fd0048a5c473ecd",
+      "passwordHash": "f4e6bdbd6e18c4829f0123284e3cfccde89bfa476ce2bd8eb829edc29904d1c917495d14cc1bde61f878a7d45f76818c9c551116a387f200664a88eaffd1569b",
+      "isConfigured": true,
+      "updatedAt": "2026-10-09T05:37:47.840Z"
+    },
+    "exercise": {
+      "id": "exercise",
+      "name": "Exercise Guidance",
+      "category": "Performance & Strength",
+      "salt": "2f38678efc483cae19f6ddc93ba914c7",
+      "passwordHash": "776e8ff4189258571c8c147869540de5f4a922d42f4db55f13a566956e5a631dd149055b2604ef4baa114fe6add6bf9efbbec318dcc032aaef5d4d871dc5adf2",
+      "isConfigured": true,
+      "updatedAt": "2026-10-09T05:37:47.884Z"
+    },
+    "physiotherapy": {
+      "id": "physiotherapy",
+      "name": "Physiotherapy & Fitness Guidelines",
+      "category": "Rehabilitation",
+      "salt": "66503cfcccb06bb9f1c602ce38a6e76e",
+      "passwordHash": "beb33f0e2778f1be64a32a4e1e2e4df22596c47705526927fe760a8c1e66fa9b001d2139afa5a3605cd16c75c4f5d24f6134c92e5d9b014141d75a80b762b23b",
+      "isConfigured": true,
+      "updatedAt": "2026-10-09T05:37:47.927Z"
+    },
+    "client-folder": {
+      "id": "client-folder",
+      "name": "Client Folder",
+      "category": "Dossier Directory & Vault",
+      "salt": "b0c1b78092262c304834d3244c024956",
+      "passwordHash": "12caf1163cddc0e34747335dbbc3508f5e3dda912885972766bd978bacb65c304afb2127e94dd5146b9ce0e10d6ed860d72d2fe79261a4cae366f755ebe0f927",
+      "isConfigured": true,
+      "updatedAt": "2026-10-09T05:37:47.970Z"
+    },
+    "whatsapp": {
+      "id": "whatsapp",
+      "name": "WhatsApp Hub",
+      "category": "Patient Comms & Dispatch",
+      "salt": "10c9788fe85bab40c02f0a30adaff27e",
+      "passwordHash": "0ee9011ac32ef03a354dc5bc6701c16791293ec26f43edbaec96845102c3cc469f42aa7726ea0d9346e7c314ad643bdb9bf2b2592e573810d8f2648bc484fe3c",
+      "isConfigured": true,
+      "updatedAt": "2026-10-09T05:37:48.014Z"
+    },
+    "document-verification": {
+      "id": "document-verification",
+      "name": "Document Verification",
+      "category": "Clinical Integrity",
+      "salt": "dbf188546b18d7bf49949aa54b97ed36",
+      "passwordHash": "bcc0ff44a0f80cae9b0f6d6f1b723fdba5cfa45e64ff384f6c21a1988f50362df11511380c10163ea9a1915bb84dd3eba6414154d762dbf2869fc827b6cbffae",
+      "isConfigured": true,
+      "updatedAt": "2026-10-09T05:37:48.057Z"
+    },
+    "clinicalnotes": {
+      "id": "clinicalnotes",
+      "name": "Clinical Consultation Notes",
+      "category": "Attending Physician Records",
+      "salt": "c1950274d3431931085d2d8d2a5b3b36",
+      "passwordHash": "f918c420abf2c572ec96ffe318a3fb593d5fa92de5a718264bed3fec041011cbf1b8b3242773aa040f7c06851c7e57ba16c72b339d82fd478611a0a15be4b12c",
+      "isConfigured": true,
+      "updatedAt": "2026-10-09T05:37:48.099Z"
+    }
+  },
+  "securityAuditLogs": [
+    {
+      "id": "audit-1791524294760-48ke",
+      "event": "APP_LOGIN_SUCCESS",
+      "details": "Successful main app login session created",
+      "timestamp": "2026-10-09T05:38:14.760Z",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit-1791524286178-c7yp",
+      "event": "APP_LOGIN_FAIL",
+      "details": "Temporary lockout active for IP 127.0.0.1",
+      "timestamp": "2026-10-09T05:38:06.178Z",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit-1791524280184-yln1",
+      "event": "APP_LOGIN_FAIL",
+      "details": "Temporary lockout active for IP 127.0.0.1",
+      "timestamp": "2026-10-09T05:38:00.184Z",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit-1791524275260-sbgx",
+      "event": "APP_LOGIN_FAIL",
+      "details": "Temporary lockout active for IP 127.0.0.1",
+      "timestamp": "2026-10-09T05:37:55.260Z",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit-1791524275257-rhvl",
+      "event": "APP_LOGIN_FAIL",
+      "details": "Incorrect password attempt from IP 127.0.0.1",
+      "timestamp": "2026-10-09T05:37:55.257Z",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit-1791524275207-axty",
+      "event": "APP_LOGIN_FAIL",
+      "details": "Incorrect password attempt from IP 127.0.0.1",
+      "timestamp": "2026-10-09T05:37:55.208Z",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit-1791524275159-pkb0",
+      "event": "APP_LOGIN_FAIL",
+      "details": "Incorrect password attempt from IP 127.0.0.1",
+      "timestamp": "2026-10-09T05:37:55.159Z",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit-1791524275112-7nfd",
+      "event": "APP_LOGIN_FAIL",
+      "details": "Incorrect password attempt from IP 127.0.0.1",
+      "timestamp": "2026-10-09T05:37:55.112Z",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit-1791524275061-a5mg",
+      "event": "APP_LOGIN_FAIL",
+      "details": "Incorrect password attempt from IP 127.0.0.1",
+      "timestamp": "2026-10-09T05:37:55.061Z",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit-1791524268387-qj28",
+      "event": "APP_LOGOUT",
+      "details": "User explicitly logged out. Session terminated.",
+      "timestamp": "2026-10-09T05:37:48.387Z",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit-1791524268376-mrkz",
+      "event": "FOLDER_UNLOCK_SUCCESS",
+      "details": "Folder 'biometrics' successfully unlocked",
+      "timestamp": "2026-10-09T05:37:48.376Z",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit-1791524268325-cik1",
+      "event": "FOLDER_UNLOCK_FAIL",
+      "details": "Failed folder unlock for 'biometrics'",
+      "timestamp": "2026-10-09T05:37:48.325Z",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit-1791524268271-9uj1",
+      "event": "FOLDER_UNLOCK_SUCCESS",
+      "details": "Folder 'profile' successfully unlocked",
+      "timestamp": "2026-10-09T05:37:48.272Z",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit-1791524268220-e7dv",
+      "event": "APP_LOGIN_SUCCESS",
+      "details": "Successful main app login session created",
+      "timestamp": "2026-10-09T05:37:48.220Z",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit-1791524268172-kl9j",
+      "event": "APP_LOGIN_FAIL",
+      "details": "Incorrect password attempt from IP 127.0.0.1",
+      "timestamp": "2026-10-09T05:37:48.172Z",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit-1791524268100",
+      "event": "SECURITY_RESET",
+      "details": "Initial ELSHA Security System provisioned with salted scrypt hashing.",
+      "timestamp": "2026-10-09T05:37:48.100Z"
+    }
+  ]
+}

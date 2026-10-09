@@ -76,44 +76,44 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
     'Non-Compliant',
   ];
 
-  // Helper for Category Tag styling in Geometric Balance palette
+  // Helper for Category Tag styling in Pure White/Purple palette
   const getCategoryBadge = (tag?: NoteCategoryTag | string) => {
     switch (tag) {
       case 'Initial Assessment':
         return {
           label: 'Initial Assessment',
-          bg: 'bg-[#C5A028]/20 text-[#f5d77f] border-[#C5A028]/60',
-          dot: 'bg-[#C5A028]',
+          bg: 'bg-purple-100 text-[#7E22CE] border-purple-300',
+          dot: 'bg-[#7E22CE]',
         };
       case 'Follow-up':
         return {
           label: 'Follow-up',
-          bg: 'bg-white/10 text-white border-white/20',
-          dot: 'bg-white',
+          bg: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+          dot: 'bg-indigo-600',
         };
       case 'Dietary Adjustment':
         return {
           label: 'Dietary Adjustment',
-          bg: 'bg-amber-500/20 text-amber-300 border-amber-500/50',
-          dot: 'bg-amber-400',
+          bg: 'bg-amber-50 text-amber-800 border-amber-300',
+          dot: 'bg-amber-600',
         };
       case 'Glycemic & Lab Review':
         return {
           label: 'Glycemic & Lab Review',
-          bg: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50',
-          dot: 'bg-cyan-400',
+          bg: 'bg-cyan-50 text-cyan-800 border-cyan-300',
+          dot: 'bg-cyan-600',
         };
       case 'Acute / SOS':
         return {
           label: 'Acute / SOS',
-          bg: 'bg-rose-500/20 text-rose-300 border-rose-500/50',
-          dot: 'bg-rose-400',
+          bg: 'bg-rose-50 text-rose-800 border-rose-300',
+          dot: 'bg-rose-600',
         };
       default:
         return {
           label: tag || 'Consultation Note',
-          bg: 'bg-[#111] text-gray-300 border-white/20',
-          dot: 'bg-gray-400',
+          bg: 'bg-purple-50 text-gray-700 border-purple-200',
+          dot: 'bg-purple-600',
         };
     }
   };
@@ -222,34 +222,34 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
   };
 
   const handleCopyAudit = (note: ClinicalConsultationNote) => {
-    const auditText = `[ELSHA CLINICAL NOTE AUDIT]\nSession: ${note.sessionDate} (${note.sessionTime})\nCategory: ${note.categoryTag || note.consultationType}\nType: ${note.consultationType}\nClinician: ${note.clinicianName}\nAdherence: ${note.patientAdherence}\nFasting Glucose: ${note.objectiveVitalsFindings.bloodGlucoseFasting || 'N/A'} mg/dL\nPP Glucose: ${note.objectiveVitalsFindings.bloodGlucosePostPrandial || 'N/A'} mg/dL\nStatus: AES-GCM Encrypted / Prescription Isolated`;
+    const auditText = `[ŽIATHLON CLINICAL NOTE AUDIT]\nSession: ${note.sessionDate} (${note.sessionTime})\nCategory: ${note.categoryTag || note.consultationType}\nType: ${note.consultationType}\nClinician: ${note.clinicianName}\nAdherence: ${note.patientAdherence}\nFasting Glucose: ${note.objectiveVitalsFindings.bloodGlucoseFasting || 'N/A'} mg/dL\nPP Glucose: ${note.objectiveVitalsFindings.bloodGlucosePostPrandial || 'N/A'} mg/dL\nStatus: AES-GCM Encrypted / Prescription Isolated`;
     navigator.clipboard.writeText(auditText);
     setCopiedId(note.id);
     setTimeout(() => setCopiedId(null), 2000);
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 text-gray-900">
       {/* Module Header */}
-      <div className="border-b-2 border-[#C5A028] pb-4 flex flex-wrap items-center justify-between gap-4">
+      <div className="border-b-2 border-purple-200 pb-4 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <span className="text-[10px] uppercase font-bold tracking-[0.4em] text-[#C5A028]">
+          <span className="text-[10px] uppercase font-bold tracking-[0.4em] text-[#7E22CE]">
             MODULE 15 • INTERNAL METABOLIC GOVERNANCE
           </span>
-          <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white uppercase mt-0.5">
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-gray-950 uppercase mt-0.5">
             Clinical Notes & Observations
           </h2>
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 text-xs bg-[#111] px-3.5 py-1.5 border border-[#C5A028] text-[#C5A028] font-bold uppercase tracking-wider">
+          <div className="flex items-center gap-2 text-xs bg-purple-50 px-3.5 py-1.5 border border-purple-200 text-[#7E22CE] font-bold uppercase tracking-wider rounded-lg">
             <Lock className="w-3.5 h-3.5" />
             <span>Prescription Isolated • E2EE Private</span>
           </div>
           <button
             type="button"
             onClick={handleCreateNewSession}
-            className="py-1.5 px-4 bg-[#C5A028] text-black text-xs font-black uppercase tracking-widest cursor-pointer hover:bg-[#d8b132] transition-colors flex items-center gap-1.5"
+            className="py-1.5 px-4 bg-[#7E22CE] text-white text-xs font-black uppercase tracking-widest cursor-pointer hover:bg-[#6b1dae] transition-colors flex items-center gap-1.5 rounded-lg shadow-xs"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>New Session</span>
@@ -261,31 +261,31 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Column: Consultation Sessions Timeline (4 Cols) */}
         <div className="lg:col-span-4 space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-white/10">
+          <div className="flex items-center justify-between pb-2 border-b border-purple-200">
             <div className="flex items-center gap-2">
-              <ClipboardList className="w-4 h-4 text-[#C5A028]" />
-              <h3 className="text-xs font-black uppercase tracking-widest text-[#C5A028]">
+              <ClipboardList className="w-4 h-4 text-[#7E22CE]" />
+              <h3 className="text-xs font-black uppercase tracking-widest text-[#7E22CE]">
                 Consultation History ({notes.length})
               </h3>
             </div>
-            <span className="text-[10px] font-mono text-gray-400 uppercase tracking-wider">
+            <span className="text-[10px] font-mono text-gray-600 font-bold uppercase tracking-wider">
               {patientName}
             </span>
           </div>
 
           {/* Filter & Sort Controls */}
-          <div className="p-3 bg-[#111] border border-white/10 space-y-2.5">
+          <div className="p-3.5 bg-purple-50 border-2 border-purple-200 rounded-xl space-y-2.5 shadow-xs">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {/* Category Filter Dropdown */}
               <div>
-                <label className="text-[9px] uppercase font-bold tracking-wider text-[#C5A028] flex items-center gap-1 mb-1">
+                <label className="text-[9px] uppercase font-bold tracking-wider text-[#7E22CE] flex items-center gap-1 mb-1">
                   <Filter className="w-3 h-3" /> Filter by Category
                 </label>
                 <select
                   id="category-filter-select"
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full bg-[#000000] border border-white/20 focus:border-[#C5A028] py-1.5 px-2 text-white text-[11px] font-bold focus:outline-none transition-all cursor-pointer"
+                  className="w-full bg-white border border-purple-200 focus:border-[#7E22CE] py-1.5 px-2 text-gray-950 text-[11px] font-bold focus:outline-none transition-all cursor-pointer rounded-lg"
                 >
                   <option value="ALL">All Categories ({notes.length})</option>
                   {CATEGORY_TAGS.map((tag) => {
@@ -301,14 +301,14 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
 
               {/* Sort Order Dropdown */}
               <div>
-                <label className="text-[9px] uppercase font-bold tracking-wider text-gray-400 flex items-center gap-1 mb-1">
+                <label className="text-[9px] uppercase font-bold tracking-wider text-gray-600 flex items-center gap-1 mb-1">
                   <ArrowUpDown className="w-3 h-3" /> Sort Notes
                 </label>
                 <select
                   id="category-sort-select"
                   value={sortOrder}
                   onChange={(e) => setSortOrder(e.target.value as any)}
-                  className="w-full bg-[#000000] border border-white/20 focus:border-[#C5A028] py-1.5 px-2 text-white text-[11px] font-bold focus:outline-none transition-all cursor-pointer"
+                  className="w-full bg-white border border-purple-200 focus:border-[#7E22CE] py-1.5 px-2 text-gray-950 text-[11px] font-bold focus:outline-none transition-all cursor-pointer rounded-lg"
                 >
                   <option value="category">Sort by: Category (A-Z)</option>
                   <option value="newest">Sort by: Newest Date</option>
@@ -323,10 +323,10 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
               <button
                 type="button"
                 onClick={() => setSelectedCategory('ALL')}
-                className={`px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider border transition-colors cursor-pointer ${
+                className={`px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider border rounded transition-colors cursor-pointer ${
                   selectedCategory === 'ALL'
-                    ? 'bg-[#C5A028] text-black border-[#C5A028]'
-                    : 'bg-black/40 border-white/10 text-gray-400 hover:text-white'
+                    ? 'bg-[#7E22CE] text-white border-[#7E22CE]'
+                    : 'bg-white border-purple-200 text-gray-700 hover:text-gray-950 hover:border-[#7E22CE]'
                 }`}
               >
                 All ({notes.length})
@@ -339,10 +339,10 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
                     key={tag}
                     type="button"
                     onClick={() => setSelectedCategory(tag)}
-                    className={`px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider border transition-colors cursor-pointer flex items-center gap-1 ${
+                    className={`px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider border rounded transition-colors cursor-pointer flex items-center gap-1 ${
                       isTagActive
-                        ? 'bg-[#C5A028] text-black border-[#C5A028] font-black'
-                        : 'bg-black/40 border-white/10 text-gray-400 hover:text-white hover:border-white/30'
+                        ? 'bg-[#7E22CE] text-white border-[#7E22CE] font-black'
+                        : 'bg-white border-purple-200 text-gray-700 hover:text-gray-950 hover:border-[#7E22CE]'
                     }`}
                   >
                     <span>{tag}</span>
@@ -355,13 +355,13 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
             {/* Search Bar & Active Filter Indicator */}
             <div className="flex items-center gap-2 pt-1">
               <div className="relative flex-1">
-                <Search className="w-3 h-3 text-gray-500 absolute left-2 top-2" />
+                <Search className="w-3 h-3 text-gray-400 absolute left-2 top-2" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search observation notes..."
-                  className="w-full bg-[#000000] border border-white/10 focus:border-[#C5A028] py-1 pl-7 pr-2 text-white text-[10px] focus:outline-none"
+                  className="w-full bg-white border border-purple-200 focus:border-[#7E22CE] py-1 pl-7 pr-2 text-gray-950 text-[10px] focus:outline-none rounded-lg"
                 />
               </div>
 
@@ -372,7 +372,7 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
                     setSelectedCategory('ALL');
                     setSearchQuery('');
                   }}
-                  className="px-2 py-1 bg-rose-950/40 text-rose-300 border border-rose-500/30 text-[9px] font-bold uppercase tracking-wider hover:bg-rose-900/60 cursor-pointer flex items-center gap-1"
+                  className="px-2 py-1 bg-rose-50 text-rose-800 border border-rose-200 text-[9px] font-bold uppercase tracking-wider hover:bg-rose-100 cursor-pointer flex items-center gap-1 rounded"
                   title="Reset Filter"
                 >
                   <X className="w-2.5 h-2.5" /> Reset
@@ -380,13 +380,13 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
               )}
             </div>
 
-            <div className="flex items-center justify-between text-[9px] font-mono text-gray-400 pt-0.5">
+            <div className="flex items-center justify-between text-[9px] font-mono text-gray-600 pt-0.5">
               <span>
-                Showing <strong className="text-white">{filteredAndSortedNotes.length}</strong> of{' '}
-                <strong className="text-white">{notes.length}</strong> notes
+                Showing <strong className="text-gray-950">{filteredAndSortedNotes.length}</strong> of{' '}
+                <strong className="text-gray-950">{notes.length}</strong> notes
               </span>
               {selectedCategory !== 'ALL' && (
-                <span className="text-[#C5A028] font-bold">
+                <span className="text-[#7E22CE] font-bold">
                   Filtered by: {selectedCategory}
                 </span>
               )}
@@ -404,16 +404,16 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
                 <div
                   key={note.id}
                   onClick={() => setSelectedNoteId(note.id)}
-                  className={`p-4 border transition-all cursor-pointer relative ${
+                  className={`p-4 border-2 rounded-xl transition-all cursor-pointer relative shadow-2xs ${
                     isSelected
-                      ? 'bg-[#181818] border-[#C5A028]'
-                      : 'bg-[#111] border-white/10 hover:border-white/30'
+                      ? 'bg-purple-100/70 border-[#7E22CE] ring-1 ring-[#7E22CE]/30'
+                      : 'bg-white border-purple-200 hover:border-[#7E22CE]'
                   }`}
                 >
                   {/* Category Tag Header Badge */}
                   <div className="flex items-center justify-between gap-2 mb-2">
                     <span
-                      className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider border ${badge.bg}`}
+                      className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider border rounded ${badge.bg}`}
                     >
                       <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
                       <Tag className="w-2.5 h-2.5" />
@@ -421,58 +421,58 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
                     </span>
 
                     <span
-                      className={`text-[9px] font-mono font-bold uppercase tracking-widest px-2 py-0.5 ${
+                      className={`text-[9px] font-mono font-bold uppercase tracking-widest px-2 py-0.5 rounded ${
                         note.patientAdherence.includes('High')
-                          ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-500/40'
+                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
                           : note.patientAdherence.includes('Moderate')
-                          ? 'bg-amber-950/60 text-amber-400 border border-amber-500/40'
-                          : 'bg-rose-950/60 text-rose-400 border border-rose-500/40'
+                          ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                          : 'bg-rose-100 text-rose-800 border border-rose-300'
                       }`}
                     >
-                      {note.patientAdherence.split(' ')[0]}
+                      {note.patientAdherence?.split(' ')[0] || ''}
                     </span>
                   </div>
 
                   {/* Date & Time */}
                   <div className="flex items-center gap-1.5 mb-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-[#C5A028]" />
-                    <span className="text-xs font-mono font-bold text-white tracking-wide">
+                    <Calendar className="w-3.5 h-3.5 text-[#7E22CE]" />
+                    <span className="text-xs font-mono font-bold text-gray-950 tracking-wide">
                       {note.sessionDate}
                     </span>
-                    <span className="text-[10px] font-mono text-gray-400">
+                    <span className="text-[10px] font-mono text-gray-500">
                       {note.sessionTime}
                     </span>
                   </div>
 
                   {/* Consultation Type Headline */}
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-[#C5A028] mb-1">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-[#7E22CE] mb-1">
                     {note.consultationType}
                   </h4>
 
                   {/* Short Snippet */}
-                  <p className="text-[11px] text-gray-400 line-clamp-2 leading-relaxed mb-3">
+                  <p className="text-[11px] text-gray-600 line-clamp-2 leading-relaxed mb-3">
                     {note.chiefComplaintsObservations || 'No observation notes recorded.'}
                   </p>
 
                   {/* Vitals Summary Pill */}
-                  <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[10px] font-mono text-gray-400">
+                  <div className="pt-2 border-t border-purple-100 flex items-center justify-between text-[10px] font-mono text-gray-600">
                     <div>
                       FBS:{' '}
-                      <span className="text-white font-bold">
+                      <span className="text-gray-950 font-bold">
                         {note.objectiveVitalsFindings.bloodGlucoseFasting || '--'}
                       </span>{' '}
                       mg/dL
                     </div>
                     <div>
                       PPBS:{' '}
-                      <span className="text-white font-bold">
+                      <span className="text-gray-950 font-bold">
                         {note.objectiveVitalsFindings.bloodGlucosePostPrandial || '--'}
                       </span>{' '}
                       mg/dL
                     </div>
                     <div>
                       Wt:{' '}
-                      <span className="text-white font-bold">
+                      <span className="text-gray-950 font-bold">
                         {note.objectiveVitalsFindings.currentWeight || '--'}
                       </span>{' '}
                       kg
@@ -483,7 +483,7 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
             })}
 
             {filteredAndSortedNotes.length === 0 && (
-              <div className="p-8 text-center bg-[#111] border border-white/10 text-gray-400 text-xs space-y-3">
+              <div className="p-8 text-center bg-purple-50 border-2 border-purple-200 rounded-xl text-gray-600 text-xs space-y-3">
                 <p>No consultation notes found matching your filter criteria.</p>
                 <div className="flex items-center justify-center gap-2">
                   <button
@@ -492,14 +492,14 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
                       setSelectedCategory('ALL');
                       setSearchQuery('');
                     }}
-                    className="py-1 px-3 bg-white/10 hover:bg-white/20 text-white text-[10px] uppercase font-bold"
+                    className="py-1 px-3 bg-white border border-purple-200 hover:border-[#7E22CE] text-gray-800 text-[10px] uppercase font-bold rounded-lg"
                   >
                     Clear Filter
                   </button>
                   <button
                     type="button"
                     onClick={handleCreateNewSession}
-                    className="py-1 px-3 bg-[#C5A028] text-black hover:bg-[#d8b132] text-[10px] uppercase font-bold"
+                    className="py-1 px-3 bg-[#7E22CE] text-white hover:bg-[#6b1dae] text-[10px] uppercase font-bold rounded-lg"
                   >
                     + Create New Note
                   </button>
@@ -512,23 +512,23 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
         {/* Right Column: Active Session Editor (8 Cols) */}
         <div className="lg:col-span-8 space-y-6">
           {activeNote ? (
-            <div className="bg-[#111] border border-[#C5A028] p-6 space-y-6">
+            <div className="bg-white border-2 border-purple-200 rounded-xl p-6 shadow-xs space-y-6">
               {/* Active Session Top Bar */}
-              <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-white/10">
+              <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-purple-200">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-[#000000] border border-[#C5A028]">
-                    <Stethoscope className="w-5 h-5 text-[#C5A028]" />
+                  <div className="p-2.5 bg-purple-50 border border-purple-200 rounded-lg text-[#7E22CE]">
+                    <Stethoscope className="w-5 h-5 text-[#7E22CE]" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2 mb-0.5">
-                      <span className="text-[10px] uppercase font-mono tracking-widest text-[#C5A028] font-bold">
+                      <span className="text-[10px] uppercase font-mono tracking-widest text-[#7E22CE] font-bold">
                         Consultation Note Record • ID: {activeNote.id}
                       </span>
                       {(() => {
                         const activeBadge = getCategoryBadge(activeNote.categoryTag);
                         return (
                           <span
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider border ${activeBadge.bg}`}
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider border rounded ${activeBadge.bg}`}
                           >
                             <Tag className="w-2.5 h-2.5" />
                             {activeBadge.label}
@@ -536,7 +536,7 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
                         );
                       })()}
                     </div>
-                    <h3 className="text-base font-black uppercase text-white tracking-wider">
+                    <h3 className="text-base font-black uppercase text-gray-950 tracking-wider">
                       {activeNote.consultationType}
                     </h3>
                   </div>
@@ -546,11 +546,11 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
                   <button
                     type="button"
                     onClick={() => handleCopyAudit(activeNote)}
-                    className="p-2 bg-[#000000] border border-white/20 hover:border-[#C5A028] text-gray-300 hover:text-[#C5A028] text-xs transition-colors cursor-pointer"
+                    className="p-2 bg-purple-50 border border-purple-200 hover:border-[#7E22CE] text-gray-700 hover:text-[#7E22CE] text-xs transition-colors cursor-pointer rounded-lg"
                     title="Copy Clinical Audit Summary"
                   >
                     {copiedId === activeNote.id ? (
-                      <Check className="w-4 h-4 text-emerald-400" />
+                      <Check className="w-4 h-4 text-emerald-600" />
                     ) : (
                       <Copy className="w-4 h-4" />
                     )}
@@ -560,7 +560,7 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
                     <button
                       type="button"
                       onClick={() => onDeleteNote(activeNote.id)}
-                      className="p-2 bg-[#000000] border border-rose-500/30 hover:border-rose-500 text-rose-400 text-xs transition-colors cursor-pointer"
+                      className="p-2 bg-rose-50 border border-rose-200 hover:border-rose-400 text-rose-600 text-xs transition-colors cursor-pointer rounded-lg"
                       title="Delete this consultation record"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -570,13 +570,13 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
               </div>
 
               {/* Category Tag Selector Banner */}
-              <div className="p-3 bg-[#000000] border border-white/10 space-y-2">
+              <div className="p-3.5 bg-purple-50 border border-purple-200 rounded-xl space-y-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <label className="text-[10px] uppercase font-black tracking-widest text-[#C5A028] flex items-center gap-1.5">
-                    <Tag className="w-3.5 h-3.5 text-[#C5A028]" />
+                  <label className="text-[10px] uppercase font-black tracking-widest text-[#7E22CE] flex items-center gap-1.5">
+                    <Tag className="w-3.5 h-3.5 text-[#7E22CE]" />
                     Consultation Category Tag
                   </label>
-                  <span className="text-[10px] text-gray-400 font-mono">
+                  <span className="text-[10px] text-gray-600 font-mono">
                     Select note classification tag for filtering & analytics
                   </span>
                 </div>
@@ -590,10 +590,10 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
                         key={tag}
                         type="button"
                         onClick={() => onUpdateNote(activeNote.id, { categoryTag: tag })}
-                        className={`p-2 text-center text-xs font-bold uppercase tracking-wider border transition-all cursor-pointer flex flex-col items-center justify-center gap-1 ${
+                        className={`p-2 text-center text-xs font-bold uppercase tracking-wider border rounded-lg transition-all cursor-pointer flex flex-col items-center justify-center gap-1 ${
                           isSelectedTag
-                            ? `${badge.bg} border-2 font-black shadow-sm ring-1 ring-[#C5A028]`
-                            : 'bg-black/40 border-white/10 text-gray-400 hover:text-white hover:border-white/30'
+                            ? `${badge.bg} border-2 font-black shadow-xs ring-1 ring-[#7E22CE]`
+                            : 'bg-white border-purple-200 text-gray-700 hover:text-gray-950 hover:border-[#7E22CE]'
                         }`}
                       >
                         <span className="flex items-center gap-1.5 text-[10px]">
@@ -609,19 +609,19 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
               {/* Session Meta Fields */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
-                  <label className="text-[10px] uppercase font-bold tracking-wider text-[#C5A028] block mb-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-wider text-[#7E22CE] block mb-1.5">
                     Session Date
                   </label>
                   <input
                     type="date"
                     value={activeNote.sessionDate ?? ''}
                     onChange={(e) => onUpdateNote(activeNote.id, { sessionDate: e.target.value })}
-                    className="w-full bg-[#000000] border border-white/20 focus:border-[#C5A028] py-2 px-3 text-white font-mono text-xs focus:outline-none transition-all"
+                    className="w-full bg-white border border-purple-200 focus:border-[#7E22CE] py-2 px-3 text-gray-950 font-mono text-xs focus:outline-none transition-all rounded-lg"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[10px] uppercase font-bold tracking-wider text-[#C5A028] block mb-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-wider text-[#7E22CE] block mb-1.5">
                     Session Time
                   </label>
                   <input
@@ -629,12 +629,12 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
                     value={activeNote.sessionTime ?? ''}
                     onChange={(e) => onUpdateNote(activeNote.id, { sessionTime: e.target.value })}
                     placeholder="e.g. 10:30 AM"
-                    className="w-full bg-[#000000] border border-white/20 focus:border-[#C5A028] py-2 px-3 text-white font-mono text-xs focus:outline-none transition-all"
+                    className="w-full bg-white border border-purple-200 focus:border-[#7E22CE] py-2 px-3 text-gray-950 font-mono text-xs focus:outline-none transition-all rounded-lg"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[10px] uppercase font-bold tracking-wider text-[#C5A028] block mb-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-wider text-[#7E22CE] block mb-1.5">
                     Consultation Type
                   </label>
                   <select
@@ -644,7 +644,7 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
                         consultationType: e.target.value as ConsultationType,
                       })
                     }
-                    className="w-full bg-[#000000] border border-white/20 focus:border-[#C5A028] py-2 px-3 text-white text-xs font-bold uppercase tracking-wider focus:outline-none transition-all cursor-pointer"
+                    className="w-full bg-white border border-purple-200 focus:border-[#7E22CE] py-2 px-3 text-gray-950 text-xs font-bold uppercase tracking-wider focus:outline-none transition-all cursor-pointer rounded-lg"
                   >
                     {consultationTypes.map((type) => (
                       <option key={type} value={type}>
@@ -655,7 +655,7 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
                 </div>
 
                 <div>
-                  <label className="text-[10px] uppercase font-bold tracking-wider text-[#C5A028] block mb-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-wider text-[#7E22CE] block mb-1.5">
                     Patient Adherence Rating
                   </label>
                   <select
@@ -665,7 +665,7 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
                         patientAdherence: e.target.value as PatientAdherenceLevel,
                       })
                     }
-                    className="w-full bg-[#000000] border border-white/20 focus:border-[#C5A028] py-2 px-3 text-white text-xs font-bold uppercase tracking-wider focus:outline-none transition-all cursor-pointer"
+                    className="w-full bg-white border border-purple-200 focus:border-[#7E22CE] py-2 px-3 text-gray-950 text-xs font-bold uppercase tracking-wider focus:outline-none transition-all cursor-pointer rounded-lg"
                   >
                     {adherenceLevels.map((lvl) => (
                       <option key={lvl} value={lvl}>
@@ -678,11 +678,11 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
 
               {/* Clinician Attending Name */}
               <div>
-                <label className="text-[10px] uppercase font-bold tracking-wider text-[#C5A028] block mb-1.5">
+                <label className="text-[10px] uppercase font-bold tracking-wider text-[#7E22CE] block mb-1.5">
                   Attending Clinical Nutritionist
                 </label>
                 <div className="flex items-center gap-2">
-                  <div className="p-2 bg-[#000000] border border-white/10 text-[#C5A028]">
+                  <div className="p-2 bg-purple-50 border border-purple-200 text-[#7E22CE] rounded-lg">
                     <User className="w-4 h-4" />
                   </div>
                   <input
@@ -690,7 +690,7 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
                     value={activeNote.clinicianName ?? ''}
                     onChange={(e) => onUpdateNote(activeNote.id, { clinicianName: e.target.value })}
                     placeholder="e.g. Dr. Ananya / Lead Clinical Nutritionist"
-                    className="w-full bg-[#000000] border border-white/20 focus:border-[#C5A028] py-2 px-3 text-white text-xs font-medium focus:outline-none transition-all"
+                    className="w-full bg-white border border-purple-200 focus:border-[#7E22CE] py-2 px-3 text-gray-950 text-xs font-medium focus:outline-none transition-all rounded-lg"
                   />
                 </div>
               </div>
@@ -698,15 +698,15 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
               {/* Section 1: Objective Metabolic Vitals Matrix */}
               <div className="space-y-3 pt-2">
                 <div className="flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-[#C5A028]" />
-                  <h4 className="text-xs font-black uppercase tracking-widest text-[#C5A028]">
+                  <Activity className="w-4 h-4 text-[#7E22CE]" />
+                  <h4 className="text-xs font-black uppercase tracking-widest text-[#7E22CE]">
                     Objective Metabolic Vitals (Consultation Day)
                   </h4>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
-                  <div className="p-3 bg-[#000000] border border-white/10 space-y-1">
-                    <span className="text-[9px] uppercase font-mono tracking-wider text-gray-400 block">
+                  <div className="p-3 bg-purple-50/70 border border-purple-200 rounded-xl space-y-1">
+                    <span className="text-[9px] uppercase font-mono tracking-wider text-gray-600 font-bold block">
                       Fasting Glucose
                     </span>
                     <div className="flex items-baseline gap-1">
@@ -722,14 +722,14 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
                           })
                         }
                         placeholder="126"
-                        className="w-full bg-transparent text-white font-mono font-bold text-sm focus:outline-none border-b border-white/20 focus:border-[#C5A028]"
+                        className="w-full bg-transparent text-gray-950 font-mono font-bold text-sm focus:outline-none border-b border-purple-300 focus:border-[#7E22CE]"
                       />
                       <span className="text-[9px] text-gray-500 font-mono">mg/dL</span>
                     </div>
                   </div>
 
-                  <div className="p-3 bg-[#000000] border border-white/10 space-y-1">
-                    <span className="text-[9px] uppercase font-mono tracking-wider text-gray-400 block">
+                  <div className="p-3 bg-purple-50/70 border border-purple-200 rounded-xl space-y-1">
+                    <span className="text-[9px] uppercase font-mono tracking-wider text-gray-600 font-bold block">
                       Post-Prandial (2H)
                     </span>
                     <div className="flex items-baseline gap-1">
@@ -745,14 +745,14 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
                           })
                         }
                         placeholder="168"
-                        className="w-full bg-transparent text-white font-mono font-bold text-sm focus:outline-none border-b border-white/20 focus:border-[#C5A028]"
+                        className="w-full bg-transparent text-gray-950 font-mono font-bold text-sm focus:outline-none border-b border-purple-300 focus:border-[#7E22CE]"
                       />
                       <span className="text-[9px] text-gray-500 font-mono">mg/dL</span>
                     </div>
                   </div>
 
-                  <div className="p-3 bg-[#000000] border border-white/10 space-y-1">
-                    <span className="text-[9px] uppercase font-mono tracking-wider text-gray-400 block">
+                  <div className="p-3 bg-purple-50/70 border border-purple-200 rounded-xl space-y-1">
+                    <span className="text-[9px] uppercase font-mono tracking-wider text-gray-600 font-bold block">
                       Blood Pressure
                     </span>
                     <div className="flex items-baseline gap-1">
@@ -768,14 +768,14 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
                           })
                         }
                         placeholder="120/80"
-                        className="w-full bg-transparent text-white font-mono font-bold text-sm focus:outline-none border-b border-white/20 focus:border-[#C5A028]"
+                        className="w-full bg-transparent text-gray-950 font-mono font-bold text-sm focus:outline-none border-b border-purple-300 focus:border-[#7E22CE]"
                       />
                       <span className="text-[9px] text-gray-500 font-mono">mmHg</span>
                     </div>
                   </div>
 
-                  <div className="p-3 bg-[#000000] border border-white/10 space-y-1">
-                    <span className="text-[9px] uppercase font-mono tracking-wider text-gray-400 block">
+                  <div className="p-3 bg-purple-50/70 border border-purple-200 rounded-xl space-y-1">
+                    <span className="text-[9px] uppercase font-mono tracking-wider text-gray-600 font-bold block">
                       Current Weight
                     </span>
                     <div className="flex items-baseline gap-1">
@@ -791,14 +791,14 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
                           })
                         }
                         placeholder="61.5"
-                        className="w-full bg-transparent text-white font-mono font-bold text-sm focus:outline-none border-b border-white/20 focus:border-[#C5A028]"
+                        className="w-full bg-transparent text-gray-950 font-mono font-bold text-sm focus:outline-none border-b border-purple-300 focus:border-[#7E22CE]"
                       />
                       <span className="text-[9px] text-gray-500 font-mono">kg</span>
                     </div>
                   </div>
 
-                  <div className="p-3 bg-[#000000] border border-white/10 space-y-1">
-                    <span className="text-[9px] uppercase font-mono tracking-wider text-gray-400 block">
+                  <div className="p-3 bg-purple-50/70 border border-purple-200 rounded-xl space-y-1">
+                    <span className="text-[9px] uppercase font-mono tracking-wider text-gray-600 font-bold block">
                       Ketones Status
                     </span>
                     <div className="flex items-baseline gap-1">
@@ -814,13 +814,13 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
                           })
                         }
                         placeholder="Neg"
-                        className="w-full bg-transparent text-white font-mono font-bold text-sm focus:outline-none border-b border-white/20 focus:border-[#C5A028]"
+                        className="w-full bg-transparent text-gray-950 font-mono font-bold text-sm focus:outline-none border-b border-purple-300 focus:border-[#7E22CE]"
                       />
                     </div>
                   </div>
 
-                  <div className="p-3 bg-[#000000] border border-white/10 space-y-1">
-                    <span className="text-[9px] uppercase font-mono tracking-wider text-gray-400 block">
+                  <div className="p-3 bg-purple-50/70 border border-purple-200 rounded-xl space-y-1">
+                    <span className="text-[9px] uppercase font-mono tracking-wider text-gray-600 font-bold block">
                       Estimated HbA1c
                     </span>
                     <div className="flex items-baseline gap-1">
@@ -836,7 +836,7 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
                           })
                         }
                         placeholder="7.2%"
-                        className="w-full bg-transparent text-[#C5A028] font-mono font-bold text-sm focus:outline-none border-b border-white/20 focus:border-[#C5A028]"
+                        className="w-full bg-transparent text-[#7E22CE] font-mono font-bold text-sm focus:outline-none border-b border-purple-300 focus:border-[#7E22CE]"
                       />
                     </div>
                   </div>
@@ -846,7 +846,7 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
               {/* Section 2: Subjective Observations & Patient Symptoms */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-black uppercase tracking-wider text-[#C5A028]">
+                  <label className="text-xs font-black uppercase tracking-wider text-[#7E22CE]">
                     Subjective Patient Complaints & Behavioral Observations
                   </label>
                   {/* Rapid Template Injectors */}
@@ -856,7 +856,7 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
                       onClick={() =>
                         handleInsertTemplate('chief', 'Energy levels improved post-lunch; somnolence reduced by 50%.')
                       }
-                      className="px-2 py-0.5 bg-[#000000] border border-white/10 hover:border-[#C5A028] text-gray-400 hover:text-white transition-colors"
+                      className="px-2 py-0.5 bg-purple-50 border border-purple-200 hover:border-[#7E22CE] text-gray-700 hover:text-gray-950 transition-colors rounded"
                     >
                       + Energy Improved
                     </button>
@@ -865,7 +865,7 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
                       onClick={() =>
                         handleInsertTemplate('chief', 'Reports dawn phenomenon with waking dry mouth.')
                       }
-                      className="px-2 py-0.5 bg-[#000000] border border-white/10 hover:border-[#C5A028] text-gray-400 hover:text-white transition-colors"
+                      className="px-2 py-0.5 bg-purple-50 border border-purple-200 hover:border-[#7E22CE] text-gray-700 hover:text-gray-950 transition-colors rounded"
                     >
                       + Dawn Spike
                     </button>
@@ -878,13 +878,13 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
                     onUpdateNote(activeNote.id, { chiefComplaintsObservations: e.target.value })
                   }
                   placeholder="Record patient-reported symptom trends, energy dips, bowel motility changes, sleep quality, and exercise tolerance..."
-                  className="w-full bg-[#000000] border border-white/20 focus:border-[#C5A028] p-3 text-white text-xs font-medium focus:outline-none transition-all leading-relaxed"
+                  className="w-full bg-white border border-purple-200 focus:border-[#7E22CE] p-3 text-gray-950 text-xs font-medium focus:outline-none transition-all leading-relaxed rounded-xl"
                 />
               </div>
 
               {/* Section 3: Dietary Compliance & Deviations */}
               <div className="space-y-2">
-                <label className="text-xs font-black uppercase tracking-wider text-[#C5A028] block">
+                <label className="text-xs font-black uppercase tracking-wider text-[#7E22CE] block">
                   Dietary Protocol Adherence & Cravings Log
                 </label>
                 <textarea
@@ -894,25 +894,25 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
                     onUpdateNote(activeNote.id, { dietaryComplianceNotes: e.target.value })
                   }
                   placeholder="Document specific food protocol deviations, carbohydrate cravings, unlogged evening snacks, hydration consistency..."
-                  className="w-full bg-[#000000] border border-white/20 focus:border-[#C5A028] p-3 text-white text-xs font-medium focus:outline-none transition-all leading-relaxed"
+                  className="w-full bg-white border border-purple-200 focus:border-[#7E22CE] p-3 text-gray-950 text-xs font-medium focus:outline-none transition-all leading-relaxed rounded-xl"
                 />
               </div>
 
               {/* Section 4: PRIVATE NUTRITIONIST DIFFERENTIAL ASSESSMENT (Confidential) */}
-              <div className="p-4 bg-[#000000] border-2 border-[#C5A028] space-y-3 relative">
+              <div className="p-4 bg-purple-50/70 border-2 border-purple-300 rounded-xl space-y-3 relative shadow-2xs">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <EyeOff className="w-4 h-4 text-[#C5A028]" />
-                    <span className="text-xs font-black uppercase tracking-widest text-[#C5A028]">
+                    <EyeOff className="w-4 h-4 text-[#7E22CE]" />
+                    <span className="text-xs font-black uppercase tracking-widest text-[#7E22CE]">
                       Private Clinical Assessment & Differential Hypotheses
                     </span>
                   </div>
-                  <span className="text-[9px] font-mono font-bold bg-[#111] px-2 py-0.5 border border-[#C5A028] text-[#C5A028] uppercase tracking-wider">
+                  <span className="text-[9px] font-mono font-bold bg-white px-2 py-0.5 border border-purple-300 text-[#7E22CE] uppercase tracking-wider rounded">
                     STRICTLY CONFIDENTIAL • NOT ON PRESCRIPTION
                   </span>
                 </div>
 
-                <p className="text-[11px] text-gray-400 italic">
+                <p className="text-[11px] text-gray-600 italic">
                   Use this space for internal diagnostic considerations, behavioral psychology notes,
                   insulin resistance progression hypotheses, and guidance for future consultations.
                 </p>
@@ -924,14 +924,14 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
                     onUpdateNote(activeNote.id, { privateClinicalAssessment: e.target.value })
                   }
                   placeholder="Enter private nutritionist assessment (e.g. GLUT4 responsiveness, cortisol-driven evening snacking, psychological resistance to carbohydrate restrictions)..."
-                  className="w-full bg-black border border-white/20 focus:border-[#C5A028] p-3 text-white text-xs font-medium focus:outline-none transition-all leading-relaxed font-mono"
+                  className="w-full bg-white border border-purple-200 focus:border-[#7E22CE] p-3 text-gray-950 text-xs font-medium focus:outline-none transition-all leading-relaxed font-mono rounded-xl"
                 />
               </div>
 
               {/* Section 5: Action Plan & Next Session Directives */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-black uppercase tracking-wider text-[#C5A028]">
+                  <label className="text-xs font-black uppercase tracking-wider text-[#7E22CE]">
                     Internal Action Plan & Next Consultation Milestones
                   </label>
                   <div className="flex items-center gap-1.5 text-[10px]">
@@ -940,7 +940,7 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
                       onClick={() =>
                         handleInsertTemplate('plan', 'Order fasting insulin and lipid profile before next review.')
                       }
-                      className="px-2 py-0.5 bg-[#000000] border border-white/10 hover:border-[#C5A028] text-gray-400 hover:text-white transition-colors"
+                      className="px-2 py-0.5 bg-purple-50 border border-purple-200 hover:border-[#7E22CE] text-gray-700 hover:text-gray-950 transition-colors rounded"
                     >
                       + Order Lab Profile
                     </button>
@@ -949,7 +949,7 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
                       onClick={() =>
                         handleInsertTemplate('plan', 'Schedule 14-day follow-up consultation for CGM sensor review.')
                       }
-                      className="px-2 py-0.5 bg-[#000000] border border-white/10 hover:border-[#C5A028] text-gray-400 hover:text-white transition-colors"
+                      className="px-2 py-0.5 bg-purple-50 border border-purple-200 hover:border-[#7E22CE] text-gray-700 hover:text-gray-950 transition-colors rounded"
                     >
                       + Follow-up 14 Days
                     </button>
@@ -962,17 +962,17 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
                     onUpdateNote(activeNote.id, { actionPlanNextSteps: e.target.value })
                   }
                   placeholder="1. Targeted micro-adjustments before next visit&#10;2. Lab profile requisitions&#10;3. Follow-up consultation target date..."
-                  className="w-full bg-[#000000] border border-white/20 focus:border-[#C5A028] p-3 text-white text-xs font-medium focus:outline-none transition-all leading-relaxed"
+                  className="w-full bg-white border border-purple-200 focus:border-[#7E22CE] p-3 text-gray-950 text-xs font-medium focus:outline-none transition-all leading-relaxed rounded-xl"
                 />
               </div>
 
               {/* Bottom Quick Save & Encrypt Button */}
-              <div className="pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-4">
-                <div className="flex items-center gap-2 text-[11px] text-gray-400 font-mono">
-                  <Lock className="w-3.5 h-3.5 text-[#C5A028]" />
+              <div className="pt-4 border-t border-purple-200 flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-center gap-2 text-[11px] text-gray-600 font-mono">
+                  <Lock className="w-3.5 h-3.5 text-[#7E22CE]" />
                   <span>
                     Last Encrypted Snapshot:{' '}
-                    <strong className="text-white">
+                    <strong className="text-gray-950 font-bold">
                       {activeNote.encryptedAt
                         ? new Date(activeNote.encryptedAt).toLocaleTimeString()
                         : 'Pending Sync'}
@@ -983,7 +983,7 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
                 <button
                   type="button"
                   onClick={onSaveEncrypted}
-                  className="py-2 px-5 bg-[#C5A028] text-black text-xs font-black uppercase tracking-widest cursor-pointer hover:bg-[#d8b132] transition-colors flex items-center gap-2"
+                  className="py-2 px-5 bg-[#7E22CE] text-white text-xs font-black uppercase tracking-widest cursor-pointer hover:bg-[#6b1dae] transition-colors flex items-center gap-2 rounded-xl shadow-xs"
                 >
                   <Lock className="w-3.5 h-3.5" />
                   <span>Encrypt & Save Consultation Note</span>
@@ -991,7 +991,7 @@ export const ClinicalNotesSection: React.FC<ClinicalNotesSectionProps> = ({
               </div>
             </div>
           ) : (
-            <div className="bg-[#111] border border-white/10 p-12 text-center text-gray-400 text-xs">
+            <div className="bg-purple-50 border-2 border-purple-200 rounded-xl p-12 text-center text-gray-600 text-xs">
               Select or create a consultation session to view notes.
             </div>
           )}

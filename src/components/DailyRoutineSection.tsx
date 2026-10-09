@@ -31,24 +31,24 @@ export const DailyRoutineSection: React.FC<DailyRoutineSectionProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-gray-900">
       {/* Header */}
-      <div className="border-b-2 border-[#7E22CE] pb-4 flex flex-wrap items-center justify-between gap-3">
+      <div className="border-b-2 border-purple-200 pb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <span className="text-[10px] uppercase font-bold tracking-[0.4em] text-[#A855F7]">
+          <span className="text-[10px] uppercase font-bold tracking-[0.4em] text-[#7E22CE]">
             Module 12 • Circadian Rhythm & Chrononutrition
           </span>
-          <h2 className="text-2xl font-black tracking-tight text-white uppercase mt-0.5">
+          <h2 className="text-2xl font-black tracking-tight text-gray-950 uppercase mt-0.5">
             Daily Routine & Timed Habits
           </h2>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-gray-600">
             Map metabolic feeding windows, sleep architecture, and hydration checkpoints.
           </p>
         </div>
         <button
           type="button"
           onClick={onAddRoutineItem}
-          className="px-4 py-2 bg-[#7E22CE] text-white text-xs font-black uppercase tracking-wider hover:bg-[#9333EA] transition-all flex items-center gap-1.5 shadow-[0_0_12px_rgba(126,34,206,0.5)] cursor-pointer"
+          className="px-4 py-2 bg-[#7E22CE] text-white text-xs font-black uppercase tracking-wider hover:bg-[#6b1dae] transition-all flex items-center gap-1.5 shadow-sm cursor-pointer rounded-xl"
         >
           <Plus className="w-3.5 h-3.5" />
           <span>+ Add Schedule Event</span>
@@ -56,26 +56,26 @@ export const DailyRoutineSection: React.FC<DailyRoutineSectionProps> = ({
       </div>
 
       {/* Routine Grid / Timeline */}
-      <div className="overflow-x-auto bg-[#0d0617] border border-[#7E22CE]">
+      <div className="overflow-x-auto bg-white border-2 border-purple-200 rounded-xl shadow-xs">
         <table className="w-full text-left border-collapse text-xs">
           <thead>
-            <tr className="border-b border-[#7E22CE] bg-black text-[#A855F7] font-bold tracking-widest uppercase text-[10px]">
-              <th className="py-3 px-4 font-bold w-1/2">Daily Routine Landmark</th>
-              <th className="py-3 px-4 font-bold w-1/2">Patient Response / Logged Time</th>
+            <tr className="border-b-2 border-purple-200 bg-purple-100 text-purple-950 font-black tracking-widest uppercase text-[10px]">
+              <th className="py-3 px-4 font-black w-1/2">Daily Routine Landmark</th>
+              <th className="py-3 px-4 font-black w-1/2">Patient Response / Logged Time</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/10">
+          <tbody className="divide-y divide-purple-100">
             {routineItems.map((item, idx) => (
-              <tr key={item.id} className="hover:bg-white/[0.03] transition-colors">
-                <td className="py-3 px-4 text-white font-medium">
+              <tr key={item.id} className="hover:bg-purple-50/60 transition-colors">
+                <td className="py-3 px-4 text-gray-950 font-medium">
                   <div className="flex items-center gap-3">
-                    <div className="p-1.5 bg-black border border-[#7E22CE]/40 shrink-0">
+                    <div className="p-1.5 bg-purple-50 border border-purple-200 rounded-lg shrink-0">
                       {getRoutineIcon(item.activity)}
                     </div>
-                    <span className="text-[#A855F7] font-mono text-[10px] w-4 font-bold">
+                    <span className="text-[#7E22CE] font-mono text-[10px] w-4 font-bold">
                       {(idx + 1).toString().padStart(2, '0')}
                     </span>
-                    <span className="text-xs font-bold text-gray-200">{item.activity}</span>
+                    <span className="text-xs font-bold text-gray-900">{item.activity}</span>
                   </div>
                 </td>
 
@@ -85,7 +85,7 @@ export const DailyRoutineSection: React.FC<DailyRoutineSectionProps> = ({
                     value={item.patientResponseTime ?? ''}
                     onChange={(e) => onUpdateRoutine(item.id, e.target.value)}
                     placeholder="Enter time or response (e.g. 6:30 AM, 500 ml)..."
-                    className="w-full bg-black border border-white/20 focus:border-[#7E22CE] py-2 px-3 text-xs text-white placeholder:text-gray-600 focus:outline-none transition-all font-mono"
+                    className="w-full bg-white border border-purple-200 focus:border-[#7E22CE] py-2 px-3 text-xs text-gray-950 placeholder:text-gray-400 focus:outline-none transition-all font-mono rounded-lg"
                   />
                 </td>
               </tr>
@@ -94,11 +94,11 @@ export const DailyRoutineSection: React.FC<DailyRoutineSectionProps> = ({
         </table>
       </div>
 
-      <div className="p-4 bg-[#0d0617] border border-white/10 flex flex-wrap items-center justify-between gap-3 text-xs text-gray-400">
+      <div className="p-4 bg-purple-50 border border-purple-200 rounded-xl flex flex-wrap items-center justify-between gap-3 text-xs text-gray-700">
         <span>
-          Recommended meal spacing for metabolic stability: <strong className="text-[#C084FC]">3.5 – 4 hours</strong> between major meals to avoid glucose stacking.
+          Recommended meal spacing for metabolic stability: <strong className="text-[#7E22CE]">3.5 – 4 hours</strong> between major meals to avoid glucose stacking.
         </span>
-        <span className="text-[#A855F7] font-mono font-bold uppercase text-[10px]">Circadian Synchronized</span>
+        <span className="text-[#7E22CE] font-mono font-bold uppercase text-[10px]">Circadian Synchronized</span>
       </div>
     </div>
   );

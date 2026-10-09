@@ -73,55 +73,59 @@ export const ZiathlonLogo: React.FC<ZiathlonLogoProps> = ({
   const textColor = isLight ? 'text-black' : 'text-white';
   const crossFill = isLight ? '#000000' : '#ffffff';
 
-  // SVG Shield Emblem
+  // SVG Shield Emblem matching official logo
   const ShieldEmblem = (
     <svg
       className={`${currentSize.iconBox} shrink-0 select-none overflow-visible`}
-      viewBox="0 0 100 100"
+      viewBox="0 0 130 115"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      shapeRendering="geometricPrecision"
     >
       <defs>
-        <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor={PURPLE_LIGHT} />
-          <stop offset="50%" stopColor={PURPLE_MAIN} />
-          <stop offset="100%" stopColor={PURPLE_DARK} />
-        </linearGradient>
-
-        <filter id="subtleGlow" x="-10%" y="-10%" width="120%" height="120%">
-          <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor={PURPLE_MAIN} floodOpacity="0.35" />
+        <filter id="subtleGlowLogo" x="-10%" y="-10%" width="120%" height="120%">
+          <feDropShadow dx="0" dy="1.5" stdDeviation="2" floodColor="#7016B7" floodOpacity="0.25" />
         </filter>
       </defs>
 
-      <g filter="url(#subtleGlow)">
-        {/* Top Shield Segment */}
+      <g filter="url(#subtleGlowLogo)">
+        {/* 1. Top Shield Segment */}
         <path
-          d="M 12,23 
-             L 76,23 
-             L 74,30 
-             L 13,50 
-             C 12.5,41 12.2,32 12,23 Z"
-          fill="url(#shieldGrad)"
+          d="M 18,34 L 81,34 L 20,53 Z"
+          fill="#7016B7"
         />
 
-        {/* Middle Shield Segment (Dynamic Athletic Z-Slash) */}
+        {/* 2. Middle Dynamic Diagonal Segment */}
         <path
-          d="M 14.5,58 
-             L 72,36 
-             L 67,61 
-             L 18.5,82 
-             C 17,74 15.5,66 14.5,58 Z"
-          fill="url(#shieldGrad)"
+          d="M 22,62 L 81,38 L 76,60 L 28,78 Z"
+          fill="#7016B7"
         />
 
-        {/* Bottom Shield Segment (Pointed Tip) */}
+        {/* 3. Bottom Shield Apex Tip Segment */}
         <path
-          d="M 21,89 
-             L 63,68 
-             C 57,87 48,100 42,106 
-             C 36,99 26,92 21,89 Z"
-          fill="url(#shieldGrad)"
+          d="M 34,85 L 69,73 L 49,103 Z"
+          fill="#7016B7"
         />
+
+        {/* 4. Top-Right Floating Medical Cross (+) */}
+        <g transform="translate(84, 15)">
+          <rect
+            x="0"
+            y="6.2"
+            width="19"
+            height="6.6"
+            rx="1.8"
+            fill={crossFill}
+          />
+          <rect
+            x="6.2"
+            y="0"
+            width="6.6"
+            height="19"
+            rx="1.8"
+            fill={crossFill}
+          />
+        </g>
       </g>
     </svg>
   );

@@ -95,7 +95,7 @@ export const DrBharathkumarSportsMedicineLogo: React.FC<DrBharathkumarSportsMedi
           Digitally Signed & Clinically Validated
         </div>
         <div className="text-[9px] text-sky-300 font-mono">
-          Timestamp: {new Date().toLocaleDateString('en-GB')} • 24/7 ELSHA WhatsApp AI Sync Active
+          Timestamp: {new Date().toLocaleDateString('en-GB')} • Sports Medicine Clinical AI Active
         </div>
       </div>
     </div>

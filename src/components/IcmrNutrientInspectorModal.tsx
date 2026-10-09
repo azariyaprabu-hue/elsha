@@ -34,28 +34,28 @@ export const IcmrNutrientInspectorModal: React.FC<IcmrNutrientInspectorModalProp
   const adequacyRows = calculateIcmrAdequacy(nutrients, rda);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
-      <div className="relative w-full max-w-2xl bg-[#080c0a] border-2 border-[#C5A028] shadow-[0_0_40px_rgba(197,160,40,0.25)] text-white overflow-hidden my-8 max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-purple-950/40 backdrop-blur-sm overflow-y-auto">
+      <div className="relative w-full max-w-2xl bg-white border-2 border-purple-200 shadow-2xl rounded-2xl text-gray-950 overflow-hidden my-8 max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-[#C5A028]/40 bg-[#050706] flex items-center justify-between">
+        <div className="p-4 sm:p-5 border-b border-purple-100 bg-purple-50 flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider bg-[#C5A028] text-black">
+              <span className="px-2.5 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider bg-[#7E22CE] text-white rounded-md">
                 ICMR IFCT Clinical Profile
               </span>
-              <span className="text-xs text-gray-400 font-mono">Portion: {weightGrams}g</span>
+              <span className="text-xs text-gray-600 font-mono font-bold">Portion: {weightGrams}g</span>
             </div>
-            <h3 className="text-lg font-bold text-white tracking-wide mt-1">
+            <h3 className="text-lg font-black text-gray-950 tracking-wide mt-1">
               {title}
             </h3>
             {subtitle && (
-              <p className="text-xs text-[#f7d88c] font-mono mt-0.5">{subtitle}</p>
+              <p className="text-xs text-[#7E22CE] font-mono font-semibold mt-0.5">{subtitle}</p>
             )}
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 text-gray-500 hover:text-gray-950 hover:bg-purple-100 rounded-lg transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -65,81 +65,81 @@ export const IcmrNutrientInspectorModal: React.FC<IcmrNutrientInspectorModalProp
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
           {/* Clinical Highlight */}
           {clinicalHighlight && (
-            <div className="p-3 bg-[#111914] border border-[#C5A028]/40 text-xs text-[#f7d88c] flex items-start gap-2.5">
-              <Sparkles className="w-4 h-4 text-[#C5A028] shrink-0 mt-0.5" />
+            <div className="p-3 bg-purple-50/70 border border-purple-200 rounded-xl text-xs text-gray-900 flex items-start gap-2.5">
+              <Sparkles className="w-4 h-4 text-[#7E22CE] shrink-0 mt-0.5" />
               <div>
-                <span className="font-bold text-white">ICMR Bioactive Mechanism: </span>
+                <span className="font-black text-[#7E22CE]">ICMR Bioactive Mechanism: </span>
                 {clinicalHighlight}
               </div>
             </div>
           )}
 
           {/* Quick Macro Bar */}
-          <div className="p-4 bg-[#111613] border border-white/10 grid grid-cols-5 gap-2 text-center font-mono">
-            <div className="p-2 bg-black/40 border border-white/5">
-              <div className="text-[10px] text-gray-400 uppercase">Energy</div>
-              <div className="text-base font-bold text-white">{nutrients.calories} kcal</div>
+          <div className="p-4 bg-purple-50/40 border border-purple-200 rounded-xl grid grid-cols-5 gap-2 text-center font-mono">
+            <div className="p-2 bg-white border border-purple-200 rounded-lg">
+              <div className="text-[10px] text-gray-600 uppercase font-bold">Energy</div>
+              <div className="text-base font-black text-gray-950">{nutrients.calories} kcal</div>
             </div>
-            <div className="p-2 bg-black/40 border border-white/5">
-              <div className="text-[10px] text-gray-400 uppercase">Carbs</div>
-              <div className="text-base font-bold text-[#f7d88c]">{nutrients.carbs}g</div>
+            <div className="p-2 bg-white border border-purple-200 rounded-lg">
+              <div className="text-[10px] text-gray-600 uppercase font-bold">Carbs</div>
+              <div className="text-base font-black text-[#7E22CE]">{nutrients.carbs}g</div>
             </div>
-            <div className="p-2 bg-black/40 border border-white/5">
-              <div className="text-[10px] text-gray-400 uppercase">Protein</div>
-              <div className="text-base font-bold text-emerald-300">{nutrients.protein}g</div>
+            <div className="p-2 bg-white border border-purple-200 rounded-lg">
+              <div className="text-[10px] text-gray-600 uppercase font-bold">Protein</div>
+              <div className="text-base font-black text-emerald-800">{nutrients.protein}g</div>
             </div>
-            <div className="p-2 bg-black/40 border border-white/5">
-              <div className="text-[10px] text-gray-400 uppercase">Fat</div>
-              <div className="text-base font-bold text-amber-300">{nutrients.fat}g</div>
+            <div className="p-2 bg-white border border-purple-200 rounded-lg">
+              <div className="text-[10px] text-gray-600 uppercase font-bold">Fat</div>
+              <div className="text-base font-black text-amber-800">{nutrients.fat}g</div>
             </div>
-            <div className="p-2 bg-black/40 border border-white/5">
-              <div className="text-[10px] text-gray-400 uppercase">Fiber</div>
-              <div className="text-base font-bold text-indigo-300">{nutrients.fiber}g</div>
+            <div className="p-2 bg-white border border-purple-200 rounded-lg">
+              <div className="text-[10px] text-gray-600 uppercase font-bold">Fiber</div>
+              <div className="text-base font-black text-purple-900">{nutrients.fiber}g</div>
             </div>
           </div>
 
           {/* Comprehensive ICMR Nutrient Audit Table */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs uppercase font-mono tracking-wider text-gray-400">
+              <span className="text-xs uppercase font-mono tracking-wider text-gray-600 font-bold">
                 ICMR 2020/2024 Nutrient Contribution Analysis
               </span>
-              <span className="text-[10px] font-mono text-[#C5A028]">
+              <span className="text-[10px] font-mono text-[#7E22CE] font-bold">
                 Patient: {generalInfo.name} ({generalInfo.sex}, {generalInfo.weight}kg)
               </span>
             </div>
 
-            <div className="border border-white/10 overflow-hidden bg-[#070a08]">
+            <div className="border border-purple-200 rounded-xl overflow-hidden bg-white shadow-2xs">
               <table className="w-full text-left text-xs border-collapse font-mono">
                 <thead>
-                  <tr className="border-b border-[#C5A028]/40 bg-black text-[#C5A028] text-[10px] uppercase">
+                  <tr className="border-b border-purple-200 bg-purple-50 text-[#7E22CE] text-[10px] uppercase font-bold">
                     <th className="py-2.5 px-3">Nutrient</th>
                     <th className="py-2.5 px-3">Amount</th>
                     <th className="py-2.5 px-3">Daily ICMR RDA</th>
                     <th className="py-2.5 px-3 text-center">% of RDA Provided</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5 text-[11px]">
+                <tbody className="divide-y divide-purple-100 text-[11px]">
                   {adequacyRows.map((row, idx) => {
                     const percentMet = Math.min(100, Math.max(0, row.percentMet));
                     return (
-                      <tr key={idx} className="hover:bg-white/5 transition-colors">
-                        <td className="py-2 px-3 text-white font-medium">{row.nutrient}</td>
-                        <td className="py-2 px-3 text-[#f7d88c] font-bold">
+                      <tr key={idx} className="hover:bg-purple-50/50 transition-colors">
+                        <td className="py-2 px-3 text-gray-950 font-bold">{row.nutrient}</td>
+                        <td className="py-2 px-3 text-[#7E22CE] font-black">
                           {row.consumed} {row.unit}
                         </td>
-                        <td className="py-2 px-3 text-gray-400">
+                        <td className="py-2 px-3 text-gray-600">
                           {row.target} {row.unit}
                         </td>
                         <td className="py-2 px-3">
                           <div className="flex items-center gap-2 justify-end">
-                            <div className="w-20 bg-black h-2 rounded-full overflow-hidden border border-white/10 hidden sm:block">
+                            <div className="w-20 bg-purple-100 h-2 rounded-full overflow-hidden border border-purple-200 hidden sm:block">
                               <div
-                                className="bg-[#C5A028] h-full rounded-full transition-all"
+                                className="bg-[#7E22CE] h-full rounded-full transition-all"
                                 style={{ width: `${percentMet}%` }}
                               />
                             </div>
-                            <span className="text-xs font-bold text-white min-w-[3rem] text-right">
+                            <span className="text-xs font-black text-gray-950 min-w-[3rem] text-right">
                               {row.percentMet}%
                             </span>
                           </div>
@@ -154,14 +154,14 @@ export const IcmrNutrientInspectorModal: React.FC<IcmrNutrientInspectorModalProp
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-white/10 bg-[#050706] flex items-center justify-between">
-          <div className="text-[10px] text-gray-500 font-mono">
+        <div className="p-4 border-t border-purple-100 bg-purple-50 flex items-center justify-between">
+          <div className="text-[10px] text-gray-600 font-mono font-medium">
             Verified Indian Food Composition Tables (IFCT 2017) • ICMR-NIN Hyderabad
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="py-1.5 px-4 bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase transition-colors"
+            className="py-1.5 px-4 bg-[#7E22CE] hover:bg-[#6b1dae] text-white text-xs font-bold uppercase rounded-lg transition-colors cursor-pointer shadow-xs"
           >
             Close
           </button>

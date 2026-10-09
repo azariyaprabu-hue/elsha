@@ -2,13 +2,10 @@
 
 @layer base {
   body {
-    background-color: #FAF7FD;
-    color: #1E1136;
+    background-color: #FFFFFF !important;
+    color: #000000 !important;
+    font-weight: 600;
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  }
-
-  h1, h2, h3 {
-    letter-spacing: -0.02em;
   }
 
   .font-brand {
@@ -17,315 +14,264 @@
 }
 
 :root {
-  --brand-purple: #781CA8;
-  --brand-purple-vivid: #8B5CF6;
-  --brand-purple-accent: #9333EA;
-  --brand-purple-light: #C084FC;
-  --brand-purple-dark: #581C87;
-  --brand-purple-glow: rgba(147, 51, 234, 0.2);
+  --brand-black: #000000;
+  --brand-white: #FFFFFF;
+  --brand-purple: #7E22CE;
+  --brand-sandal: #EADDCB;
+  --brand-sandal-light: #F7F3EA;
 }
 
 /* ========================================================================= */
-/* ŽIATHLON SPORTS MEDICINE CLINIC • PURPLE WITH WHITE THEME (DEFAULT)       */
+/* PURPLE, WHITE, SANDAL & BLACK CLINICAL EDITORIAL THEME                     */
+/* EVERY BLACK LETTER IN THE APP MUST BE DARK & BOLD                         */
 /* ========================================================================= */
 
-.purple-text,
-.gold-text {
-  color: #7E22CE !important;
-}
-
-.brand-purple-gradient,
-.gold-gradient-bg {
-  background: linear-gradient(135deg, #781CA8 0%, #9333EA 50%, #581C87 100%) !important;
-  color: #ffffff !important;
-}
-
-.purple-border,
-.gold-border {
-  border-color: #7E22CE !important;
-}
-
-.purple-border-thick,
-.gold-border-thick {
-  border: 2px solid #7E22CE !important;
-}
-
-.purple-border-frame,
-.gold-border-frame {
-  border: 4px solid #7E22CE !important;
-}
-
-.purple-button,
-.gold-button {
-  background: #7E22CE !important;
-  color: #ffffff !important;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  transition: all 0.15s ease-in-out;
-  box-shadow: 0 2px 10px rgba(126, 34, 206, 0.3);
-}
-
-.purple-button:hover,
-.gold-button:hover {
-  background: #9333EA !important;
-  color: #ffffff !important;
-  box-shadow: 0 4px 16px rgba(147, 51, 234, 0.45);
-}
-
-.purple-outline-button,
-.gold-outline-button {
-  border: 1px solid #7E22CE !important;
-  color: #7E22CE !important;
-  background: #ffffff;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  transition: all 0.15s ease-in-out;
-}
-
-.purple-outline-button:hover,
-.gold-outline-button:hover {
-  background: #7E22CE !important;
-  color: #ffffff !important;
-  box-shadow: 0 2px 12px rgba(126, 34, 206, 0.3);
-}
-
-.dark-card {
-  background: #ffffff !important;
-  border: 1px solid #E9D5FF !important;
-  box-shadow: 0 2px 12px rgba(126, 34, 206, 0.06);
-}
-
-.dark-card:hover {
-  border-color: #7E22CE !important;
-}
-
-/* ========================================================================= */
-/* PURPLE WITH WHITE THEME OVERRIDES (ACTIVE BY DEFAULT)                     */
-/* ========================================================================= */
-
-/* Surface and Card Overrides */
-.theme-purple-white,
-body.theme-purple-white {
-  background-color: #FAF7FD !important;
-  color: #1E1136 !important;
-}
-
-.theme-purple-white .bg-\[\#000000\],
-.theme-purple-white .bg-black {
+/* Base Canvas & Page Sheets: Pure White */
+body,
+.bg-black,
+.bg-zinc-900,
+.bg-zinc-950,
+.bg-slate-900,
+.bg-slate-950,
+.bg-purple-950,
+.bg-\[\#000000\],
+.bg-\[\#0a0a0a\],
+.bg-\[\#0d0617\],
+.bg-\[\#0f0722\],
+.bg-\[\#120824\],
+.bg-\[\#1f0d38\] {
   background-color: #FFFFFF !important;
-  color: #1E1136 !important;
-  border-color: #E9D5FF !important;
+  color: #000000 !important;
+  border-color: #E2D9CC !important;
 }
 
-.theme-purple-white .bg-\[\#0d0617\],
-.theme-purple-white .bg-\[\#070d1e\],
-.theme-purple-white .bg-\[\#091530\],
-.theme-purple-white .bg-\[\#0b1633\],
-.theme-purple-white .bg-\[\#09030f\],
-.theme-purple-white .bg-\[\#120824\],
-.theme-purple-white .bg-\[\#101512\],
-.theme-purple-white .bg-\[\#050706\],
-.theme-purple-white .bg-\[\#15092a\],
-.theme-purple-white .bg-\[\#0f041d\],
-.theme-purple-white .bg-\[\#1a0c2e\],
-.theme-purple-white .bg-\[\#080410\],
-.theme-purple-white .bg-\[\#0a1e14\] {
+/* Ensure headings, labels, table headers are strictly sharp pitch black and heavy bold */
+h1, h2, h3, h4, h5, h6, th, dt, label {
+  color: #000000 !important;
+  font-weight: 800 !important;
+}
+
+/* Body paragraphs, table cells, lists, definitions: dark black and bold */
+p, td, li, dd {
+  color: #000000 !important;
+  font-weight: 700 !important;
+}
+
+/* Override all gray, slate, zinc, and muted text to be pitch black and bold across the whole app */
+.text-gray-950,
+.text-gray-900,
+.text-gray-800,
+.text-gray-700,
+.text-gray-600,
+.text-gray-500,
+.text-gray-400,
+.text-slate-900,
+.text-slate-800,
+.text-slate-700,
+.text-slate-600,
+.text-slate-500,
+.text-zinc-900,
+.text-zinc-800,
+.text-zinc-700,
+.text-zinc-600,
+.text-neutral-900,
+.text-neutral-800,
+.text-neutral-700,
+.text-muted-foreground {
+  color: #000000 !important;
+  font-weight: 700 !important;
+}
+
+/* Form Inputs, Selects & Textareas: Crisp White with Pitch Black Bold Text */
+input,
+textarea,
+select {
   background-color: #FFFFFF !important;
-  color: #1E1136 !important;
-  border-color: #E9D5FF !important;
-  box-shadow: 0 4px 16px rgba(126, 34, 206, 0.05);
+  color: #000000 !important;
+  font-weight: 700 !important;
+  border: 1.5px solid #CBD5E1 !important;
 }
 
-/* Soft Lilac Tinted Secondary Panels */
-.theme-purple-white .bg-\[\#0b1633\],
-.theme-purple-white .bg-\[\#091530\] {
-  background-color: #F8F4FD !important;
-  border-color: #D8B4FE !important;
+input::placeholder,
+textarea::placeholder {
+  color: #64748B !important;
+  font-weight: 500 !important;
 }
 
-/* Top Banner Radial Gradient in Purple with White */
-.theme-purple-white .bg-\[radial-gradient\(ellipse_at_center\,_var\(--tw-gradient-stops\)\)\] {
-  background: linear-gradient(135deg, #F3E8FF 0%, #FAF5FF 60%, #FFFFFF 100%) !important;
-  border-color: #7E22CE !important;
-  box-shadow: 0 10px 30px rgba(126, 34, 206, 0.1) !important;
+/* Selected fold / folder / tab: Vivid Purple with White Letters */
+.selected-fold,
+.bg-purple-active,
+button.bg-\[\#7E22CE\],
+.bg-\[\#7E22CE\],
+.bg-purple-600,
+.bg-purple-700,
+.bg-purple-800 {
+  background-color: #7E22CE !important;
+  color: #FFFFFF !important;
+  border-color: #6B21A8 !important;
 }
 
-/* Typography Overrides */
-.theme-purple-white h1.text-white,
-.theme-purple-white h2.text-white,
-.theme-purple-white h3.text-white,
-.theme-purple-white h4.text-white,
-.theme-purple-white .text-white:not(button):not(.bg-\[\#7E22CE\] *):not(.bg-\[\#9333EA\] *):not(.bg-purple-600 *):not(.bg-purple-700 *):not(.bg-purple-800 *):not(.bg-purple-900 *):not(.bg-emerald-600 *):not(.bg-rose-600 *):not(.bg-amber-600 *):not(.bg-red-600 *):not(.badge-white-text) {
-  color: #1E1136 !important;
-}
-
-/* Keep action buttons with crisp white text */
-.theme-purple-white button.bg-\[\#7E22CE\],
-.theme-purple-white button.bg-\[\#7E22CE\] *,
-.theme-purple-white button.bg-\[\#9333EA\],
-.theme-purple-white button.bg-\[\#9333EA\] *,
-.theme-purple-white .bg-purple-600,
-.theme-purple-white .bg-purple-600 *,
-.theme-purple-white .bg-purple-700,
-.theme-purple-white .bg-purple-700 *,
-.theme-purple-white .bg-purple-800,
-.theme-purple-white .bg-purple-800 *,
-.theme-purple-white .bg-purple-900,
-.theme-purple-white .bg-purple-900 *,
-.theme-purple-white .purple-button,
-.theme-purple-white .purple-button * {
+button.bg-\[\#7E22CE\] *,
+.bg-\[\#7E22CE\] *,
+.bg-purple-600 *,
+.bg-purple-700 * {
   color: #FFFFFF !important;
 }
 
-/* Secondary Action Buttons inside cards */
-.theme-purple-white button.bg-\[\#0d0617\],
-.theme-purple-white button.bg-black {
+/* Unselected items / standard text */
+.text-purple-accent,
+.text-\[\#7E22CE\],
+.text-\[\#C084FC\],
+.text-purple-600,
+.text-purple-700,
+.text-purple-800 {
+  color: #7E22CE !important;
+  font-weight: 700 !important;
+}
+
+/* Sandal Accents & Borders */
+.bg-sandal-light,
+.bg-sandal {
+  background-color: #F7F3EA !important;
+}
+
+.border-sandal,
+.border-\[\#CBD5E1\],
+.border-purple-200,
+.border-purple-900,
+.border-purple-900\/60,
+.border-purple-950\/60 {
+  border-color: #E5DECE !important;
+}
+
+/* Form Inputs, Selects & Textareas: Crisp White with Pitch Black Bold Text */
+input,
+textarea,
+select {
   background-color: #FFFFFF !important;
+  color: #000000 !important;
+  font-weight: 700 !important;
+  border: 1.5px solid #CBD5E1 !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
   border-color: #7E22CE !important;
-  color: #7E22CE !important;
-}
-.theme-purple-white button.bg-\[\#0d0617\]:hover,
-.theme-purple-white button.bg-black:hover {
-  background-color: #F3E8FF !important;
-  color: #581C87 !important;
+  outline: 2px solid rgba(126, 34, 206, 0.2) !important;
 }
 
-/* High-Contrast Gray Texts in Purple & White */
-.theme-purple-white .text-gray-200,
-.theme-purple-white .text-gray-300 {
-  color: #334155 !important;
-}
-
-.theme-purple-white .text-gray-400 {
-  color: #64748B !important;
-}
-
-.theme-purple-white .text-gray-500 {
-  color: #6B7280 !important;
-}
-
-/* Purple Accent Texts on White */
-.theme-purple-white .text-\[\#C084FC\],
-.theme-purple-white .text-purple-300,
-.theme-purple-white .text-purple-200 {
-  color: #7E22CE !important;
-  font-weight: 600;
-}
-
-.theme-purple-white .text-\[\#A855F7\] {
-  color: #6B21A8 !important;
-}
-
-/* Border adjustments */
-.theme-purple-white .border-white\/5,
-.theme-purple-white .border-white\/10,
-.theme-purple-white .border-white\/20,
-.theme-purple-white .border-white\/30 {
-  border-color: #E9D5FF !important;
-}
-
-/* Form inputs, textareas, selects */
-.theme-purple-white input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
-.theme-purple-white textarea,
-.theme-purple-white select {
+/* Tables */
+table {
   background-color: #FFFFFF !important;
-  color: #1E1136 !important;
-  border: 1px solid #D8B4FE !important;
+  color: #000000 !important;
+  font-weight: 700 !important;
 }
 
-.theme-purple-white input::placeholder,
-.theme-purple-white textarea::placeholder {
+thead,
+th {
+  color: #000000 !important;
+  font-weight: 800 !important;
+}
+
+/* Card frames & Containers */
+.clinical-sheet,
+.dark-card {
+  background: #FFFFFF !important;
+  border: 1px solid #E5DECE !important;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04) !important;
+  color: #000000 !important;
+}
+
+/* Purple Buttons */
+.purple-button {
+  background: #7E22CE !important;
+  color: #FFFFFF !important;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.15s ease-in-out;
+  box-shadow: 0 2px 10px rgba(126, 34, 206, 0.25);
+}
+
+.purple-button:hover {
+  background: #6B21A8 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 16px rgba(107, 33, 168, 0.35);
+}
+
+.purple-button * {
+  color: #FFFFFF !important;
+}
+
+.purple-outline-button {
+  background-color: #FFFFFF !important;
+  border: 1.5px solid #7E22CE !important;
+  color: #7E22CE !important;
+  font-weight: 700;
+}
+
+.purple-outline-button:hover {
+  background-color: #7E22CE !important;
+  color: #FFFFFF !important;
+}
+
+.purple-outline-button:hover * {
+  color: #FFFFFF !important;
+}
+
+/* Ziathlon Letterhead Canvas Style Protection: Keep white text crisp on dark/purple letterhead elements */
+.ziathlon-master-canvas .text-white,
+.ziathlon-master-canvas th.text-white,
+.ziathlon-master-canvas h3.text-white,
+.ziathlon-master-canvas p.text-white,
+.ziathlon-master-canvas span.text-white,
+.ziathlon-master-canvas div.text-white {
+  color: #FFFFFF !important;
+}
+
+.ziathlon-master-canvas .text-gray-200,
+.ziathlon-master-canvas p.text-gray-200 {
+  color: #E2E8F0 !important;
+}
+
+.ziathlon-master-canvas .text-gray-400 {
   color: #94A3B8 !important;
 }
 
-.theme-purple-white input:focus,
-.theme-purple-white textarea:focus,
-.theme-purple-white select:focus {
-  border-color: #7E22CE !important;
-  box-shadow: 0 0 0 3px rgba(126, 34, 206, 0.15) !important;
-  outline: none !important;
+.ziathlon-master-canvas .text-slate-500 {
+  color: #64748B !important;
 }
 
-/* Tables in Purple & White */
-.theme-purple-white table {
-  background-color: #FFFFFF !important;
-  color: #1E1136 !important;
-  border-color: #E9D5FF !important;
+.ziathlon-master-canvas .text-slate-600 {
+  color: #475569 !important;
 }
 
-.theme-purple-white thead tr,
-.theme-purple-white th {
-  background-color: #F3E8FF !important;
-  color: #581C87 !important;
-  border-color: #D8B4FE !important;
+.ziathlon-master-canvas .text-slate-700 {
+  color: #334155 !important;
 }
 
-.theme-purple-white td {
-  border-color: #F3E8FF !important;
-  color: #1E1136 !important;
+.ziathlon-master-canvas .text-slate-800 {
+  color: #1E293B !important;
 }
 
-.theme-purple-white tbody tr:nth-child(even) {
-  background-color: #FAF5FF !important;
+.ziathlon-master-canvas .text-\[\#7016B7\] {
+  color: #7016B7 !important;
 }
 
-.theme-purple-white tbody tr:hover {
-  background-color: #F3E8FF !important;
-}
-
-/* Modal overlays in Purple & White */
-.theme-purple-white .fixed.inset-0.bg-black\/80,
-.theme-purple-white .fixed.inset-0.bg-black\/90,
-.theme-purple-white .fixed.inset-0.bg-black\/70 {
-  background-color: rgba(30, 17, 54, 0.65) !important;
-  backdrop-filter: blur(8px) !important;
-}
-
-/* Custom modern scrollbars in Purple & White */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: #FAF5FF;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #D8B4FE;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #7E22CE;
-}
-
-/* ========================================================================= */
-/* PURPLE DARK THEME (FALLBACK TOGGLE)                                       */
-/* ========================================================================= */
-.theme-purple-dark,
-body.theme-purple-dark {
-  background-color: #05020a !important;
-  color: #ffffff !important;
-}
-
-.theme-purple-dark .bg-\[\#000000\],
-.theme-purple-dark .bg-black {
-  background-color: #000000 !important;
-  color: #ffffff !important;
-}
-
-.theme-purple-dark .bg-\[\#0d0617\] {
-  background-color: #0d0617 !important;
-  color: #ffffff !important;
+.ziathlon-master-canvas .text-\[\#0B0826\] {
+  color: #0B0826 !important;
 }
 
 /* Print Styles for Shareable Prescription & Client Dossier */
 @media print {
-  body {
-    background: #000000 !important;
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+  body, html {
+    background: #FFFFFF !important;
+    color: #0F172A !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
@@ -340,8 +286,17 @@ body.theme-purple-dark {
     left: 0 !important;
     top: 0 !important;
     width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
     height: auto !important;
     overflow: visible !important;
+    background: #FFFFFF !important;
+    color: #0F172A !important;
+  }
+  .ziathlon-master-canvas {
+    transform: none !important;
+    box-shadow: none !important;
+    margin: 0 auto !important;
   }
   .no-print, .no-print * {
     display: none !important;
@@ -358,7 +313,8 @@ body.theme-purple-dark {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
     box-shadow: none !important;
-    margin: 0 !important;
+    margin: 0 0 10mm 0 !important;
+    background: #FFFFFF !important;
+    color: #0F172A !important;
   }
 }
-

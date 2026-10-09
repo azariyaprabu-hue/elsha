@@ -18,7 +18,7 @@ export const DiabetesGuidelinesSection: React.FC<DiabetesGuidelinesSectionProps>
             Module 12 • Clinical Protocol & Glycemic Architecture
           </span>
           <h2 className="text-2xl font-serif text-[#f7d88c] font-bold tracking-wide">
-            ELSHA Diabetes Ingredients Guidelines
+            Žiathlon Sports Medicine Clinic Diabetes Ingredients Guidelines
           </h2>
         </div>
         <div className="flex items-center gap-1.5 text-xs text-[#d4af37] bg-[#121814] px-3 py-1.5 rounded-full border border-[#d4af37]/30">

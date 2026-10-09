@@ -39,7 +39,7 @@ export const E2EEMonitorModal: React.FC<E2EEMonitorModalProps> = ({
             </div>
             <div>
               <h2 className="text-xl font-serif text-[#f7d88c] tracking-wide flex items-center gap-2">
-                ELSHA Health Data E2EE Vault
+                Žiathlon Health Data E2EE Vault
                 <span className="text-[10px] font-sans uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
                   Active
                 </span>
