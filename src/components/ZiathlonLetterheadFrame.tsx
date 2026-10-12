@@ -223,17 +223,45 @@ export const ZiathlonLetterheadFrame: React.FC<ZiathlonLetterheadFrameProps> = (
           }}
         >
           {/* ======================================================================= */}
-          {/* 1. TOP-LEFT: OFFICIAL ZIATHLON EMBLEM & WORDMARK                       */}
+          {/* OFFICIAL DOCUMENT BORDER: ONE BLACK AND PURPLE LINE                     */}
+          {/* ======================================================================= */}
+          {/* Outer Black Border Line */}
+          <div
+            className="pointer-events-none absolute z-30"
+            style={{
+              top: '10px',
+              left: '10px',
+              right: '10px',
+              bottom: '10px',
+              border: '2px solid #000000',
+              boxSizing: 'border-box',
+            }}
+          />
+          {/* Inner Purple Border Line */}
+          <div
+            className="pointer-events-none absolute z-30"
+            style={{
+              top: '14px',
+              left: '14px',
+              right: '14px',
+              bottom: '14px',
+              border: '2px solid #7016B7',
+              boxSizing: 'border-box',
+            }}
+          />
+
+          {/* ======================================================================= */}
+          {/* 1. TOP-LEFT: OFFICIAL ZIATHLON EMBLEM & WORDMARK (SIDE-BY-SIDE LOCKUP)  */}
           {/* ======================================================================= */}
           <div
-            className="absolute top-[18px] left-[32px] w-[280px] z-10 select-none pointer-events-none flex flex-col items-start"
-            style={{ position: 'absolute', top: '18px', left: '32px' }}
+            className="absolute top-[22px] left-[30px] z-20 select-none pointer-events-none flex items-center gap-3.5"
+            style={{ position: 'absolute', top: '22px', left: '30px' }}
           >
             {/* Ziathlon Winged Purple Ribbon Emblem with Black Medical Cross (+) */}
-            <div className="mb-1">
+            <div className="shrink-0 flex items-center justify-center">
               <svg
-                width="48"
-                height="38"
+                width="46"
+                height="44"
                 viewBox="0 0 130 115"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
@@ -259,48 +287,40 @@ export const ZiathlonLetterheadFrame: React.FC<ZiathlonLetterheadFrameProps> = (
               </svg>
             </div>
 
-            {/* Wordmark: ZIATHLON */}
-            <h1 className="text-[22px] font-black tracking-[0.12em] text-[#0B0826] uppercase font-sans leading-none m-0 p-0">
-              ZIATHLON
-            </h1>
+            {/* Wordmark and Subtitle clearly decoupled from logo to avoid any merging */}
+            <div className="flex flex-col justify-center">
+              {/* Wordmark: ZIATHLON */}
+              <h1 className="text-[23px] font-black tracking-[0.14em] text-[#0B0826] uppercase font-sans leading-none m-0 p-0">
+                ZIATHLON
+              </h1>
 
-            {/* Subtitle: SPORTS MEDICINE CLINIC */}
-            <h2 className="text-[9px] font-extrabold tracking-[0.26em] text-[#7016B7] uppercase font-sans mt-1 m-0 p-0">
-              SPORTS MEDICINE CLINIC
-            </h2>
+              {/* Subtitle: SPORTS MEDICINE CLINIC */}
+              <h2 className="text-[10px] font-extrabold tracking-[0.24em] text-[#7016B7] uppercase font-sans mt-1 m-0 p-0 leading-none">
+                SPORTS MEDICINE CLINIC
+              </h2>
+            </div>
           </div>
 
-          {/* ======================================================================= */}
-          {/* 2. TOP-RIGHT: ANGLED GEOMETRIC HEADER ARTWORK                          */}
-          {/* ======================================================================= */}
+          {/* Top-Right: Clinic Tagline / Medical Centre Identification */}
           <div
-            className="absolute top-0 right-0 w-[350px] h-[95px] pointer-events-none select-none overflow-hidden z-0"
-            style={{ position: 'absolute', top: 0, right: 0 }}
+            className="absolute top-[26px] right-[30px] text-right z-20 pointer-events-none select-none"
+            style={{ position: 'absolute', top: '26px', right: '30px' }}
           >
-            <svg
-              viewBox="0 0 380 112"
-              className="w-full h-full"
-              preserveAspectRatio="none"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              {/* Primary Royal Purple Slanted Parallelogram */}
-              <polygon points="35,0 165,0 238,104 108,104" fill="#7016B7" />
+            <div className="font-mono text-[10px] font-black text-[#7016B7] uppercase tracking-widest">
+              OFFICIAL CLINICAL RECORD
+            </div>
+            <div className="text-[9.5px] font-bold text-slate-600 font-sans tracking-wide mt-1">
+              Centre for Sports Medicine & Metabolic Health
+            </div>
+          </div>
 
-              {/* Medium Purple Layered Stripe */}
-              <polygon points="155,0 205,0 270,104 220,104" fill="#9333EA" />
-
-              {/* Dark Navy Slanted Wedge */}
-              <polygon points="195,0 270,0 325,86 250,86" fill="#0B0826" />
-
-              {/* White separator hairline grooves */}
-              <line x1="162" y1="0" x2="235" y2="104" stroke="#FFFFFF" strokeWidth="2.5" />
-              <line x1="202" y1="0" x2="267" y2="104" stroke="#FFFFFF" strokeWidth="2" />
-
-              {/* Horizontal Purple Baseline Rule extending right to edge */}
-              <line x1="225" y1="100" x2="380" y2="100" stroke="#7016B7" strokeWidth="4.5" />
-              <line x1="225" y1="104" x2="380" y2="104" stroke="#0B0826" strokeWidth="1.5" />
-            </svg>
+          {/* Header Divider: One Black and Purple Line */}
+          <div
+            className="absolute left-[24px] right-[24px] top-[84px] z-20 pointer-events-none flex flex-col gap-[1.5px]"
+            style={{ position: 'absolute', left: '24px', right: '24px', top: '84px' }}
+          >
+            <div className="w-full h-[1.5px] bg-[#000000]" />
+            <div className="w-full h-[2px] bg-[#7016B7]" />
           </div>
 
           {/* ======================================================================= */}
@@ -310,12 +330,12 @@ export const ZiathlonLetterheadFrame: React.FC<ZiathlonLetterheadFrameProps> = (
             className="ziathlon-content-container absolute z-20 overflow-y-auto overflow-x-hidden"
             style={{
               position: 'absolute',
-              top: '116px',
-              left: '32px',
-              right: '32px',
-              bottom: '106px',
-              width: '736px',
-              height: '909px',
+              top: '96px',
+              left: '28px',
+              right: '28px',
+              bottom: '92px',
+              width: '744px',
+              height: '943px',
               boxSizing: 'border-box',
               scrollbarWidth: 'thin',
               scrollbarColor: '#CBD5E1 transparent',
@@ -325,68 +345,44 @@ export const ZiathlonLetterheadFrame: React.FC<ZiathlonLetterheadFrameProps> = (
           </div>
 
           {/* ======================================================================= */}
-          {/* 4. LOCKED FOOTER (BOTTOM-LEFT BANNER + BOTTOM-RIGHT DOCTOR CREDENTIALS) */}
+          {/* 4. LOCKED FOOTER (CLINIC ADDRESS + DOCTOR CREDENTIALS)                  */}
           {/* ======================================================================= */}
           {!hideFooter && (
             <div className="ziathlon-locked-footer pointer-events-none select-none">
-              {/* Notice text above address banner */}
+              {/* Footer Divider: One Purple and Black Line */}
               <div
-                className="absolute z-20 text-[9px] text-gray-400 font-sans tracking-wide"
-                style={{ position: 'absolute', left: '32px', bottom: '88px' }}
+                className="absolute left-[24px] right-[24px] bottom-[86px] z-20 pointer-events-none flex flex-col gap-[1.5px]"
+                style={{ position: 'absolute', left: '24px', right: '24px', bottom: '86px' }}
+              >
+                <div className="w-full h-[2px] bg-[#7016B7]" />
+                <div className="w-full h-[1.5px] bg-[#000000]" />
+              </div>
+
+              {/* Notice text above address */}
+              <div
+                className="absolute z-20 text-[9.5px] text-gray-500 font-sans tracking-wide"
+                style={{ position: 'absolute', left: '32px', bottom: '66px' }}
               >
                 Not valid for Medico Legal Purpose
               </div>
 
-              {/* A. BOTTOM-LEFT: GEOMETRIC GRAPHIC & CLINIC ADDRESS */}
+              {/* A. BOTTOM-LEFT: CLINIC ADDRESS (CLEAN ON WHITE CANVAS) */}
               <div
-                className="absolute left-0 bottom-0 w-[440px] h-[82px] z-10 overflow-hidden"
-                style={{ position: 'absolute', left: 0, bottom: 0, width: '440px', height: '82px' }}
+                className="absolute left-[32px] bottom-[16px] z-20 text-left select-text pointer-events-auto leading-tight"
+                style={{ position: 'absolute', left: '32px', bottom: '16px', maxWidth: '340px' }}
               >
-                {/* SVG Background for Bottom Angled Polygons */}
-                <div className="absolute inset-0 w-full h-full pointer-events-none z-0">
-                  <svg
-                    viewBox="0 0 440 82"
-                    className="w-full h-full"
-                    preserveAspectRatio="none"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    {/* Dark Navy Angled Block (holds clinic address in white) */}
-                    <polygon points="0,0 285,0 330,82 0,82" fill="#0B0826" />
-
-                    {/* Top purple accent stripe running along the top of the block */}
-                    <polygon points="0,0 325,0 338,8 0,8" fill="#7016B7" />
-
-                    {/* Middle Royal Purple Angled Parallelogram Stripe */}
-                    <polygon points="280,0 360,0 405,82 325,82" fill="#7016B7" />
-
-                    {/* Dark Navy Angled Wedge */}
-                    <polygon points="355,0 395,0 440,82 400,82" fill="#0B0826" />
-
-                    {/* White separator hairline lines */}
-                    <line x1="278" y1="0" x2="323" y2="82" stroke="#FFFFFF" strokeWidth="2.5" />
-                    <line x1="358" y1="0" x2="403" y2="82" stroke="#FFFFFF" strokeWidth="2.5" />
-                  </svg>
-                </div>
-
-                {/* Address inside Dark Navy Block */}
-                <div
-                  className="relative z-10 w-full h-full flex flex-col justify-center px-8 py-2 select-text pointer-events-auto text-left text-white leading-tight font-medium"
-                  style={{ maxWidth: '280px' }}
-                >
-                  <p className="font-bold text-white text-[10px] m-0">{clinicAddressLine1}</p>
-                  <p className="text-gray-200 text-[10px] m-0">{clinicAddressLine2}</p>
-                  <p className="text-gray-200 text-[10px] m-0">{clinicAddressLine3}</p>
-                </div>
+                <p className="font-extrabold text-[#0B0826] text-[11px] m-0">{clinicAddressLine1}</p>
+                <p className="text-slate-600 text-[10px] m-0 mt-0.5">{clinicAddressLine2}</p>
+                <p className="text-slate-600 text-[10px] m-0">{clinicAddressLine3}</p>
               </div>
 
               {/* B. BOTTOM-RIGHT: DOCTOR CREDENTIALS & CONTACT (ON CLEAN WHITE CANVAS) */}
               <div
-                className="absolute z-15 text-right select-text pointer-events-auto flex flex-col items-end space-y-2"
+                className="absolute z-20 text-right select-text pointer-events-auto flex flex-col items-end space-y-1"
                 style={{
                   position: 'absolute',
-                  right: '36px',
-                  bottom: '12px',
+                  right: '32px',
+                  bottom: '16px',
                   width: '320px',
                 }}
               >
@@ -398,7 +394,7 @@ export const ZiathlonLetterheadFrame: React.FC<ZiathlonLetterheadFrameProps> = (
                   <div className="font-bold text-slate-800 text-[10.5px] leading-tight mt-0.5">
                     {doctorQualifications}
                   </div>
-                  <div className="font-medium text-slate-600 text-[10px] leading-tight mt-0.5">
+                  <div className="font-semibold text-slate-600 text-[10px] leading-tight mt-0.5">
                     {doctorRole}
                   </div>
                   <div className="font-bold text-[#0B0826] text-[10px] font-mono leading-tight mt-0.5">
@@ -411,7 +407,7 @@ export const ZiathlonLetterheadFrame: React.FC<ZiathlonLetterheadFrameProps> = (
                   <p className="font-extrabold text-[#0B0826] text-[10.5px] tracking-wider m-0">
                     {doctorPhone}
                   </p>
-                  <p className="text-slate-600 font-medium text-[9.5px] m-0">
+                  <p className="text-slate-600 font-semibold text-[9.5px] m-0">
                     {doctorEmail}
                   </p>
                   <p className="text-[#0B0826] font-bold text-[9.5px] m-0">

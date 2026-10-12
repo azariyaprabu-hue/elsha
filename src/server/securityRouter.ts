@@ -59,8 +59,8 @@ export function requireAppAuth(req: Request, res: Response, next: NextFunction) 
   next();
 }
 
-// Express middleware to protect routes requiring specific Folder Unlock
-export function requireFolderAuth(folderId: string) {
+// Express middleware to protect routes requiring App Authentication (Entrance password)
+export function requireFolderAuth(_folderId?: string) {
   return (req: Request, res: Response, next: NextFunction) => {
     const session = getSessionFromReq(req);
     if (!session) {
@@ -71,15 +71,7 @@ export function requireFolderAuth(folderId: string) {
       });
     }
 
-    if (!session.unlockedFolders.has(folderId)) {
-      return res.status(403).json({
-        success: false,
-        error: `Access Denied: Folder [${folderId}] is locked. Please enter folder password.`,
-        code: 'FOLDER_LOCKED',
-        folderId,
-      });
-    }
-
+    // Once entrance password authentication succeeds, all clinical folders are accessible without individual folder passwords
     (req as any).session = session;
     next();
   };

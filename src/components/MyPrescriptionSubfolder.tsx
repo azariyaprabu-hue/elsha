@@ -260,53 +260,53 @@ export const MyPrescriptionSubfolder: React.FC<MyPrescriptionSubfolderProps> = (
             {/* ========================================================================= */}
             {/* 1. PATIENT INFORMATION: COMPACT READABLE LINES (NO TABLES, NO COLUMNS)    */}
             {/* ========================================================================= */}
-            <div className="border-b border-purple-200/80 pb-2 mb-2 text-[10px] leading-relaxed">
+            <div className="border-b border-purple-200/90 pb-2 mb-2.5 text-[11px] leading-relaxed">
               {/* Line 1: Patient Name, Gender, Age, Phone (with Date & Time on right) */}
               <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                 <div className="flex flex-wrap items-baseline gap-1.5 min-w-0">
-                  <span className="font-extrabold text-[13px] text-[#0B0826] tracking-tight">{patientName}</span>
+                  <span className="font-black text-[15px] text-[#0B0826] tracking-tight">{patientName}</span>
                   <span className="text-slate-400">,</span>
-                  <span className="font-semibold text-slate-800">{patientSex}</span>
+                  <span className="font-bold text-slate-800 text-[11.5px]">{patientSex}</span>
                   <span className="text-slate-400">,</span>
-                  <span className="font-semibold text-slate-800">{patientAge} Yrs</span>
+                  <span className="font-bold text-slate-800 text-[11.5px]">{patientAge} Yrs</span>
                   <span className="text-slate-400">,</span>
-                  <span className="text-slate-500 font-medium">Phone:</span>
-                  <span className="font-mono font-bold text-slate-900">
+                  <span className="text-slate-600 font-semibold text-[11.5px]">Phone:</span>
+                  <span className="font-mono font-bold text-slate-950 text-[11.5px]">
                     {generalInfo?.mobileNumber || generalInfo?.phone || '+91 94482 88008'}
                   </span>
                 </div>
-                <div className="text-[9.5px] text-slate-600 font-mono shrink-0">
-                  <span>Date: <strong className="text-slate-900">{new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</strong></span>
+                <div className="text-[11px] text-slate-600 font-mono shrink-0">
+                  <span>Date: <strong className="text-slate-950">{new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</strong></span>
                   <span className="mx-1.5 text-slate-300">|</span>
-                  <span>Time: <strong className="text-slate-900">{new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</strong></span>
+                  <span>Time: <strong className="text-slate-950">{new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</strong></span>
                 </div>
               </div>
 
               {/* Line 2: City | UHID | ABHA Address | Occupation */}
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-[9.5px] text-slate-700">
-                <span>City: <strong className="text-slate-900 font-semibold">{generalInfo?.place || generalInfo?.city || 'Bangalore'}</strong></span>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-[11px] text-slate-700">
+                <span>City: <strong className="text-slate-950 font-semibold">{generalInfo?.place || generalInfo?.city || 'Bangalore'}</strong></span>
                 <span className="text-slate-300">|</span>
-                <span>UHID: <strong className="font-mono font-bold text-[#7016B7]">{currentPatientId || 'ZC00459'}</strong></span>
+                <span>UHID: <strong className="font-mono font-black text-[#7016B7]">{currentPatientId || 'ZC00459'}</strong></span>
                 <span className="text-slate-300">|</span>
-                <span>ABHA Address: <strong className="font-mono text-slate-900">{generalInfo?.email?.includes('@') ? generalInfo.email : '10436404055711@abdm'}</strong></span>
+                <span>ABHA Address: <strong className="font-mono text-slate-950">{generalInfo?.email?.includes('@') ? generalInfo.email : '10436404055711@abdm'}</strong></span>
                 <span className="text-slate-300">|</span>
-                <span>Occupation: <strong className="text-slate-900 font-semibold">{generalInfo?.occupation || 'IT Sector'}</strong></span>
+                <span>Occupation: <strong className="text-slate-950 font-semibold">{generalInfo?.occupation || 'IT Sector'}</strong></span>
               </div>
 
               {/* Line 3: Clinical Domain | Address */}
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5 text-[9px] text-slate-600">
-                <span>Clinical Domain: <strong className="font-bold text-[#7016B7]">{generalInfo?.tag || 'Metabolic Health & Sports Medicine'}</strong></span>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5 text-[10.5px] text-slate-600">
+                <span>Clinical Domain: <strong className="font-black text-[#7016B7]">{generalInfo?.tag || 'Metabolic Health & Sports Medicine'}</strong></span>
                 <span className="text-slate-300">|</span>
-                <span>Address: <span className="text-slate-800">{generalInfo?.address || 'JP Nagar 7th Phase, Bangalore'}</span></span>
+                <span>Address: <span className="text-slate-800 font-medium">{generalInfo?.address || 'JP Nagar 7th Phase, Bangalore'}</span></span>
               </div>
             </div>
 
             {/* ========================================================================= */}
             {/* 2. DIAGNOSES & CLINICAL OBJECTIVES – CONTINUOUS INLINE FORMAT             */}
             {/* ========================================================================= */}
-            <div className="text-[9.5px] leading-relaxed break-words [overflow-wrap:anywhere]">
-              <span className="font-black text-[#7016B7] uppercase tracking-wider">PRIMARY DIAGNOSES & METABOLIC STATUS: </span>
-              <span className="font-medium text-slate-900">
+            <div className="text-[12px] leading-relaxed break-words [overflow-wrap:anywhere]">
+              <span className="font-black text-[#7016B7] uppercase tracking-wide text-[12px]">PRIMARY DIAGNOSES & METABOLIC STATUS: </span>
+              <span className="font-semibold text-slate-900 text-[12px]">
                 Subclinical Hypothyroidism & Metabolic Protocol (Plan: Formulary Protocol; Review: 90 Days) | Clinical Objectives: TSH / FT4 Normalization, Glycemic Control, Fat Loss
               </span>
             </div>
@@ -314,9 +314,9 @@ export const MyPrescriptionSubfolder: React.FC<MyPrescriptionSubfolderProps> = (
             {/* ========================================================================= */}
             {/* 3. TREATMENT PLAN / PRESCRIPTION (℞) – CONTINUOUS INLINE FORMAT          */}
             {/* ========================================================================= */}
-            <div className="text-[9.5px] leading-relaxed break-words [overflow-wrap:anywhere]">
-              <span className="font-black text-[#7016B7] uppercase tracking-wider">TREATMENT PLAN / PRESCRIPTION (℞): </span>
-              <span className="font-medium text-slate-900">
+            <div className="text-[12px] leading-relaxed break-words [overflow-wrap:anywhere]">
+              <span className="font-black text-[#7016B7] uppercase tracking-wide text-[12px]">TREATMENT PLAN / PRESCRIPTION (℞): </span>
+              <span className="font-semibold text-slate-900 text-[12px]">
                 {rxList.length > 0
                   ? rxList.map((item) => {
                       const details = [
@@ -334,17 +334,17 @@ export const MyPrescriptionSubfolder: React.FC<MyPrescriptionSubfolderProps> = (
             {/* ========================================================================= */}
             {/* 4. DOCTOR REMARKS & INSTRUCTIONS – CONTINUOUS INLINE FORMAT               */}
             {/* ========================================================================= */}
-            <div className="text-[9.5px] leading-relaxed break-words [overflow-wrap:anywhere]">
-              <span className="font-black text-[#7016B7] uppercase tracking-wider">PHYSICIAN ADMINISTRATION & LIFESTYLE NOTES: </span>
-              <span className="font-medium text-slate-900">{doctorNotes}</span>
+            <div className="text-[12px] leading-relaxed break-words [overflow-wrap:anywhere]">
+              <span className="font-black text-[#7016B7] uppercase tracking-wide text-[12px]">PHYSICIAN ADMINISTRATION & LIFESTYLE NOTES: </span>
+              <span className="font-semibold text-slate-900 text-[12px]">{doctorNotes}</span>
             </div>
 
             {/* ========================================================================= */}
             {/* 5. FOLLOW-UP RECOMMENDATIONS – CONTINUOUS INLINE FORMAT                   */}
             {/* ========================================================================= */}
-            <div className="text-[9.5px] leading-relaxed break-words [overflow-wrap:anywhere]">
-              <span className="font-black text-[#7016B7] uppercase tracking-wider">FOLLOW-UP RECOMMENDATIONS: </span>
-              <span className="font-medium text-slate-900">
+            <div className="text-[12px] leading-relaxed break-words [overflow-wrap:anywhere]">
+              <span className="font-black text-[#7016B7] uppercase tracking-wide text-[12px]">FOLLOW-UP RECOMMENDATIONS: </span>
+              <span className="font-semibold text-slate-900 text-[12px]">
                 Review in clinic after 30 days or earlier in case of acute symptoms | Repeat Thyroid Panel & Fasting Glucose in 60 days
               </span>
             </div>
@@ -353,7 +353,7 @@ export const MyPrescriptionSubfolder: React.FC<MyPrescriptionSubfolderProps> = (
             {/* 6. CLINICAL CONSULTATION NOTE                                             */}
             {/* ========================================================================= */}
             <div className="pt-2 text-left">
-              <p className="text-[8.5px] text-gray-500 font-mono font-semibold m-0">
+              <p className="text-[10px] text-gray-500 font-mono font-bold m-0">
                 Clinical Prescription • Electronic EMR Record • Follow up after 30 days or earlier in case of acute symptoms
               </p>
             </div>

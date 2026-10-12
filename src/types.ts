@@ -54,6 +54,8 @@ export interface GeneralInfo {
   pulseRate?: string;
   bloodPressure?: string;
   spo2?: string;
+  mobileNumber?: string;
+  city?: string;
 }
 
 export interface Calculations {
@@ -63,6 +65,7 @@ export interface Calculations {
   tdee: number;
   waistToHipRatio?: number;
   idealCalories?: number;
+  targetCalories?: number;
 }
 
 export type MajorDomainId = 'diseases' | 'disorders' | 'performance' | 'fitness';

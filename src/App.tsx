@@ -101,6 +101,7 @@ import { SportsMedicineBannerBackground } from './components/SportsMedicineBanne
 // Advanced AI & Clinical Suites
 import { PersonalNutritionAiSection } from './components/PersonalNutritionAiSection';
 import { WhatsAppHubSection } from './components/WhatsAppHubSection';
+import { ZionMainApp } from './components/zion/ZionMainApp';
 import { AiDietPlanSection } from './components/AiDietPlanSection';
 import { Custom7DayPlanStudio } from './components/Custom7DayPlanStudio';
 import { ClinicalNotesSection } from './components/ClinicalNotesSection';
@@ -109,10 +110,8 @@ import { DocumentVerificationSection } from './components/DocumentVerificationSe
 
 // ELSHA Security & Access Control Suite
 import { ElshaLoginScreen } from './components/ElshaLoginScreen';
-import { FolderPasswordPrompt } from './components/FolderPasswordPrompt';
 import { SecuritySettingsView } from './components/SecuritySettingsView';
 import { elshaSecurity } from './services/elshaSecurityClient';
-import { CANONICAL_FOLDERS } from './types/securityTypes';
 
 import {
   ShieldCheck,
@@ -256,14 +255,13 @@ export default function App() {
     clinicalNotes,
   ]);
 
-  // --- Active Module Navigation (Defaults to Overview Front Page as Requested) ---
+  // --- Active Module Navigation (Defaults to Ziathlon Front Page) ---
   const [activeTab, setActiveTab] = useState<string>('overview');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // --- ELSHA Security & Authentication State ---
+  // --- ELSHA Security & Authentication State (Main Entrance Password System) ---
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => elshaSecurity.isAuthenticated());
   const [isCheckingAuth, setIsCheckingAuth] = useState<boolean>(true);
-  const [unlockedFolders, setUnlockedFolders] = useState<Set<string>>(new Set());
   const [showLogoutConfirm, setShowLogoutConfirm] = useState<boolean>(false);
 
   // Validate server session on initial load and handle browser refresh
@@ -272,7 +270,6 @@ export default function App() {
     elshaSecurity.checkStatus().then((status) => {
       if (!isMounted) return;
       setIsAuthenticated(status.isAuthenticated);
-      setUnlockedFolders(new Set(status.unlockedFolders || []));
       setIsCheckingAuth(false);
     });
     return () => {
@@ -280,50 +277,8 @@ export default function App() {
     };
   }, []);
 
-  // Map any sub-tab or view ID to its canonical folder identifier
-  const getCanonicalFolderForTab = (tabId: string): string | null => {
-    if (tabId === 'overview' || tabId === 'workspace' || tabId === 'security-settings') {
-      return null; // Public / Dashboard views within authenticated session
-    }
-    if (['profile', 'general', 'domains', 'symptoms', 'medical-history', 'parent-history', 'upload-files'].includes(tabId)) {
-      return 'profile';
-    }
-    if (['biometrics', 'biometrics-scanner', 'biometrics-progress'].includes(tabId)) {
-      return 'biometrics';
-    }
-    if (['medicinal'].includes(tabId)) {
-      return 'medicinal';
-    }
-    if (tabId === 'anthropometry') return 'anthropometry';
-    if (tabId === 'rda') return 'rda';
-    if (['7-day-diet-plan', 'dietplan', 'custom-plan-studio'].includes(tabId)) return '7-day-diet-plan';
-    if (['nutrition', 'lifestyle', 'mental-assessment', 'gut-health', 'nutritional-assessment', 'micronutrients', 'daily-routine', 'food-frequency', 'dietary-recall', 'nutritional-gap', 'diet-domains', 'ingredients-ayurveda', 'recipes-guidelines', 'nutrition-ai'].includes(tabId)) {
-      return 'nutrition';
-    }
-    if (['exercise'].includes(tabId)) return 'exercise';
-    if (['fitness-guidelines', 'physiotherapy'].includes(tabId)) return 'physiotherapy';
-    if (['client-folder', 'client-folders'].includes(tabId)) return 'client-folder';
-    if (['whatsapp'].includes(tabId)) return 'whatsapp';
-    if (['document-verification'].includes(tabId)) return 'document-verification';
-    if (['clinicalnotes'].includes(tabId)) return 'clinicalnotes';
-    return null;
-  };
-
-  // Safe navigation handler that locks previously opened folder when navigating away
+  // Safe navigation handler directly opens any folder without folder passwords
   const handleNavigateToTab = (newTabId: string) => {
-    const currentFolder = getCanonicalFolderForTab(activeTab);
-    const targetFolder = getCanonicalFolderForTab(newTabId);
-
-    // If navigating away from a protected folder to a different folder or dashboard, remove active temporary grant
-    if (currentFolder && currentFolder !== targetFolder) {
-      elshaSecurity.lockFolder(currentFolder);
-      setUnlockedFolders((prev) => {
-        const next = new Set(prev);
-        next.delete(currentFolder);
-        return next;
-      });
-    }
-
     setActiveTab(newTabId);
   };
 
@@ -331,7 +286,6 @@ export default function App() {
   const handleLogout = async () => {
     await elshaSecurity.logout();
     setIsAuthenticated(false);
-    setUnlockedFolders(new Set());
     setActiveTab('overview');
     setShowLogoutConfirm(false);
   };
@@ -448,6 +402,7 @@ export default function App() {
 
   // --- 7 FOLDERS NAVIGATION AS SPECIFIED BY USER ---
   const navTabs = [
+    { id: 'zion', label: '💜 ZION AI APP', short: 'ZION AI' },
     { id: 'workspace', label: '📁', short: '📁' },
     { id: 'profile', label: '1 PROFILE', short: '1. PROFILE' },
     { id: 'biometrics', label: '2 BIOMETRIC', short: '2. BIOMETRIC' },
@@ -766,12 +721,6 @@ export default function App() {
     );
   }
 
-  // 2. CHECK IF CURRENT TARGET TAB REQUIRES INDIVIDUAL FOLDER UNLOCK
-  const activeCanonicalFolderId = getCanonicalFolderForTab(activeTab);
-  const isTargetFolderLocked =
-    activeCanonicalFolderId !== null && !unlockedFolders.has(activeCanonicalFolderId);
-  const targetFolderMeta = CANONICAL_FOLDERS.find((f) => f.id === activeCanonicalFolderId);
-
   return (
     <DeviceFrame deviceMode={deviceMode} onSelectDeviceMode={setDeviceMode}>
       <div className="min-h-screen theme-purple-white bg-transparent text-[#0F172A] flex flex-col selection:bg-[#8C5E28] selection:text-white font-sans transition-colors duration-200 relative">
@@ -965,28 +914,6 @@ export default function App() {
               : 'flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-6 space-y-8 relative z-10'
           }
         >
-          {/* INDIVIDUAL FOLDER PASSWORD GATE: SHOWN IF TARGET FOLDER IS LOCKED */}
-          {isTargetFolderLocked ? (
-            <FolderPasswordPrompt
-              folderId={activeCanonicalFolderId!}
-              folderName={targetFolderMeta?.name || 'Protected Folder'}
-              categoryName={targetFolderMeta?.category}
-              onUnlockSuccess={() => {
-                setUnlockedFolders((prev) => new Set([...prev, activeCanonicalFolderId!]));
-              }}
-              onCancel={() => {
-                setActiveTab('workspace');
-              }}
-              onUnlock={async (pwd) => {
-                const res = await elshaSecurity.unlockFolder(activeCanonicalFolderId!, pwd);
-                if (res.success) {
-                  setUnlockedFolders((prev) => new Set([...prev, activeCanonicalFolderId!]));
-                }
-                return res;
-              }}
-            />
-          ) : (
-            <>
               {/* 00. FRONT PAGE: ONLY LOGO ZIATHLON SPORT MEDICINE CLINIC & ENTER BUTTON */}
               {activeTab === 'overview' && (
                 <FrontPageZiathlon
@@ -1181,6 +1108,12 @@ export default function App() {
             />
           )}
 
+          {activeTab === 'zion' && (
+            <div className="w-full h-[calc(100vh-140px)] bg-white rounded-2xl shadow-xl overflow-hidden border border-purple-200">
+              <ZionMainApp onOpenClinicalPortal={() => setActiveTab('overview')} />
+            </div>
+          )}
+
           {/* Bottom Workflow Action Bar (Shown only inside Clinical Folders, not Front Page) */}
           {activeTab !== 'overview' && (
             <div className="pt-6 border-t-2 border-[#7E22CE] flex flex-wrap items-center justify-between gap-4">
@@ -1236,8 +1169,6 @@ export default function App() {
                 })()}
               </div>
             </div>
-          )}
-          </>
           )}
         </main>
 

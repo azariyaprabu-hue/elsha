@@ -2,7 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import { CANONICAL_FOLDERS, CanonicalFolderMeta } from '../types/securityTypes';
-export { CANONICAL_FOLDERS, CanonicalFolderMeta };
+export { CANONICAL_FOLDERS };
+export type { CanonicalFolderMeta };
 
 export interface FolderSecurityConfig {
   id: string;

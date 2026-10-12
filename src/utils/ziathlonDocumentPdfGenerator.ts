@@ -85,12 +85,25 @@ export function generateZiathlonDocumentPdf(data: ZiathlonDocumentPdfData): Gene
   const COLOR_MUTED_BG = [241, 245, 249]; // #F1F5F9
 
   // =========================================================================
-  // 1. TOP HEADER: ZIATHLON OFFICIAL LOGO (LEFT) & ANGLED GEOMETRIC GRAPHIC (RIGHT)
+  // OFFICIAL DOCUMENT BORDER: ONE BLACK AND PURPLE LINE FRAMING THE PAGE
+  // =========================================================================
+  // 1. Outer Black Border Line
+  doc.setDrawColor(0, 0, 0);
+  doc.setLineWidth(0.5);
+  doc.rect(2.5, 2.5, pageWidth - 5.0, pageHeight - 5.0);
+
+  // 2. Inner Purple Border Line
+  doc.setDrawColor(COLOR_PURPLE[0], COLOR_PURPLE[1], COLOR_PURPLE[2]);
+  doc.setLineWidth(0.5);
+  doc.rect(3.6, 3.6, pageWidth - 7.2, pageHeight - 7.2);
+
+  // =========================================================================
+  // 1. TOP HEADER: ZIATHLON OFFICIAL LOGO & TITLE (SIDE-BY-SIDE LOCKUP)
   // =========================================================================
 
   // A. Top-Left Emblem Ribbon Vector (Exact 3 Ribbon Segments + Medical Cross)
-  const emblemX = marginX;
-  const emblemY = 6.8;
+  const emblemX = marginX + 1.0;
+  const emblemY = 3.5;
 
   // Segment 1 (Top Ribbon)
   doc.setFillColor(COLOR_PURPLE[0], COLOR_PURPLE[1], COLOR_PURPLE[2]);
@@ -108,162 +121,128 @@ export function generateZiathlonDocumentPdf(data: ZiathlonDocumentPdfData): Gene
   doc.roundedRect(emblemX + 11.3, emblemY + 2.4, 2.6, 0.9, 0.2, 0.2, 'F');
   doc.roundedRect(emblemX + 12.15, emblemY + 1.55, 0.9, 2.6, 0.2, 0.2, 'F');
 
-  // Wordmark: ZIATHLON
+  // Wordmark: ZIATHLON (Positioned side-by-side with emblem with generous clearance)
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(18);
+  doc.setFontSize(17);
   doc.setTextColor(COLOR_NAVY[0], COLOR_NAVY[1], COLOR_NAVY[2]);
-  doc.text('ZIATHLON', emblemX, emblemY + 18.5);
+  doc.text('ZIATHLON', emblemX + 16.5, emblemY + 8.2);
 
   // Subtitle: SPORTS MEDICINE CLINIC
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(7.5);
   doc.setTextColor(COLOR_PURPLE[0], COLOR_PURPLE[1], COLOR_PURPLE[2]);
-  doc.text('SPORTS MEDICINE CLINIC', emblemX, emblemY + 22.2);
+  doc.text('SPORTS MEDICINE CLINIC', emblemX + 16.7, emblemY + 12.2);
 
-  // B. Top-Right Angled Geometric Dark Navy & Purple Graphics (No Tagline Text)
-  const topGraphicW = 99.75; // 380px at 800px width
-  const topGraphicH = 29.4;  // 112px at 800px width
-  const tgX = pageWidth - topGraphicW;
-  const sx = topGraphicW / 380;
-  const sy = topGraphicH / 112;
+  // Top-Right: Clinical Centre Identification
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.0);
+  doc.setTextColor(COLOR_PURPLE[0], COLOR_PURPLE[1], COLOR_PURPLE[2]);
+  doc.text('OFFICIAL CLINICAL RECORD', pageWidth - marginX, emblemY + 8.0, { align: 'right' });
 
-  // 1. Top dark navy triangular corner cap sitting at top-right
-  doc.setFillColor(COLOR_NAVY[0], COLOR_NAVY[1], COLOR_NAVY[2]);
-  doc.triangle(tgX + 175 * sx, 0, tgX + 380 * sx, 0, tgX + 380 * sx, 48 * sy, 'F');
-  doc.triangle(tgX + 175 * sx, 0, tgX + 220 * sx, 48 * sy, tgX + 380 * sx, 48 * sy, 'F');
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6.8);
+  doc.setTextColor(100, 116, 139);
+  doc.text('Centre for Sports Medicine & Metabolic Health', pageWidth - marginX, emblemY + 11.8, { align: 'right' });
 
-  // 2. Primary Royal Purple Slanted Parallelogram
-  doc.setFillColor(COLOR_PURPLE[0], COLOR_PURPLE[1], COLOR_PURPLE[2]);
-  doc.triangle(tgX + 35 * sx, 0, tgX + 165 * sx, 0, tgX + 238 * sx, 104 * sy, 'F');
-  doc.triangle(tgX + 35 * sx, 0, tgX + 108 * sx, 104 * sy, tgX + 238 * sx, 104 * sy, 'F');
+  // Header Divider: One Black Line and One Purple Line (Cleanly below the header)
+  doc.setDrawColor(0, 0, 0);
+  doc.setLineWidth(0.35);
+  doc.line(marginX, 21.0, pageWidth - marginX, 21.0);
 
-  // 3. Medium Purple Layered Stripe
-  doc.setFillColor(COLOR_LIGHT_PURPLE[0], COLOR_LIGHT_PURPLE[1], COLOR_LIGHT_PURPLE[2]);
-  doc.triangle(tgX + 155 * sx, 0, tgX + 205 * sx, 0, tgX + 270 * sx, 104 * sy, 'F');
-  doc.triangle(tgX + 155 * sx, 0, tgX + 220 * sx, 104 * sy, tgX + 270 * sx, 104 * sy, 'F');
-
-  // 4. Dark Navy Slanted Wedge
-  doc.setFillColor(COLOR_NAVY[0], COLOR_NAVY[1], COLOR_NAVY[2]);
-  doc.triangle(tgX + 195 * sx, 0, tgX + 270 * sx, 0, tgX + 325 * sx, 86 * sy, 'F');
-  doc.triangle(tgX + 195 * sx, 0, tgX + 250 * sx, 86 * sy, tgX + 325 * sx, 86 * sy, 'F');
-
-  // 5. White separator hairline grooves
-  doc.setDrawColor(COLOR_WHITE[0], COLOR_WHITE[1], COLOR_WHITE[2]);
-  doc.setLineWidth(0.65);
-  doc.line(tgX + 162 * sx, 0, tgX + 235 * sx, 104 * sy);
-  doc.line(tgX + 202 * sx, 0, tgX + 267 * sx, 104 * sy);
-
-  // 6. Horizontal purple baseline rule extending to right edge
   doc.setDrawColor(COLOR_PURPLE[0], COLOR_PURPLE[1], COLOR_PURPLE[2]);
-  doc.setLineWidth(1.0);
-  doc.line(tgX + 225 * sx, 100 * sy, pageWidth, 100 * sy);
+  doc.setLineWidth(0.5);
+  doc.line(marginX, 21.6, pageWidth - marginX, 21.6);
 
   // =========================================================================
-  // 2. LOCKED FOOTER (BOTTOM-LEFT NAVY & PURPLE BANNER + BOTTOM-RIGHT DOCTOR INFO)
+  // 2. LOCKED FOOTER (CLINIC ADDRESS + DOCTOR CREDENTIALS)
   // =========================================================================
+
+  // Footer Divider: One Purple Line and One Black Line
+  const footerLineY = 273.0;
+  doc.setDrawColor(COLOR_PURPLE[0], COLOR_PURPLE[1], COLOR_PURPLE[2]);
+  doc.setLineWidth(0.5);
+  doc.line(marginX, footerLineY, pageWidth - marginX, footerLineY);
+
+  doc.setDrawColor(0, 0, 0);
+  doc.setLineWidth(0.35);
+  doc.line(marginX, footerLineY + 0.5, pageWidth - marginX, footerLineY + 0.5);
+
+  // Notice Text
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(5.5);
+  doc.setTextColor(156, 163, 175);
+  doc.text('Not valid for Medico Legal Purpose', marginX, footerLineY + 3.8);
+
+  // Clinic Address (Bottom-Left on White Canvas)
+  const addrX = marginX;
+  const addrY = footerLineY + 7.5;
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.2);
+  doc.setTextColor(COLOR_NAVY[0], COLOR_NAVY[1], COLOR_NAVY[2]);
+  doc.text(data.clinicAddressLine1 || '#55, 4th Cross, Panduranga Nagar,', addrX, addrY);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6.5);
+  doc.setTextColor(71, 85, 105);
+  doc.text(data.clinicAddressLine2 || 'Off Bannerghatta Road, Near IIM-B,', addrX, addrY + 3.5);
+  doc.text(data.clinicAddressLine3 || 'Bangalore 560076', addrX, addrY + 7.0);
 
   // A. Doctor Credentials (Bottom-Right, above contact info)
   const docRightX = marginX + contentWidth;
-  const docBottomY = 265.0;
+  const docBottomY = footerLineY + 7.0;
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
+  doc.setFontSize(9.5);
   doc.setTextColor(COLOR_NAVY[0], COLOR_NAVY[1], COLOR_NAVY[2]);
   doc.text(data.doctorName || 'Dr. Bharath Kumar B', docRightX, docBottomY, { align: 'right' });
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7.5);
+  doc.setFontSize(7.0);
   doc.setTextColor(31, 41, 55);
-  doc.text(data.doctorQualifications || 'MBBS, PGDSM (Sports Medicine)', docRightX, docBottomY + 3.8, { align: 'right' });
+  doc.text(data.doctorQualifications || 'MBBS, PGDSM (Sports Medicine)', docRightX, docBottomY + 3.4, { align: 'right' });
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7);
+  doc.setFontSize(6.5);
   doc.setTextColor(71, 85, 105);
-  doc.text(data.doctorRole || 'Medical Director | Ziathlon', docRightX, docBottomY + 7.2, { align: 'right' });
+  doc.text(data.doctorRole || 'Medical Director | Ziathlon', docRightX, docBottomY + 6.6, { align: 'right' });
 
   doc.setFont('courier', 'bold');
-  doc.setFontSize(7.5);
+  doc.setFontSize(7.0);
   doc.setTextColor(COLOR_NAVY[0], COLOR_NAVY[1], COLOR_NAVY[2]);
-  doc.text(data.doctorRegNo || 'KMC#81009', docRightX, docBottomY + 10.6, { align: 'right' });
+  doc.text(data.doctorRegNo || 'KMC#81009', docRightX, docBottomY + 9.8, { align: 'right' });
 
   // Contact Details (Below doctor credentials with Vertical Purple Accent Line on Right)
-  const contactY = docBottomY + 14.8;
+  const contactY = docBottomY + 13.2;
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7.5);
+  doc.setFontSize(7.0);
   doc.setTextColor(COLOR_NAVY[0], COLOR_NAVY[1], COLOR_NAVY[2]);
   doc.text(data.doctorPhone || '+91 799 699 44 99', docRightX - 2.0, contactY, { align: 'right' });
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(6.8);
+  doc.setFontSize(6.5);
   doc.setTextColor(71, 85, 105);
-  doc.text(data.doctorEmail || 'info@ziathlon.com', docRightX - 2.0, contactY + 3.4, { align: 'right' });
+  doc.text(data.doctorEmail || 'info@ziathlon.com', docRightX - 2.0, contactY + 3.0, { align: 'right' });
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(6.8);
+  doc.setFontSize(6.5);
   doc.setTextColor(COLOR_NAVY[0], COLOR_NAVY[1], COLOR_NAVY[2]);
-  doc.text(data.doctorWebsite || 'www.ziathlon.com', docRightX - 2.0, contactY + 6.8, { align: 'right' });
+  doc.text(data.doctorWebsite || 'www.ziathlon.com', docRightX - 2.0, contactY + 6.0, { align: 'right' });
 
   // Vertical Purple Accent Bar on Right Edge of Contact Info
   doc.setDrawColor(COLOR_PURPLE[0], COLOR_PURPLE[1], COLOR_PURPLE[2]);
-  doc.setLineWidth(0.9);
-  doc.line(docRightX, contactY - 2.0, docRightX, contactY + 7.2);
-
-  // B. Bottom Angled Geometric Banner (y = 275.5mm to 297mm, left-side only up to ~115mm)
-  const bannerY = 275.5;
-  const bannerH = 21.5;
-  const bsx = (pageWidth * (440 / 800)) / 440;
-  const bsy = bannerH / 82;
-
-  // 1. Left Dark Navy Block
-  doc.setFillColor(COLOR_NAVY[0], COLOR_NAVY[1], COLOR_NAVY[2]);
-  doc.triangle(0, bannerY, 285 * bsx, bannerY, 330 * bsx, bannerY + bannerH, 'F');
-  doc.triangle(0, bannerY, 0, bannerY + bannerH, 330 * bsx, bannerY + bannerH, 'F');
-
-  // 2. Top Purple Accent Stripe along top of block
-  doc.setFillColor(COLOR_PURPLE[0], COLOR_PURPLE[1], COLOR_PURPLE[2]);
-  doc.triangle(0, bannerY, 325 * bsx, bannerY, 338 * bsx, bannerY + 8 * bsy, 'F');
-  doc.triangle(0, bannerY, 0, bannerY + 8 * bsy, 338 * bsx, bannerY + 8 * bsy, 'F');
-
-  // 3. Middle Royal Purple Parallelogram Stripe
-  doc.setFillColor(COLOR_PURPLE[0], COLOR_PURPLE[1], COLOR_PURPLE[2]);
-  doc.triangle(280 * bsx, bannerY, 360 * bsx, bannerY, 405 * bsx, bannerY + bannerH, 'F');
-  doc.triangle(280 * bsx, bannerY, 325 * bsx, bannerY + bannerH, 405 * bsx, bannerY + bannerH, 'F');
-
-  // 4. Dark Navy Wedge
-  doc.setFillColor(COLOR_NAVY[0], COLOR_NAVY[1], COLOR_NAVY[2]);
-  doc.triangle(355 * bsx, bannerY, 395 * bsx, bannerY, 440 * bsx, bannerY + bannerH, 'F');
-  doc.triangle(355 * bsx, bannerY, 400 * bsx, bannerY + bannerH, 440 * bsx, bannerY + bannerH, 'F');
-
-  // 5. White hairline separator lines
-  doc.setDrawColor(COLOR_WHITE[0], COLOR_WHITE[1], COLOR_WHITE[2]);
-  doc.setLineWidth(0.65);
-  doc.line(278 * bsx, bannerY, 323 * bsx, bannerY + bannerH);
-  doc.line(358 * bsx, bannerY, 403 * bsx, bannerY + bannerH);
-
-  // C. Clinic Address (Inside Left Dark Navy Block)
-  const addrX = marginX;
-  const addrY = bannerY + 6.8;
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7);
-  doc.setTextColor(COLOR_WHITE[0], COLOR_WHITE[1], COLOR_WHITE[2]);
-  doc.text(data.clinicAddressLine1 || '#55, 4th Cross, Panduranga Nagar,', addrX, addrY);
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(6.8);
-  doc.setTextColor(230, 230, 230);
-  doc.text(data.clinicAddressLine2 || 'Off Bannerghatta Road, Near IIM-B,', addrX, addrY + 3.6);
-  doc.text(data.clinicAddressLine3 || 'Bangalore 560076', addrX, addrY + 7.2);
+  doc.setLineWidth(0.8);
+  doc.line(docRightX, contactY - 1.8, docRightX, contactY + 6.4);
 
   // =========================================================================
   // 3. MAIN CLINICAL CONTENT AREA (CONTINUOUS CLINICAL REPORT LAYOUT)
   // =========================================================================
-  let curY = 34.0;
+  let curY = 27.5;
 
   // 1. PATIENT INFORMATION: COMPACT READABLE LINES (NO TABLES, NO COLUMNS)
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8.5);
+  doc.setFontSize(9.5);
   doc.setTextColor(11, 8, 38);
   const nameLine = `${data.patientDisplayName}, ${data.patientGender}, ${data.patientAge}, Phone: ${data.patientPhone}`;
   doc.text(nameLine, marginX, curY);
@@ -271,15 +250,15 @@ export function generateZiathlonDocumentPdf(data: ZiathlonDocumentPdfData): Gene
   // Consultation Date & Time on the right
   const dateStr = `Date: ${data.formattedDateTime.split(',')[0]?.trim() || '24/09/2026'} | Time: ${data.formattedDateTime.split(',')[1]?.trim() || '11:30 AM'}`;
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.2);
+  doc.setFontSize(7.8);
   doc.setTextColor(71, 85, 105);
   doc.text(dateStr, marginX + contentWidth, curY, { align: 'right' });
 
-  curY += 4.0;
+  curY += 4.2;
 
   // Line 2: City | UHID | ABHA Address | Occupation
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.0);
+  doc.setFontSize(7.5);
   doc.setTextColor(51, 65, 85);
   const line2 = `City: ${data.city || 'Bangalore'} | UHID: ${data.uhid || 'ZC00459'} | ABHA Address: ${data.abhaAddress || '10436404055711@abdm'} | Occupation: ${data.occupation || 'IT Sector'}`;
   doc.text(line2, marginX, curY);
@@ -302,14 +281,14 @@ export function generateZiathlonDocumentPdf(data: ZiathlonDocumentPdfData): Gene
   const drawClinicalLine = (label: string, content?: string) => {
     if (!content) return;
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7.2);
+    doc.setFontSize(7.8);
     doc.setTextColor(COLOR_PURPLE[0], COLOR_PURPLE[1], COLOR_PURPLE[2]);
     const labelStr = `${label} `;
     const labelWidth = doc.getTextWidth(labelStr);
     doc.text(labelStr, marginX, curY);
 
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.0);
+    doc.setFontSize(7.5);
     doc.setTextColor(17, 24, 39);
 
     const words = content.split(' ');
@@ -328,7 +307,7 @@ export function generateZiathlonDocumentPdf(data: ZiathlonDocumentPdfData): Gene
         } else {
           doc.text(currentLine, marginX, curY);
         }
-        curY += 3.5;
+        curY += 3.6;
         currentLine = word;
       } else {
         currentLine = testLine;

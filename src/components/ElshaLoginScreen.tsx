@@ -161,6 +161,32 @@ export const ElshaLoginScreen: React.FC<ElshaLoginScreenProps> = ({
                 </>
               )}
             </button>
+
+            {/* Quick Demo Access */}
+            <div className="pt-2 flex items-center justify-between text-xs">
+              <button
+                type="button"
+                onClick={() => setPassword('Elsha@2026')}
+                className="text-[11px] text-purple-700 hover:text-purple-900 font-semibold underline cursor-pointer"
+              >
+                Fill Password: Elsha@2026
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  setPassword('Elsha@2026');
+                  setIsLoading(true);
+                  const result = await onLogin('Elsha@2026');
+                  setIsLoading(false);
+                  if (result.success) {
+                    onLoginSuccess();
+                  }
+                }}
+                className="px-2.5 py-1 bg-purple-100 hover:bg-purple-200 text-[#7016B7] rounded-lg text-[10px] font-bold uppercase tracking-wider cursor-pointer transition-colors"
+              >
+                1-Click Demo Login
+              </button>
+            </div>
           </form>
 
           {/* Privacy & Protected Notice */}

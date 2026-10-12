@@ -60,6 +60,7 @@ export interface SavedPrescriptionHistoryRecord {
   patientCity?: string;
   patientMarital?: string;
   patientInformant?: string;
+  uhid?: string;
   vitalsSummary: string;
   symptomsSummary: string;
   familyHistory?: string;
@@ -132,8 +133,6 @@ export const ThreePartMedicalRecordPreview: React.FC<ThreePartMedicalRecordPrevi
   // Badge Color Theme: Amber Gold (#E5A93C, exact match to reference photo download.jpg) vs Royal Purple
   const [colorTheme, setColorTheme] = useState<'amber-gold' | 'royal-purple'>('amber-gold');
   const isGold = colorTheme === 'amber-gold';
-  const cornerBandColor = isGold ? '#E5A93C' : '#9333EA';
-  const cornerInnerStripeColor = isGold ? '#B45309' : '#581C87';
   const badgeBgClass = isGold
     ? 'bg-[#E5A93C] text-white shadow-xs'
     : 'bg-[#7E22CE] text-white shadow-xs';
@@ -923,146 +922,146 @@ export const ThreePartMedicalRecordPreview: React.FC<ThreePartMedicalRecordPrevi
             {/* ========================================================================= */}
             {/* 1. PATIENT INFORMATION: COMPACT READABLE LINES (NO TABLES, NO COLUMNS)    */}
             {/* ========================================================================= */}
-            <div className="border-b border-purple-200/80 pb-2 mb-2 text-[10px] leading-relaxed">
+            <div className="border-b border-purple-200/90 pb-2 mb-2.5 text-[11px] leading-relaxed">
               {/* Line 1: Patient Name, Gender, Age, Phone (with Date & Time on right) */}
               <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                 <div className="flex flex-wrap items-baseline gap-1.5 min-w-0">
-                  <span className="font-extrabold text-[13px] text-[#0B0826] tracking-tight">{patientDisplayName}</span>
+                  <span className="font-black text-[15px] text-[#0B0826] tracking-tight">{patientDisplayName}</span>
                   <span className="text-slate-400">,</span>
-                  <span className="font-semibold text-slate-800">{patientGender}</span>
+                  <span className="font-bold text-slate-800 text-[11.5px]">{patientGender}</span>
                   <span className="text-slate-400">,</span>
-                  <span className="font-semibold text-slate-800">{patientAge}</span>
+                  <span className="font-bold text-slate-800 text-[11.5px]">{patientAge}</span>
                   <span className="text-slate-400">,</span>
-                  <span className="text-slate-500 font-medium">Phone:</span>
-                  <span className="font-mono font-bold text-slate-900">{patientPhone}</span>
+                  <span className="text-slate-600 font-semibold text-[11.5px]">Phone:</span>
+                  <span className="font-mono font-bold text-slate-950 text-[11.5px]">{patientPhone}</span>
                 </div>
-                <div className="text-[9.5px] text-slate-600 font-mono shrink-0">
-                  <span>Date: <strong className="text-slate-900">{consultationDate}</strong></span>
+                <div className="text-[11px] text-slate-600 font-mono shrink-0">
+                  <span>Date: <strong className="text-slate-950">{consultationDate}</strong></span>
                   <span className="mx-1.5 text-slate-300">|</span>
-                  <span>Time: <strong className="text-slate-900">{consultationTime}</strong></span>
+                  <span>Time: <strong className="text-slate-950">{consultationTime}</strong></span>
                 </div>
               </div>
 
               {/* Line 2: City | UHID | ABHA Address | Occupation */}
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-[9.5px] text-slate-700">
-                <span>City: <strong className="text-slate-900 font-semibold">{patientCity}</strong></span>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-[11px] text-slate-700">
+                <span>City: <strong className="text-slate-950 font-semibold">{patientCity}</strong></span>
                 <span className="text-slate-300">|</span>
-                <span>UHID: <strong className="font-mono font-bold text-[#7016B7]">{patientUhid}</strong></span>
+                <span>UHID: <strong className="font-mono font-black text-[#7016B7]">{patientUhid}</strong></span>
                 <span className="text-slate-300">|</span>
-                <span>ABHA Address: <strong className="font-mono text-slate-900">{patientAbha}</strong></span>
+                <span>ABHA Address: <strong className="font-mono text-slate-950">{patientAbha}</strong></span>
                 <span className="text-slate-300">|</span>
-                <span>Occupation: <strong className="text-slate-900 font-semibold">{generalInfo.occupation || 'IT Sector'}</strong></span>
+                <span>Occupation: <strong className="text-slate-950 font-semibold">{generalInfo.occupation || 'IT Sector'}</strong></span>
               </div>
 
               {/* Line 3: Clinical Domain | Address */}
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5 text-[9px] text-slate-600">
-                <span>Clinical Domain: <strong className="font-bold text-[#7016B7]">{patientTag}</strong></span>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5 text-[10.5px] text-slate-600">
+                <span>Clinical Domain: <strong className="font-black text-[#7016B7]">{patientTag}</strong></span>
                 <span className="text-slate-300">|</span>
-                <span>Address: <span className="text-slate-800">{patientAddress}</span></span>
+                <span>Address: <span className="text-slate-800 font-medium">{patientAddress}</span></span>
               </div>
             </div>
 
             {/* ========================================================================= */}
             {/* 2. VITALS – CONTINUOUS INLINE FORMAT                                      */}
             {/* ========================================================================= */}
-            <div className="text-[9.5px] leading-relaxed break-words [overflow-wrap:anywhere]">
-              <span className="font-black text-[#7016B7] uppercase tracking-wider">VITALS: </span>
-              <span className="font-medium text-slate-900">{displayVitals}</span>
+            <div className="text-[12px] leading-relaxed break-words [overflow-wrap:anywhere]">
+              <span className="font-black text-[#7016B7] uppercase tracking-wide text-[12px]">VITALS: </span>
+              <span className="font-semibold text-slate-900 text-[12px]">{displayVitals}</span>
             </div>
 
             {/* ========================================================================= */}
             {/* 3. SYMPTOMS – CONTINUOUS INLINE FORMAT                                    */}
             {/* ========================================================================= */}
-            <div className="text-[9.5px] leading-relaxed break-words [overflow-wrap:anywhere]">
-              <span className="font-black text-[#7016B7] uppercase tracking-wider">SYMPTOMS: </span>
-              <span className="font-medium text-slate-900">{displaySymptoms}</span>
+            <div className="text-[12px] leading-relaxed break-words [overflow-wrap:anywhere]">
+              <span className="font-black text-[#7016B7] uppercase tracking-wide text-[12px]">SYMPTOMS: </span>
+              <span className="font-semibold text-slate-900 text-[12px]">{displaySymptoms}</span>
             </div>
 
             {/* ========================================================================= */}
             {/* 4. CLINICAL EXAMINATION – CONTINUOUS INLINE FORMAT                        */}
             {/* ========================================================================= */}
-            <div className="text-[9.5px] leading-relaxed break-words [overflow-wrap:anywhere]">
-              <span className="font-black text-[#7016B7] uppercase tracking-wider">CLINICAL EXAMINATION: </span>
-              <span className="font-medium text-slate-900">{displayClinicalExamination}</span>
+            <div className="text-[12px] leading-relaxed break-words [overflow-wrap:anywhere]">
+              <span className="font-black text-[#7016B7] uppercase tracking-wide text-[12px]">CLINICAL EXAMINATION: </span>
+              <span className="font-semibold text-slate-900 text-[12px]">{displayClinicalExamination}</span>
             </div>
 
             {/* ========================================================================= */}
             {/* 5. DIAGNOSTICS – PAST HISTORY – CONTINUOUS INLINE FORMAT                  */}
             {/* ========================================================================= */}
-            <div className="text-[9.5px] leading-relaxed break-words [overflow-wrap:anywhere]">
-              <span className="font-black text-[#7016B7] uppercase tracking-wider">DIAGNOSTICS – PAST HISTORY: </span>
-              <span className="font-medium text-slate-900">{displayDiagnosticsHistory}</span>
+            <div className="text-[12px] leading-relaxed break-words [overflow-wrap:anywhere]">
+              <span className="font-black text-[#7016B7] uppercase tracking-wide text-[12px]">DIAGNOSTICS – PAST HISTORY: </span>
+              <span className="font-semibold text-slate-900 text-[12px]">{displayDiagnosticsHistory}</span>
             </div>
 
             {/* ========================================================================= */}
             {/* 6. WORKING DIAGNOSES AND RISK FACTORS – CONTINUOUS INLINE FORMAT          */}
             {/* ========================================================================= */}
-            <div className="text-[9.5px] leading-relaxed break-words [overflow-wrap:anywhere]">
-              <span className="font-black text-[#7016B7] uppercase tracking-wider">WORKING DIAGNOSES AND RISK FACTORS: </span>
-              <span className="font-medium text-slate-900">{displayDiagnoses}</span>
+            <div className="text-[12px] leading-relaxed break-words [overflow-wrap:anywhere]">
+              <span className="font-black text-[#7016B7] uppercase tracking-wide text-[12px]">WORKING DIAGNOSES AND RISK FACTORS: </span>
+              <span className="font-semibold text-slate-900 text-[12px]">{displayDiagnoses}</span>
             </div>
 
             {/* ========================================================================= */}
             {/* 7. CLINICAL GOALS – CONTINUOUS INLINE FORMAT                              */}
             {/* ========================================================================= */}
-            <div className="text-[9.5px] leading-relaxed break-words [overflow-wrap:anywhere]">
-              <span className="font-black text-[#7016B7] uppercase tracking-wider">CLINICAL GOALS: </span>
-              <span className="font-medium text-slate-900">{displayGoals}</span>
+            <div className="text-[12px] leading-relaxed break-words [overflow-wrap:anywhere]">
+              <span className="font-black text-[#7016B7] uppercase tracking-wide text-[12px]">CLINICAL GOALS: </span>
+              <span className="font-semibold text-slate-900 text-[12px]">{displayGoals}</span>
             </div>
 
             {/* ========================================================================= */}
             {/* 8. MEDICAL HISTORY – CONTINUOUS INLINE FORMAT                             */}
             {/* ========================================================================= */}
-            <div className="text-[9.5px] leading-relaxed break-words [overflow-wrap:anywhere]">
-              <span className="font-black text-[#7016B7] uppercase tracking-wider">MEDICAL HISTORY: </span>
-              <span className="font-medium text-slate-900">{displayMedicalHistory}</span>
+            <div className="text-[12px] leading-relaxed break-words [overflow-wrap:anywhere]">
+              <span className="font-black text-[#7016B7] uppercase tracking-wide text-[12px]">MEDICAL HISTORY: </span>
+              <span className="font-semibold text-slate-900 text-[12px]">{displayMedicalHistory}</span>
             </div>
 
             {/* ========================================================================= */}
             {/* 9. NUTRITION ASSESSMENT – CONTINUOUS INLINE FORMAT                        */}
             {/* ========================================================================= */}
-            <div className="text-[9.5px] leading-relaxed break-words [overflow-wrap:anywhere]">
-              <span className="font-black text-[#7016B7] uppercase tracking-wider">NUTRITION ASSESSMENT: </span>
-              <span className="font-medium text-slate-900">{displayNutritionAssessment}</span>
+            <div className="text-[12px] leading-relaxed break-words [overflow-wrap:anywhere]">
+              <span className="font-black text-[#7016B7] uppercase tracking-wide text-[12px]">NUTRITION ASSESSMENT: </span>
+              <span className="font-semibold text-slate-900 text-[12px]">{displayNutritionAssessment}</span>
             </div>
 
             {/* ========================================================================= */}
             {/* 10. NUTRITION PRESCRIPTION – CONTINUOUS INLINE FORMAT                     */}
             {/* ========================================================================= */}
-            <div className="text-[9.5px] leading-relaxed break-words [overflow-wrap:anywhere]">
-              <span className="font-black text-[#7016B7] uppercase tracking-wider">NUTRITION PRESCRIPTION: </span>
-              <span className="font-medium text-slate-900">{displayNutritionPrescription}</span>
+            <div className="text-[12px] leading-relaxed break-words [overflow-wrap:anywhere]">
+              <span className="font-black text-[#7016B7] uppercase tracking-wide text-[12px]">NUTRITION PRESCRIPTION: </span>
+              <span className="font-semibold text-slate-900 text-[12px]">{displayNutritionPrescription}</span>
             </div>
 
             {/* ========================================================================= */}
             {/* 11. EXERCISE RECOMMENDATIONS – CONTINUOUS INLINE FORMAT                   */}
             {/* ========================================================================= */}
-            <div className="text-[9.5px] leading-relaxed break-words [overflow-wrap:anywhere]">
-              <span className="font-black text-[#7016B7] uppercase tracking-wider">EXERCISE RECOMMENDATIONS: </span>
-              <span className="font-medium text-slate-900">{displayExerciseRecs}</span>
+            <div className="text-[12px] leading-relaxed break-words [overflow-wrap:anywhere]">
+              <span className="font-black text-[#7016B7] uppercase tracking-wide text-[12px]">EXERCISE RECOMMENDATIONS: </span>
+              <span className="font-semibold text-slate-900 text-[12px]">{displayExerciseRecs}</span>
             </div>
 
             {/* ========================================================================= */}
             {/* 12. TREATMENT PLAN / PRESCRIPTION (℞) – CONTINUOUS INLINE FORMAT          */}
             {/* ========================================================================= */}
-            <div className="text-[9.5px] leading-relaxed break-words [overflow-wrap:anywhere]">
-              <span className="font-black text-[#7016B7] uppercase tracking-wider">TREATMENT PLAN / PRESCRIPTION (℞): </span>
-              <span className="font-medium text-slate-900">{displayTreatmentPlan}</span>
+            <div className="text-[12px] leading-relaxed break-words [overflow-wrap:anywhere]">
+              <span className="font-black text-[#7016B7] uppercase tracking-wide text-[12px]">TREATMENT PLAN / PRESCRIPTION (℞): </span>
+              <span className="font-semibold text-slate-900 text-[12px]">{displayTreatmentPlan}</span>
             </div>
 
             {/* ========================================================================= */}
             {/* 13. FOLLOW-UP RECOMMENDATIONS – CONTINUOUS INLINE FORMAT                  */}
             {/* ========================================================================= */}
-            <div className="text-[9.5px] leading-relaxed break-words [overflow-wrap:anywhere]">
-              <span className="font-black text-[#7016B7] uppercase tracking-wider">FOLLOW-UP RECOMMENDATIONS: </span>
-              <span className="font-medium text-slate-900">{displayFollowUp}</span>
+            <div className="text-[12px] leading-relaxed break-words [overflow-wrap:anywhere]">
+              <span className="font-black text-[#7016B7] uppercase tracking-wide text-[12px]">FOLLOW-UP RECOMMENDATIONS: </span>
+              <span className="font-semibold text-slate-900 text-[12px]">{displayFollowUp}</span>
             </div>
 
             {/* ========================================================================= */}
             {/* 14. CLINICAL CONSULTATION NOTE                                            */}
             {/* ========================================================================= */}
             <div className="pt-2 text-left">
-              <p className="text-[8.5px] text-gray-500 font-mono font-semibold m-0">
+              <p className="text-[10px] text-gray-500 font-mono font-bold m-0">
                 Clinical Consultation • Electronic EMR Record • Follow up after 30 days or earlier in case of acute symptoms
               </p>
             </div>
