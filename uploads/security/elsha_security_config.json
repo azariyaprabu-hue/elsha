@@ -1,10 +1,10 @@
 {
   "version": 1,
   "appPassword": {
-    "salt": "fd2912cee8326408bbf9205a66d3c0b1",
-    "passwordHash": "7708e6dfdc4d9ff1bec1768bab3177fd84257f7ea15b2ec6d2e3e6c75d63e7f67ad94d9c4daabadb453311f3627e79064537c221ab4af5edd062283670adc1db",
+    "salt": "a28a222e9969c638b6ee36736d207610",
+    "passwordHash": "1f98d9c09cef140c0b3af17dca0a559e72b6013959fdbab6b0eccb2dad55e714a22dd0691c85c624439c46fe1c5b66da7cb2ce3447e40fe7cee15a44beb79809",
     "isConfigured": true,
-    "updatedAt": "2026-10-09T05:37:48.100Z",
+    "updatedAt": "2026-10-12T13:28:18.131Z",
     "mustChangePassword": false
   },
   "folders": {
@@ -127,6 +127,48 @@
     }
   },
   "securityAuditLogs": [
+    {
+      "id": "audit-1791811705798-qez8",
+      "event": "APP_LOGIN_FAIL",
+      "details": "Incorrect password attempt from IP 127.0.0.1",
+      "timestamp": "2026-10-12T13:28:25.798Z",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit-1791811698131-buuu",
+      "event": "APP_LOGIN_SUCCESS",
+      "details": "Successful main app login session created",
+      "timestamp": "2026-10-12T13:28:18.131Z",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit-1791811694287-nlzp",
+      "event": "APP_LOGIN_SUCCESS",
+      "details": "Successful main app login session created",
+      "timestamp": "2026-10-12T13:28:14.287Z",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit-1791811687940-ltqc",
+      "event": "APP_LOGIN_FAIL",
+      "details": "Incorrect password attempt from IP 127.0.0.1",
+      "timestamp": "2026-10-12T13:28:07.940Z",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit-1791811682780-74g0",
+      "event": "APP_LOGIN_SUCCESS",
+      "details": "Successful main app login session created",
+      "timestamp": "2026-10-12T13:28:02.780Z",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit-1791807144620-jcec",
+      "event": "APP_LOGIN_SUCCESS",
+      "details": "Successful main app login session created",
+      "timestamp": "2026-10-12T12:12:24.620Z",
+      "ip": "127.0.0.1"
+    },
     {
       "id": "audit-1791524294760-48ke",
       "event": "APP_LOGIN_SUCCESS",

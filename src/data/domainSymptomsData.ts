@@ -1,5 +1,23 @@
 import { SymptomAssessmentItem } from '../types';
 
+export const PERFORMANCE_PRIMARY_CATEGORIES = [
+  'Athlets',
+  'GYM',
+  'Football',
+  'Cricket',
+  'Sport Endurance',
+  'OTHERS',
+] as const;
+
+export const PERFORMANCE_OTHER_SUBCATEGORIES = [
+  'Volley Ball',
+  'Basket Ball',
+  'Kabaddi',
+  'Badminton',
+  'Kho Kho',
+  'Throwball',
+] as const;
+
 export const domainCategoriesMapping: Record<'DISEASES' | 'DISORDERS' | 'PERFORMANCE' | 'FITNESS', string[]> = {
   DISEASES: [
     'Diabetes Mellitus',
@@ -27,27 +45,56 @@ export const domainCategoriesMapping: Record<'DISEASES' | 'DISORDERS' | 'PERFORM
     'Obesity',
   ],
   PERFORMANCE: [
-    'Sports Nutrition',
-    'Endurance',
-    'Strength & Conditioning',
-    'Pre-Workout Nutrition',
-    'Post-Workout Nutrition',
-    'Recovery Nutrition',
-    'Hydration & Electrolytes',
-    'Competition Nutrition',
-    'Performance Nutrition',
+    'Athlets',
+    'GYM',
+    'Football',
+    'Cricket',
+    'Sport Endurance',
+    'OTHERS',
+    'Volley Ball',
+    'Basket Ball',
+    'Kabaddi',
+    'Badminton',
+    'Kho Kho',
+    'Throwball',
   ],
   FITNESS: [
     'Weight Loss',
     'Weight Gain',
-    'Weight Maintenance',
-    'Fat Loss',
     'Muscle Gain',
+    'Fat Loss',
     'Body Recomposition',
-    'General Fitness',
-    'Healthy Lifestyle',
   ],
 };
+
+export function normalizeConditionName(name: string): string {
+  if (!name) return 'Diabetes Mellitus';
+  const clean = name.trim().toLowerCase();
+  if (clean === 'athlets' || clean === 'athletes') return 'Athlets';
+  if (clean === 'gym') return 'GYM';
+  if (clean === 'football') return 'Football';
+  if (clean === 'cricket') return 'Cricket';
+  if (clean === 'sport endurance' || clean === 'sports endurance') return 'Sport Endurance';
+  if (clean === 'others' || clean === 'other') return 'OTHERS';
+  if (clean === 'volley ball' || clean === 'volleyball' || clean === 'volley_ball') return 'Volley Ball';
+  if (clean === 'basket ball' || clean === 'basketball' || clean === 'basket_ball') return 'Basket Ball';
+  if (clean === 'kabadi' || clean === 'kabaddi') return 'Kabaddi';
+  if (clean === 'badmitten' || clean === 'badminton') return 'Badminton';
+  if (clean === 'kho _kho' || clean === 'kho_kho' || clean === 'kho kho' || clean === 'kho-kho') return 'Kho Kho';
+  if (clean === 'throwball' || clean === 'throw ball') return 'Throwball';
+  if (clean === 'weight loss') return 'Weight Loss';
+  if (clean === 'weight gain') return 'Weight Gain';
+  if (clean === 'muscle gain') return 'Muscle Gain';
+  if (clean === 'fat loss') return 'Fat Loss';
+  if (clean === 'body recombosition' || clean === 'body recomposition') return 'Body Recomposition';
+
+  // Check matching in domainCategoriesMapping
+  for (const catList of Object.values(domainCategoriesMapping)) {
+    const direct = catList.find((c) => c.toLowerCase() === clean);
+    if (direct) return direct;
+  }
+  return name.trim();
+}
 
 export const domainSpecificSymptoms: Record<string, SymptomAssessmentItem[]> = {
   // ==========================================
@@ -332,6 +379,162 @@ export const domainSpecificSymptoms: Record<string, SymptomAssessmentItem[]> = {
   // ==========================================
   // PERFORMANCE
   // ==========================================
+  'Athlets': [
+    { id: 'ath1', symptom: 'Delayed Onset Muscle Soreness (DOMS >48-72h)', duration: '2 weeks', severity: 'Moderate' },
+    { id: 'ath2', symptom: 'Mid-Session Energy Crash / Glycogen Bonking', duration: 'Past 3 sessions', severity: 'Severe' },
+    { id: 'ath3', symptom: 'Involuntary Muscle Cramping & Fasciculations', duration: 'Mid-session', severity: 'Moderate' },
+    { id: 'ath4', symptom: 'Elevated Morning Resting Heart Rate (>5 bpm rise)', duration: '1 week', severity: 'Mild' },
+    { id: 'ath5', symptom: 'Exercise-Induced Gastrointestinal Distress', duration: 'High intensity', severity: 'Moderate' },
+    { id: 'ath6', symptom: 'Sleep Disruption despite Physical Exhaustion', duration: '2 weeks', severity: 'Moderate' },
+    { id: 'ath7', symptom: 'Tendonitis & Joint Stiffness (Achilles / Patellar)', duration: '1 month', severity: 'Moderate' },
+    { id: 'ath8', symptom: 'Heavy Sweat Rate with Salt Residue on Gear', duration: 'Daily', severity: 'Often' },
+    { id: 'ath9', symptom: 'Drop in Peak Power Output & Sprint Speed', duration: '3 weeks', severity: 'Moderate' },
+    { id: 'ath10', symptom: 'Post-Competition Acute Dehydration & Fatigue', duration: 'Post-event', severity: 'Severe' },
+  ],
+
+  'GYM': [
+    { id: 'gym1', symptom: 'Lumbar Spine Tightness & Lower Back Strain', duration: 'Post-deadlifts', severity: 'Moderate' },
+    { id: 'gym2', symptom: 'Shoulder Impingement & Rotator Cuff Tenderness', duration: '3 weeks', severity: 'Moderate' },
+    { id: 'gym3', symptom: 'Forearm Grip Exhaustion during Pulling Movements', duration: 'Heavy sets', severity: 'Moderate' },
+    { id: 'gym4', symptom: 'Delayed Neuromuscular Recovery Between Workouts', duration: 'Leg days', severity: 'Severe' },
+    { id: 'gym5', symptom: 'Pre-Workout Stimulant Jitters & Heart Flutters', duration: 'Frequent', severity: 'Severe' },
+    { id: 'gym6', symptom: 'Post-Workout Nausea & Transient Lightheadedness', duration: 'Squat sessions', severity: 'Mild' },
+    { id: 'gym7', symptom: 'Quadriceps & Hamstring Involuntary Spasms', duration: 'Nightly', severity: 'Moderate' },
+    { id: 'gym8', symptom: 'Joint Crepitus & Knee Clicking under Load', duration: '1 month', severity: 'Mild' },
+    { id: 'gym9', symptom: 'Plateaued Progressive Overload & Overtraining Fatigue', duration: '6 weeks', severity: 'Severe' },
+    { id: 'gym10', symptom: 'High Lactic Acid Burning Limiting Target Rep Ranges', duration: 'Every session', severity: 'Often' },
+  ],
+
+  'Football': [
+    { id: 'fb1', symptom: 'High-Velocity Sprint Hamstring Strain / Tightness', duration: '2 weeks', severity: 'Severe' },
+    { id: 'fb2', symptom: 'Groin & Adductor Tenderness on Side Kicks', duration: 'Past 3 matches', severity: 'Moderate' },
+    { id: 'fb3', symptom: 'Calf Muscle Cramps in Final 20 Minutes of Play', duration: 'Match days', severity: 'Severe' },
+    { id: 'fb4', symptom: 'Excessive Fluid & Electrolyte Loss under Sun', duration: '90m match', severity: 'Severe' },
+    { id: 'fb5', symptom: 'Ankle Joint Inversion Sprain / Lateral Laxity', duration: '1 month', severity: 'Moderate' },
+    { id: 'fb6', symptom: 'Post-Match Heavy Legs & Glycogen Depletion', duration: 'Post-game', severity: 'Often' },
+    { id: 'fb7', symptom: 'Impact Bruising & Contusions on Shins and Thighs', duration: 'Frequent', severity: 'Mild' },
+    { id: 'fb8', symptom: 'Sudden Direction-Change Knee Strain (ACL/MCL stress)', duration: '2 weeks', severity: 'Moderate' },
+    { id: 'fb9', symptom: 'Late-Match Cognitive Reaction Lag & Sluggishness', duration: '2nd half', severity: 'Moderate' },
+    { id: 'fb10', symptom: 'Post-Game Dehydration Headaches & Chills', duration: 'Evening', severity: 'Moderate' },
+  ],
+
+  'Cricket': [
+    { id: 'cr1', symptom: 'Fast Bowling Lumbar Stress & Thoracic Tightness', duration: 'Bowling spells', severity: 'Severe' },
+    { id: 'cr2', symptom: 'Shoulder Impingement & Rotator Cuff Soreness', duration: '3 weeks', severity: 'Moderate' },
+    { id: 'cr3', symptom: 'Wicket-Keeping Meniscus Strain from Deep Squatting', duration: 'Match days', severity: 'Moderate' },
+    { id: 'cr4', symptom: 'Fielding Sun Exhaustion & Heat Fatigue in Long Sessions', duration: 'Day matches', severity: 'Severe' },
+    { id: 'cr5', symptom: 'Hand & Finger Impact Bruising from Hard Cricket Ball', duration: 'Catching practice', severity: 'Mild' },
+    { id: 'cr6', symptom: 'Hamstring Pulls during Sudden Quick Singles', duration: '2 weeks', severity: 'Moderate' },
+    { id: 'cr7', symptom: 'Forearm & Wrist Extensor Soreness from Bat Impact', duration: 'Net practice', severity: 'Mild' },
+    { id: 'cr8', symptom: 'Dehydration & Low Sodium during Multi-Hour Innings', duration: 'Match days', severity: 'Severe' },
+    { id: 'cr9', symptom: 'Cervical Spine / Neck Muscle Spasms from Helmet Weight', duration: 'Post-batting', severity: 'Mild' },
+    { id: 'cr10', symptom: 'Delayed Musculoskeletal Recovery between Match Days', duration: 'Tournaments', severity: 'Moderate' },
+  ],
+
+  'Sport Endurance': [
+    { id: 'se1', symptom: 'Severe Glycogen Depletion ("Hitting the Wall")', duration: 'Long sessions', severity: 'Severe' },
+    { id: 'se2', symptom: 'Aerobic Cardiac Drift (Elevated HR at Sustained Pace)', duration: 'Past 3 weeks', severity: 'Moderate' },
+    { id: 'se3', symptom: 'Hyponatremia Risk from High Sweat Rate & Plain Water', duration: 'Ultra sessions', severity: 'Severe' },
+    { id: 'se4', symptom: 'Persistent Gastrointestinal Cramping & Acid Reflux', duration: 'Running efforts', severity: 'Moderate' },
+    { id: 'se5', symptom: 'Runner\'s Knee & Iliotibial (IT) Band Friction Pain', duration: '1 month', severity: 'Moderate' },
+    { id: 'se6', symptom: 'Achilles Tendinopathy & Morning Ankle Stiffness', duration: '3 weeks', severity: 'Moderate' },
+    { id: 'se7', symptom: 'Post-Endurance Shivering & Systemic Temperature Drop', duration: 'Post-event', severity: 'Mild' },
+    { id: 'se8', symptom: 'Loss of Aerobic Threshold & Early Lactate Buildup', duration: '2 weeks', severity: 'Moderate' },
+    { id: 'se9', symptom: 'Suppressed Immune Function during High Mileage Blocks', duration: 'Recent training', severity: 'Mild' },
+    { id: 'se10', symptom: 'Extended Muscular Recovery Time (>72 Hours)', duration: 'Chronic', severity: 'Severe' },
+  ],
+
+  'OTHERS': [
+    { id: 'oth1', symptom: 'Multi-Sport Agility Fatigue & Lateral Strain', duration: 'Tournament play', severity: 'Moderate' },
+    { id: 'oth2', symptom: 'High-Sweat Rate Electrolyte Depletion & Cramping', duration: 'Match sessions', severity: 'Severe' },
+    { id: 'oth3', symptom: 'Overuse Tendinopathy in Knees & Ankles', duration: '1 month', severity: 'Moderate' },
+    { id: 'oth4', symptom: 'Rotator Cuff & Overhead Arm Fatigue', duration: 'Weekly', severity: 'Moderate' },
+    { id: 'oth5', symptom: 'Post-Practice Joint Inflammation & Tenderness', duration: 'Evening', severity: 'Moderate' },
+    { id: 'oth6', symptom: 'Delayed Recovery between Back-to-Back Match Days', duration: 'Tournaments', severity: 'Severe' },
+    { id: 'oth7', symptom: 'Calorie Deficit for High Athletic Workload', duration: 'Training log', severity: 'Moderate' },
+    { id: 'oth8', symptom: 'Acute Lactic Acid Heaviness in Lower Extremities', duration: '2nd half', severity: 'Often' },
+    { id: 'oth9', symptom: 'Plantar Fascia & Foot Arch Soreness', duration: 'Hard court', severity: 'Mild' },
+    { id: 'oth10', symptom: 'Nocturnal Muscle Fasciculations & Sleep Disruption', duration: 'Nightly', severity: 'Mild' },
+  ],
+
+  'Volley Ball': [
+    { id: 'vb1', symptom: 'Jumper\'s Knee (Patellar Tendinopathy from Spike Landings)', duration: '1 month', severity: 'Severe' },
+    { id: 'vb2', symptom: 'Rotator Cuff Impingement from Overhead Spiking & Serving', duration: '3 weeks', severity: 'Moderate' },
+    { id: 'vb3', symptom: 'Finger Sprains & Joint Jamming from Net Blocking', duration: 'Recent match', severity: 'Moderate' },
+    { id: 'vb4', symptom: 'Ankle Inversion Sprain from Landing on Opponent\'s Foot', duration: '2 weeks', severity: 'Severe' },
+    { id: 'vb5', symptom: 'Explosive Vertical Jump Power Drop in 4th/5th Sets', duration: 'Late sets', severity: 'Severe' },
+    { id: 'vb6', symptom: 'Lumbar Hyperextension Strain during Backcourt Spiking', duration: 'Match days', severity: 'Moderate' },
+    { id: 'vb7', symptom: 'Forearm Skin Bruising from Repetitive Underhand Digs', duration: 'Weekly', severity: 'Mild' },
+    { id: 'vb8', symptom: 'Scapular Dynamic Fatigue & Shoulder Drop', duration: 'Tournament', severity: 'Moderate' },
+    { id: 'vb9', symptom: 'Hard Court Foot Impact Shock & Heel Pain', duration: 'Indoor court', severity: 'Mild' },
+    { id: 'vb10', symptom: 'Heat Exhaustion & Calf Cramps in Multi-Set Matches', duration: 'Mid-match', severity: 'Often' },
+  ],
+
+  'Basket Ball': [
+    { id: 'bb1', symptom: 'Patellar Tendon Soreness from Repeated High Rebounds', duration: '3 weeks', severity: 'Moderate' },
+    { id: 'bb2', symptom: 'Lateral Ankle Sprains from Rapid Directional Cutting', duration: '2 weeks', severity: 'Severe' },
+    { id: 'bb3', symptom: 'Achilles Tendon Stiffness on Morning Waking', duration: '1 month', severity: 'Moderate' },
+    { id: 'bb4', symptom: 'Low Back Muscle Spasms from Low Defensive Stances', duration: 'Match days', severity: 'Moderate' },
+    { id: 'bb5', symptom: 'Medial Tibial Stress Syndrome (Shin Splints)', duration: 'Hard court season', severity: 'Severe' },
+    { id: 'bb6', symptom: 'Quadriceps Tendon Burning on Transition Sprints', duration: '4th quarter', severity: 'Severe' },
+    { id: 'bb7', symptom: 'Finger Jamming & Collateral Ligament Trauma', duration: 'Rebound play', severity: 'Mild' },
+    { id: 'bb8', symptom: 'Heavy Sweat Electrolyte Loss & Involuntary Calf Twitches', duration: 'Indoor gym', severity: 'Often' },
+    { id: 'bb9', symptom: 'Late-Game Free Throw Inaccuracy from Triceps Fatigue', duration: 'Final minutes', severity: 'Moderate' },
+    { id: 'bb10', symptom: 'Plantar Heel Impact Soreness from Sudden Decelerations', duration: 'Post-game', severity: 'Mild' },
+  ],
+
+  'Kabaddi': [
+    { id: 'kb1', symptom: 'Ankle Inversion / Eversion Sprains from Ankle Holds', duration: '2 weeks', severity: 'Severe' },
+    { id: 'kb2', symptom: 'Shoulder Dislocation / AC Joint Sprains from Hard Tackles', duration: 'Past match', severity: 'Severe' },
+    { id: 'kb3', symptom: 'Mat Burn & Friction Abrasions on Forearms & Knees', duration: 'Tournament', severity: 'Mild' },
+    { id: 'kb4', symptom: 'Thoracic Rib Wall Contusions & Heavy Impact Bruising', duration: 'Raid impacts', severity: 'Severe' },
+    { id: 'kb5', symptom: 'Hamstring & Adductor Groin Pulls during Frog Jumps', duration: '3 weeks', severity: 'Moderate' },
+    { id: 'kb6', symptom: 'Severe Lactic Acid Burn in Thighs from Low Squatting Stance', duration: 'Continuous', severity: 'Often' },
+    { id: 'kb7', symptom: 'Cervical Spine & Trapezius Muscle Spasms from Defensive Grips', duration: 'Match days', severity: 'Moderate' },
+    { id: 'kb8', symptom: 'Thumb & Finger Hyper-Extensive Sprains during Escapes', duration: 'Recent raid', severity: 'Mild' },
+    { id: 'kb9', symptom: 'Anaerobic Breath-Holding (Cant) Hypoxic Exhaustion', duration: 'Late raids', severity: 'Severe' },
+    { id: 'kb10', symptom: 'Involuntary Calf & Foot Arch Cramping in 2nd Half', duration: '2nd half', severity: 'Severe' },
+  ],
+
+  'Badminton': [
+    { id: 'bm1', symptom: 'Tennis / Golfer\'s Elbow (Lateral/Medial Epicondylitis)', duration: '1 month', severity: 'Moderate' },
+    { id: 'bm2', symptom: 'Rotator Cuff & Supraspinatus Soreness from Full Smashing', duration: '3 weeks', severity: 'Severe' },
+    { id: 'bm3', symptom: 'Achilles Tendon Strain from Rapid Forecourt Lunging', duration: '2 weeks', severity: 'Moderate' },
+    { id: 'bm4', symptom: 'Patellar & Meniscus Twisting Strain on Court Recovery', duration: 'Match play', severity: 'Moderate' },
+    { id: 'bm5', symptom: 'Wrist Flexor Tendinitis from Deceptive Flick Shots', duration: '3 weeks', severity: 'Mild' },
+    { id: 'bm6', symptom: 'Friction Blisters & Calluses on Dominant Foot Big Toe', duration: 'Tournament', severity: 'Mild' },
+    { id: 'bm7', symptom: 'Asymmetric Lumbar Muscle Spasms from One-Sided Smashing', duration: 'Weekly', severity: 'Moderate' },
+    { id: 'bm8', symptom: 'Ankle Instability on Deep Backcourt Round-the-Head Shots', duration: 'Recent match', severity: 'Moderate' },
+    { id: 'bm9', symptom: 'Cardiovascular Anaerobic Exhaustion in Prolonged Rallies', duration: 'High pace', severity: 'Severe' },
+    { id: 'bm10', symptom: 'Dominant Trapezius & Neck Tightness Post-Tournament', duration: 'Post-match', severity: 'Often' },
+  ],
+
+  'Kho Kho': [
+    { id: 'kk1', symptom: 'Sudden Acceleration Hamstring & Quadriceps Tears/Pulls', duration: '2 weeks', severity: 'Severe' },
+    { id: 'kk2', symptom: 'Knee Meniscus & Ligament Strain from Rapid Diving Turns', duration: 'Match day', severity: 'Severe' },
+    { id: 'kk3', symptom: 'Deep Soil / Mud Traction Ankle Rolling & Sprains', duration: '1 month', severity: 'Moderate' },
+    { id: 'kk4', symptom: 'Palm, Knee & Elbow Abrasions from Low Pole Dives', duration: 'Practice', severity: 'Mild' },
+    { id: 'kk5', symptom: 'Extreme Lactic Acidosis from Non-Stop Sitting & Sprints', duration: 'Mid-match', severity: 'Severe' },
+    { id: 'kk6', symptom: 'Sacroiliac & Lower Back Spasms from Zigzag Chasing', duration: '3 weeks', severity: 'Moderate' },
+    { id: 'kk7', symptom: 'Shin Splints & Gastrocnemius Cramps from Explosive Pole Push', duration: 'Late innings', severity: 'Often' },
+    { id: 'kk8', symptom: 'Chest Wall Impact Soreness from Ground Diving Tags', duration: 'Recent match', severity: 'Mild' },
+    { id: 'kk9', symptom: 'Severe Breathlessness & Aerobic Depletion in Chasing Turn', duration: 'Chasing blocks', severity: 'Severe' },
+    { id: 'kk10', symptom: 'Bilateral Adductor Groin Spasms after Match Halves', duration: 'Post-match', severity: 'Moderate' },
+  ],
+
+  'Throwball': [
+    { id: 'tb1', symptom: 'Overhead Throwing Shoulder Subacromial Bursitis & Ache', duration: '3 weeks', severity: 'Moderate' },
+    { id: 'tb2', symptom: 'Wrist Hyperextension & Sprain from Catching Hard Balls', duration: 'Recent match', severity: 'Severe' },
+    { id: 'tb3', symptom: 'Rotator Cuff Tendinitis from Powerful Jumping Throws', duration: '1 month', severity: 'Severe' },
+    { id: 'tb4', symptom: 'Bilateral Knee Impact Soreness on Net Jump Landings', duration: 'Match days', severity: 'Moderate' },
+    { id: 'tb5', symptom: 'Ankle Inversion Twists during Rapid Lateral Court Coverage', duration: '2 weeks', severity: 'Moderate' },
+    { id: 'tb6', symptom: 'Scapular Muscle Spasms & Upper Back Stiffness', duration: 'Post-game', severity: 'Mild' },
+    { id: 'tb7', symptom: 'Biceps Tendon Inflammation from Rapid Overhead Releases', duration: '3 weeks', severity: 'Mild' },
+    { id: 'tb8', symptom: 'Swollen Finger Knuckles & Joint Capsule Sprains', duration: 'Practice', severity: 'Mild' },
+    { id: 'tb9', symptom: 'Dehydration & Low Electrolyte Energy Drop in Long Sets', duration: '3rd set', severity: 'Often' },
+    { id: 'tb10', symptom: 'Lumbar Hyperextension Ache after Backline Catches', duration: 'Evening', severity: 'Moderate' },
+  ],
+
   'Sports Nutrition': [
     { id: 'sn1', symptom: 'Delayed Muscle Soreness (>48-72h DOMS)', duration: '2 weeks', severity: 'Moderate' },
     { id: 'sn2', symptom: 'Mid-Session Energy Crash / Glycogen Bonking', duration: 'Past 3 sessions', severity: 'Severe' },
@@ -863,14 +1066,120 @@ export const domainAdditionalSuggestedSymptoms: Record<string, string[]> = {
     'High Mental Stress from Work Notifications',
     'Lack of Scheduled Mindful Walking Breaks',
   ],
+  'Athlets': [
+    'Drop in Peak Aerobic Power (VO2 max)',
+    'Sub-Clinical Achilles Tendon Crepitus',
+    'Post-Match Glycogen Bonk & Hand Tremors',
+    'Sleep Architecture Degradation on Travel',
+    'High Sweat Sodium Loss Staining Uniform',
+    'Chronic Bilateral Hamstring Stiffness',
+  ],
+  'GYM': [
+    'Subacromial Shoulder Pinching on Incline Press',
+    'Mid-Set Forearm Extensor Cramping',
+    'Lumbar Spine Fatigue during Standing OHP',
+    'Patellar Tendon Soreness on Deep Back Squats',
+    'Post-Heavy Lift Vagal Lightheadedness',
+    'Low Intra-Muscular Glycogen Flatness',
+  ],
+  'Football': [
+    'Adductor Longus Groin Tightness',
+    'Calf Muscle Cramps in 2nd Half Extra Time',
+    'Lateral Ankle Ligament Instability',
+    'Shin Bone Impact Sensitivity',
+    'Late-Game Visual Reaction Lag',
+    'Dehydration Chills after Hot Match',
+  ],
+  'Cricket': [
+    'Fast Bowling Lumbar Sacral Stiffness',
+    'Bowling Arm Triceps / Rotator Tenderness',
+    'Wicket-Keeper Deep Squat Knee Ache',
+    'Multi-Session Heat Exhaustion',
+    'Bat Grip Forearm Flexor Soreness',
+    'Finger Knuckle Impact Swelling',
+  ],
+  'Sport Endurance': [
+    'Glycogen "Wall" Bonk at 30km Mark',
+    'Aerobic Cardiac Drift under Hot Conditions',
+    'Hyponatremic Finger Puffiness & Nausea',
+    'Runner\'s Gastrointestinal Cramps & Urgency',
+    'IT Band Lateral Knee Friction Burn',
+    'Post-Race Core Shivering & Exhaustion',
+  ],
+  'OTHERS': [
+    'Multi-Sport Lateral Direction Fatigue',
+    'Post-Match Joint Capsule Swelling',
+    'Delayed Muscle Recovery between Tournaments',
+    'Dehydration Headaches & Salt Loss',
+    'Foot Arch & Plantar Fascial Tightness',
+    'Involuntary Muscle Twitches during Sleep',
+  ],
+  'Volley Ball': [
+    'Patellar Jumper\'s Knee Tendon Aching',
+    'Rotator Cuff Impingement on Hard Spikes',
+    'Net Block Finger Sprains & Swelling',
+    'Landing Ankle Rolling Instability',
+    'Late-Set Vertical Jump Power Decline',
+    'Forearm Hematoma / Bruising from Hard Digs',
+  ],
+  'Basket Ball': [
+    'Hard Court Shin Splints (Medial Tibial Pain)',
+    'Patellar Rebound Shock Tenderness',
+    'Lateral Ankle Inversion Soreness',
+    'Defensive Stance Low Back Muscle Spasm',
+    'Late 4th Quarter Free-Throw Fatigue',
+    'Foot Plantar Heel Deceleration Bruise',
+  ],
+  'Kabaddi': [
+    'Tackle Impact Rib Wall Contusions',
+    'Ankle Hold Ligament Sprain & Swelling',
+    'Mat Friction Burns on Elbows & Knees',
+    'Raid Hypoxic Exhaustion (Cant Strain)',
+    'Low Squatting Thigh Lactic Acid Lockup',
+    'Frog Jump Adductor & Groin Pulls',
+  ],
+  'Badminton': [
+    'Smash Arm Tennis Elbow (Epicondylitis)',
+    'Forecourt Lunging Achilles Tendon Strain',
+    'Rotator Cuff Supraspinatus Tendonitis',
+    'Forefoot Big Toe Friction Callus Blisters',
+    'Asymmetrical Spinal Muscular Tightness',
+    'Court Recovery Rapid Ankle Instability',
+  ],
+  'Kho Kho': [
+    'Pole Diving Tag Palm & Elbow Abrasions',
+    'Knee Meniscus Twisting Strain on Turns',
+    'Extreme Lactic Acid Exhaustion from Chasing',
+    'Deep Soil Ankle Inversion Sprain',
+    'Continuous Squat to Sprint Quad Burn',
+    'Late Match Groin Adductor Cramping',
+  ],
+  'Throwball': [
+    'Overhead Catching Wrist Hyperextension',
+    'Jumping Throw Rotator Cuff Strain',
+    'Net Landing Knee Shock Tenderness',
+    'Scapular & Upper Back Muscle Spasms',
+    'Finger Knuckle Capsule Swelling',
+    'Biceps Tendon Overhead Release Ache',
+  ],
 };
 
-// Fallback search
+// Robust retrieval helper that respects canonical names and user spellings
 export function getSymptomsForCategory(categoryName: string): SymptomAssessmentItem[] {
+  if (!categoryName) return domainSpecificSymptoms['Diabetes Mellitus'];
+
+  // Direct hit
   if (domainSpecificSymptoms[categoryName]) {
     return domainSpecificSymptoms[categoryName];
   }
 
+  // Normalized hit
+  const normalized = normalizeConditionName(categoryName);
+  if (domainSpecificSymptoms[normalized]) {
+    return domainSpecificSymptoms[normalized];
+  }
+
+  // Fuzzy lookup
   const cleanName = categoryName.trim().toLowerCase();
   const keys = Object.keys(domainSpecificSymptoms);
   const found = keys.find(

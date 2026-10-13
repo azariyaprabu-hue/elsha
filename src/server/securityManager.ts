@@ -148,7 +148,7 @@ export function loadSecurityConfig(): SecurityDbSchema {
   }
 
   // Initial provision: Secure default configuration
-  const defaultAppPass = hashPassword('Elsha@2026');
+  const defaultAppPass = hashPassword('ziathlon@2026');
   const foldersConfig: Record<string, FolderSecurityConfig> = {};
 
   CANONICAL_FOLDERS.forEach((f) => {

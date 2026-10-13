@@ -4,6 +4,10 @@ import {
   domainSpecificSymptoms,
   domainCategoriesMapping,
   domainAdditionalSuggestedSymptoms,
+  PERFORMANCE_PRIMARY_CATEGORIES,
+  PERFORMANCE_OTHER_SUBCATEGORIES,
+  normalizeConditionName,
+  getSymptomsForCategory,
 } from '../data/domainSymptomsData';
 import {
   AlertCircle,
@@ -19,6 +23,8 @@ import {
   Tag,
   Check,
   X,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 
 interface SymptomsAssessmentSectionProps {
@@ -44,8 +50,10 @@ export const SymptomsAssessmentSection: React.FC<SymptomsAssessmentSectionProps>
 }) => {
   // Determine initial major domain tab
   const getInitialTab = (catName: string): MajorDomainTab => {
+    if (!catName) return 'DISEASES';
+    const normalized = normalizeConditionName(catName);
     for (const [dom, cats] of Object.entries(domainCategoriesMapping)) {
-      if (cats.some((c) => c.toLowerCase() === catName.toLowerCase())) {
+      if (cats.some((c) => c.toLowerCase() === normalized.toLowerCase() || c.toLowerCase() === catName.toLowerCase())) {
         return dom as MajorDomainTab;
       }
     }
@@ -57,16 +65,22 @@ export const SymptomsAssessmentSection: React.FC<SymptomsAssessmentSectionProps>
   // Find initial matching condition
   const availableConditions = domainCategoriesMapping[activeMajorTab];
   const initialCondition =
-    availableConditions.find((c) => c.toLowerCase() === categoryName.toLowerCase()) ||
+    (categoryName && normalizeConditionName(categoryName)) ||
+    availableConditions.find((c) => c.toLowerCase() === categoryName?.toLowerCase()) ||
     availableConditions[0] ||
     'Diabetes Mellitus';
 
   const [activeCondition, setActiveCondition] = useState<string>(initialCondition);
+  const isSubActive = (PERFORMANCE_OTHER_SUBCATEGORIES as readonly string[]).includes(initialCondition as any);
+  const [showOthersSubMenu, setShowOthersSubMenu] = useState<boolean>(() => {
+    return initialCondition === 'OTHERS' || isSubActive;
+  });
+
   const [currentSymptoms, setCurrentSymptoms] = useState<SymptomAssessmentItem[]>(() => {
     if (initialSymptoms && initialSymptoms.length > 0) {
       return initialSymptoms.map((s) => ({ ...s, selected: s.selected !== false }));
     }
-    const defaultSyms = domainSpecificSymptoms[initialCondition] || [];
+    const defaultSyms = getSymptomsForCategory(initialCondition) || [];
     return defaultSyms.map((s) => ({ ...s, selected: true }));
   });
 
@@ -83,6 +97,47 @@ export const SymptomsAssessmentSection: React.FC<SymptomsAssessmentSectionProps>
     }
   }, [initialSymptoms]);
 
+  // When condition changes, load its clinical symptoms and immediately push to parent preview
+  const handleSelectCondition = (cond: string) => {
+    const normalized = normalizeConditionName(cond);
+    setActiveCondition(normalized);
+    if ((PERFORMANCE_OTHER_SUBCATEGORIES as readonly string[]).includes(normalized as any) || normalized === 'OTHERS') {
+      setShowOthersSubMenu(true);
+    }
+    const syms = getSymptomsForCategory(normalized) || [];
+    const mapped = syms.map((s) => ({
+      ...s,
+      selected: true,
+    }));
+    syncSymptomsToParent(mapped);
+    setActionNotice(`Calibrated symptoms for ${normalized} (${mapped.length} loaded & synced to preview)`);
+    setTimeout(() => setActionNotice(null), 2500);
+  };
+
+  // Dynamically calibrate symptoms whenever categoryName prop changes (e.g. user selected in Module 02)
+  useEffect(() => {
+    if (categoryName) {
+      const normalized = normalizeConditionName(categoryName);
+      let foundTab: MajorDomainTab = 'DISEASES';
+      for (const [dom, cats] of Object.entries(domainCategoriesMapping)) {
+        if (cats.some((c) => c.toLowerCase() === normalized.toLowerCase() || c.toLowerCase() === categoryName.toLowerCase())) {
+          foundTab = dom as MajorDomainTab;
+          break;
+        }
+      }
+      setActiveMajorTab(foundTab);
+      if ((PERFORMANCE_OTHER_SUBCATEGORIES as readonly string[]).includes(normalized as any) || normalized === 'OTHERS') {
+        setShowOthersSubMenu(true);
+      }
+      setActiveCondition(normalized);
+      const syms = getSymptomsForCategory(normalized) || [];
+      if (syms && syms.length > 0) {
+        const mapped = syms.map((s) => ({ ...s, selected: true }));
+        syncSymptomsToParent(mapped);
+      }
+    }
+  }, [categoryName]);
+
   // Modal / drawer state for adding symptoms from domain
   const [showAddMenu, setShowAddMenu] = useState<boolean>(false);
   const [customSymptomText, setCustomSymptomText] = useState<string>('');
@@ -93,23 +148,15 @@ export const SymptomsAssessmentSection: React.FC<SymptomsAssessmentSectionProps>
   // When major tab changes, pick first condition
   const handleSelectMajorTab = (tab: MajorDomainTab) => {
     setActiveMajorTab(tab);
-    const firstCond = domainCategoriesMapping[tab][0];
-    if (firstCond) {
+    if (tab === 'PERFORMANCE') {
+      const firstCond = PERFORMANCE_PRIMARY_CATEGORIES[0];
       handleSelectCondition(firstCond);
+    } else {
+      const firstCond = domainCategoriesMapping[tab][0];
+      if (firstCond) {
+        handleSelectCondition(firstCond);
+      }
     }
-  };
-
-  // When condition changes, load its clinical symptoms and immediately push to parent preview
-  const handleSelectCondition = (cond: string) => {
-    setActiveCondition(cond);
-    const syms = domainSpecificSymptoms[cond] || [];
-    const mapped = syms.map((s) => ({
-      ...s,
-      selected: true,
-    }));
-    syncSymptomsToParent(mapped);
-    setActionNotice(`Calibrated symptoms for ${cond} (${mapped.length} loaded & synced to preview)`);
-    setTimeout(() => setActionNotice(null), 2500);
   };
 
   // Auto-fill symptoms listener from uploaded files
@@ -302,36 +349,125 @@ export const SymptomsAssessmentSection: React.FC<SymptomsAssessmentSectionProps>
         </div>
 
         {/* CONDITIONS UNDER ACTIVE DOMAIN */}
-        <div className="p-4 bg-purple-50/70 border border-purple-200 rounded-xl space-y-2.5">
+        <div className="p-4 bg-purple-50/70 border border-purple-200 rounded-xl space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-[10px] uppercase font-mono text-[#7E22CE] font-bold flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-[#7E22CE]" />
-              Select Condition in {activeMajorTab} ({domainCategoriesMapping[activeMajorTab].length} Conditions):
+              Select Condition in {activeMajorTab} ({activeMajorTab === 'PERFORMANCE' ? '6 Disciplines + 6 Sub-Sports' : `${domainCategoriesMapping[activeMajorTab].length} Conditions`}):
             </span>
-            <span className="text-[10px] text-gray-600 font-mono">
-              Active: <span className="text-[#7E22CE] font-bold">{activeCondition}</span>
+            <span className="text-[10px] text-gray-700 font-mono">
+              Calibrated For: <span className="text-[#7E22CE] font-black uppercase">{activeCondition}</span>
             </span>
           </div>
 
-          <div className="flex flex-wrap gap-1.5">
-            {domainCategoriesMapping[activeMajorTab].map((cond) => {
-              const isSelected = activeCondition === cond;
-              return (
-                <button
-                  key={cond}
-                  type="button"
-                  onClick={() => handleSelectCondition(cond)}
-                  className={`px-3 py-1.5 text-xs font-black uppercase tracking-wider transition-all cursor-pointer border rounded-lg ${
-                    isSelected
-                      ? 'bg-[#7E22CE] text-white border-purple-700 shadow-xs'
-                      : 'bg-white text-black border-purple-300 hover:border-purple-500 hover:bg-purple-100/60'
-                  }`}
-                >
-                  {cond}
-                </button>
-              );
-            })}
-          </div>
+          {activeMajorTab === 'PERFORMANCE' ? (
+            <div className="space-y-2.5">
+              <div className="flex flex-wrap gap-1.5">
+                {PERFORMANCE_PRIMARY_CATEGORIES.map((cond) => {
+                  const isSelected = activeCondition === cond;
+                  if (cond === 'OTHERS') {
+                    const isSubSelected = (PERFORMANCE_OTHER_SUBCATEGORIES as readonly string[]).includes(activeCondition as any);
+                    const isOthersActive = isSelected || isSubSelected;
+                    return (
+                      <button
+                        key="OTHERS"
+                        type="button"
+                        onClick={() => {
+                          handleSelectCondition('OTHERS');
+                          setShowOthersSubMenu(!showOthersSubMenu);
+                        }}
+                        className={`px-3 py-1.5 text-xs font-black uppercase tracking-wider transition-all cursor-pointer border rounded-lg flex items-center gap-1.5 ${
+                          isOthersActive
+                            ? 'bg-amber-400 text-black border-amber-500 shadow-sm'
+                            : 'bg-white text-black border-purple-300 hover:border-purple-500 hover:bg-purple-100/60'
+                        }`}
+                      >
+                        <span>OTHERS</span>
+                        <span className={`text-[9px] px-1.5 py-0.2 rounded font-mono ${isOthersActive ? 'bg-black text-amber-300' : 'bg-purple-100 text-purple-800'}`}>
+                          6 Sub-Sports
+                        </span>
+                        {showOthersSubMenu ? (
+                          <ChevronUp className="w-3 h-3" />
+                        ) : (
+                          <ChevronDown className="w-3 h-3" />
+                        )}
+                      </button>
+                    );
+                  }
+
+                  return (
+                    <button
+                      key={cond}
+                      type="button"
+                      onClick={() => handleSelectCondition(cond)}
+                      className={`px-3 py-1.5 text-xs font-black uppercase tracking-wider transition-all cursor-pointer border rounded-lg ${
+                        isSelected
+                          ? 'bg-[#7E22CE] text-white border-purple-700 shadow-xs'
+                          : 'bg-white text-black border-purple-300 hover:border-purple-500 hover:bg-purple-100/60'
+                      }`}
+                    >
+                      {cond}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* OTHERS Sports Sub-Headings Panel */}
+              {(showOthersSubMenu || activeCondition === 'OTHERS' || (PERFORMANCE_OTHER_SUBCATEGORIES as readonly string[]).includes(activeCondition as any)) && (
+                <div className="p-3 bg-amber-50/90 border border-amber-300 rounded-xl space-y-2 animate-in fade-in">
+                  <div className="flex items-center justify-between border-b border-amber-200/80 pb-1.5">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+                      <Zap className="w-3.5 h-3.5 text-amber-600" />
+                      OTHERS • Specific Sports & Games Sub-Headings (Click to Load Symptoms):
+                    </span>
+                    <span className="text-[9px] text-amber-800 font-mono">
+                      6 Disciplines Available
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {PERFORMANCE_OTHER_SUBCATEGORIES.map((subCat) => {
+                      const isSubSelected = activeCondition === subCat;
+                      return (
+                        <button
+                          key={subCat}
+                          type="button"
+                          onClick={() => handleSelectCondition(subCat)}
+                          className={`px-3 py-1.5 text-xs font-black uppercase tracking-wider transition-all cursor-pointer border rounded-lg flex items-center gap-1.5 ${
+                            isSubSelected
+                              ? 'bg-amber-500 text-black border-amber-600 shadow-sm font-black'
+                              : 'bg-white text-slate-800 border-amber-200 hover:bg-amber-100 hover:border-amber-400'
+                          }`}
+                        >
+                          {isSubSelected && <Check className="w-3.5 h-3.5 text-black" />}
+                          <span>{subCat}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-1.5">
+              {domainCategoriesMapping[activeMajorTab].map((cond) => {
+                const isSelected = activeCondition === cond;
+                return (
+                  <button
+                    key={cond}
+                    type="button"
+                    onClick={() => handleSelectCondition(cond)}
+                    className={`px-3 py-1.5 text-xs font-black uppercase tracking-wider transition-all cursor-pointer border rounded-lg ${
+                      isSelected
+                        ? 'bg-[#7E22CE] text-white border-purple-700 shadow-xs'
+                        : 'bg-white text-black border-purple-300 hover:border-purple-500 hover:bg-purple-100/60'
+                    }`}
+                  >
+                    {cond}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 

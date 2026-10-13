@@ -166,17 +166,17 @@ export const ElshaLoginScreen: React.FC<ElshaLoginScreenProps> = ({
             <div className="pt-2 flex items-center justify-between text-xs">
               <button
                 type="button"
-                onClick={() => setPassword('Elsha@2026')}
+                onClick={() => setPassword('ziathlon@2026')}
                 className="text-[11px] text-purple-700 hover:text-purple-900 font-semibold underline cursor-pointer"
               >
-                Fill Password: Elsha@2026
+                Fill Password: ziathlon@2026
               </button>
               <button
                 type="button"
                 onClick={async () => {
-                  setPassword('Elsha@2026');
+                  setPassword('ziathlon@2026');
                   setIsLoading(true);
-                  const result = await onLogin('Elsha@2026');
+                  const result = await onLogin('ziathlon@2026');
                   setIsLoading(false);
                   if (result.success) {
                     onLoginSuccess();

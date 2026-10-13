@@ -1222,6 +1222,7 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
           onSelectDomain={onSelectDomain}
           selectedCategory={selectedCategory}
           onSelectCategory={onSelectCategory}
+          onNavigateToSymptoms={() => setActiveProfileSubfolder('symptoms')}
         />
       )}
 
