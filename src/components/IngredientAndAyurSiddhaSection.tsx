@@ -301,7 +301,7 @@ export const IngredientAndAyurSiddhaSection: React.FC<IngredientAndAyurSiddhaSec
             <span>MODULE 17 • CONDITION-SPECIFIC CLINICAL INGREDIENT GUIDELINES</span>
           </div>
           <h2 className="text-2xl font-black tracking-tight text-white uppercase mt-0.5">
-            ELSHA Dynamic Ingredient Guidelines (90 Condition-Specific Items)
+            ZIATHLON Dynamic Ingredient Guidelines (90 Condition-Specific Items)
           </h2>
           <p className="text-xs text-gray-400">
             Automated AI generation of unique condition-specific ingredient guidelines for every Disease, Disorder, Performance and Fitness goal.

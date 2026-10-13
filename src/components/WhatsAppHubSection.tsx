@@ -1327,7 +1327,7 @@ export const WhatsAppHubSection: React.FC<WhatsAppHubSectionProps> = ({
                         </h3>
                         {activeConv.elshaPatientId && (
                           <span className="px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 text-[10px] font-bold">
-                            ELSHA PATIENT
+                            ZIATHLON PATIENT
                           </span>
                         )}
                       </div>

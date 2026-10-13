@@ -63,7 +63,7 @@ export const ElshaLoginScreen: React.FC<ElshaLoginScreenProps> = ({
         <div className="flex items-center gap-2">
           <div className="w-2.5 h-2.5 rounded-full bg-purple-500 animate-pulse" />
           <span className="text-[11px] font-mono tracking-widest uppercase text-purple-300 font-bold">
-            ELSHA HEALTH SYSTEM • SECURE ACCESS
+            ZIATHLON HEALTH SYSTEM • SECURE ACCESS
           </span>
         </div>
         <div className="flex items-center gap-2 text-[10px] font-mono text-purple-400 bg-purple-950/60 border border-purple-800/40 px-3 py-1 rounded-full">
@@ -85,7 +85,7 @@ export const ElshaLoginScreen: React.FC<ElshaLoginScreenProps> = ({
             </div>
             <div>
               <h1 className="text-2xl sm:text-3xl font-black text-[#0B0826] tracking-tight">
-                Welcome to ELSHA
+                Welcome to ZIATHLON
               </h1>
               <p className="text-xs sm:text-sm text-slate-600 mt-1.5 font-medium">
                 Enter your password to continue.
@@ -157,7 +157,7 @@ export const ElshaLoginScreen: React.FC<ElshaLoginScreenProps> = ({
               ) : (
                 <>
                   <Lock className="w-4 h-4" />
-                  <span>Login to ELSHA</span>
+                  <span>Login to ZIATHLON</span>
                 </>
               )}
             </button>

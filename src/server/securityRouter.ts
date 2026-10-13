@@ -51,7 +51,7 @@ export function requireAppAuth(req: Request, res: Response, next: NextFunction) 
   if (!session) {
     return res.status(401).json({
       success: false,
-      error: 'Unauthorized: ELSHA App authentication required. Please login.',
+      error: 'Unauthorized: ZIATHLON App authentication required. Please login.',
       code: 'AUTH_REQUIRED',
     });
   }
@@ -66,7 +66,7 @@ export function requireFolderAuth(_folderId?: string) {
     if (!session) {
       return res.status(401).json({
         success: false,
-        error: 'Unauthorized: ELSHA App authentication required. Please login.',
+        error: 'Unauthorized: ZIATHLON App authentication required. Please login.',
         code: 'AUTH_REQUIRED',
       });
     }
@@ -173,7 +173,7 @@ securityRouter.post('/login', (req: Request, res: Response) => {
   res.json({
     success: true,
     sessionId,
-    message: 'Welcome to ELSHA. Authentication successful.',
+    message: 'Welcome to ZIATHLON. Authentication successful.',
     mustChangePassword: config.appPassword.mustChangePassword || false,
     unlockedFolders: [],
   });

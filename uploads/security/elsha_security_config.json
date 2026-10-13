@@ -128,6 +128,55 @@
   },
   "securityAuditLogs": [
     {
+      "id": "audit-1791874850265-47vi",
+      "event": "APP_LOGIN_SUCCESS",
+      "details": "Successful main app login session created",
+      "timestamp": "2026-10-13T07:00:50.265Z",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit-1791872855737-ac39",
+      "event": "APP_LOGIN_SUCCESS",
+      "details": "Successful main app login session created",
+      "timestamp": "2026-10-13T06:27:35.737Z",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit-1791872851326-9vge",
+      "event": "APP_LOGIN_FAIL",
+      "details": "Incorrect password attempt from IP 127.0.0.1",
+      "timestamp": "2026-10-13T06:27:31.326Z",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit-1791869978957-ze3w",
+      "event": "APP_LOGIN_SUCCESS",
+      "details": "Successful main app login session created",
+      "timestamp": "2026-10-13T05:39:38.957Z",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit-1791869964680-tyh4",
+      "event": "APP_LOGIN_FAIL",
+      "details": "Incorrect password attempt from IP 127.0.0.1",
+      "timestamp": "2026-10-13T05:39:24.680Z",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit-1791869959705-u82s",
+      "event": "APP_LOGIN_FAIL",
+      "details": "Incorrect password attempt from IP 127.0.0.1",
+      "timestamp": "2026-10-13T05:39:19.705Z",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit-1791869954073-35tn",
+      "event": "APP_LOGIN_FAIL",
+      "details": "Incorrect password attempt from IP 127.0.0.1",
+      "timestamp": "2026-10-13T05:39:14.073Z",
+      "ip": "127.0.0.1"
+    },
+    {
       "id": "audit-1791811705798-qez8",
       "event": "APP_LOGIN_FAIL",
       "details": "Incorrect password attempt from IP 127.0.0.1",

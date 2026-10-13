@@ -185,7 +185,7 @@ export const PersonalNutritionAiDrawer: React.FC<PersonalNutritionAiDrawerProps>
                 }`}
               >
                 <div className="text-[9px] text-gray-400 font-mono mb-1">
-                  {isUser ? 'You' : 'ELSHA AI'} • {msg.timestamp}
+                  {isUser ? 'You' : 'ZIATHLON AI'} • {msg.timestamp}
                 </div>
                 <div
                   className={`p-3.5 rounded-2xl text-xs leading-relaxed ${

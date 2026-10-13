@@ -2,9 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   Activity,
   Upload,
-  FileSpreadsheet,
-  TrendingDown,
-  TrendingUp,
+  Camera,
+  CameraOff,
   Sparkles,
   CheckCircle2,
   AlertTriangle,
@@ -14,18 +13,21 @@ import {
   Calendar,
   Clock,
   User,
-  ShieldCheck,
-  Scale,
   RefreshCw,
   Trash2,
-  ChevronRight,
   Download,
   Maximize2,
   X,
   FileCheck,
   BarChart3,
-  Dna,
-  Zap,
+  TrendingDown,
+  TrendingUp,
+  Scale,
+  Scan,
+  ZoomIn,
+  ChevronLeft,
+  ChevronRight,
+  Image as ImageIcon,
 } from 'lucide-react';
 
 export interface ExtractedBiometricScan {
@@ -37,10 +39,10 @@ export interface ExtractedBiometricScan {
   scanType: string; // e.g. "Tanita PRO", "InBody 770", "DEXA"
   documentId: string;
   originalFileName: string;
-  originalFileUrl?: string;
+  originalFileUrl?: string; // Base64 picture or document link
   originalFileMime?: string;
   
-  // Extracted values (null if not detected in the report)
+  // Extracted values
   age?: number | string | null;
   sex?: string | null;
   height?: string | number | null;
@@ -80,7 +82,7 @@ export interface ExtractedBiometricScan {
   otherParameters?: Array<{ name: string; value: string; unit?: string }>;
 }
 
-// Default Historical Scans from the clinical baseline specified in the prompt
+// Baseline Clinical Historical Scans
 export const INITIAL_BIOMETRIC_SCANS: ExtractedBiometricScan[] = [
   {
     id: 'scan-2026-0826-01',
@@ -201,10 +203,7 @@ export const BodyCompositionTrackerSection: React.FC<BodyCompositionTrackerSecti
   onBackToMainFolders,
   initialSubfolder = 'scanner',
 }) => {
-  // CRITICAL REQUIREMENT: The BIOMETRIC major folder must contain ONLY TWO subfolders:
-  // 1. SCANNER
-  // 2. PROGRESS
-  // Do NOT create, display, or add any other subfolders inside BIOMETRIC.
+  // Subfolders in Biometric: 1. SCANNER, 2. PROGRESS
   const [activeSubfolder, setActiveSubfolder] = useState<'scanner' | 'progress'>(initialSubfolder);
 
   useEffect(() => {
@@ -234,42 +233,130 @@ export const BodyCompositionTrackerSection: React.FC<BodyCompositionTrackerSecti
     }
   }, [scans]);
 
-  // Scanner Upload & Processing State
+  // Scanner State
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraCaptureInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
+  const [customScanDate, setCustomScanDate] = useState<string>(() => {
+    const today = new Date();
+    const dd = String(today.getDate()).padStart(2, '0');
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const yyyy = today.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  });
+
   const [lastExtractedScan, setLastExtractedScan] = useState<ExtractedBiometricScan | null>(null);
   const [nameMismatchWarning, setNameMismatchWarning] = useState<{
     detectedName: string;
     scanCandidate: ExtractedBiometricScan;
   } | null>(null);
 
-  // Original Document Viewer Modal
-  const [viewingDocument, setViewingDocument] = useState<{
-    title: string;
-    url?: string;
-    fileName: string;
-    mime?: string;
-    scan: ExtractedBiometricScan;
-  } | null>(null);
+  // Date-wise opened scan modal (for viewing the uploaded picture alongside extracted data date-wise)
+  const [openedDateScan, setOpenedDateScan] = useState<ExtractedBiometricScan | null>(null);
+  const [imageZoomLevel, setImageZoomLevel] = useState<number>(1);
 
-  // Process File Upload via OCR + AI Engine
-  const processReportFile = async (file: File) => {
+  // Clean up camera stream on unmount
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, []);
+
+  // Activate Live Camera Scanner
+  const startLiveCameraScanner = async () => {
+    setCameraError(null);
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Direct camera streaming is unavailable in this environment. Falling back to device capture.');
+      }
+
+      const constraints: MediaStreamConstraints = {
+        video: {
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        },
+        audio: false,
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      streamRef.current = stream;
+      setIsCameraActive(true);
+
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play().catch((err) => {
+            console.warn('Video play error:', err);
+          });
+        }
+      }, 150);
+    } catch (err: any) {
+      console.warn('Camera stream could not start, triggering capture input fallback:', err);
+      setCameraError(err?.message || 'Camera permission required.');
+      // Auto-trigger mobile capture input fallback
+      if (cameraCaptureInputRef.current) {
+        cameraCaptureInputRef.current.click();
+      }
+    }
+  };
+
+  // Stop Live Camera Scanner
+  const stopLiveCameraScanner = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setIsCameraActive(false);
+  };
+
+  // Capture Frame from Live Camera Stream
+  const captureFrameFromScanner = () => {
+    if (!videoRef.current) return;
+    try {
+      const video = videoRef.current;
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth || 1280;
+      canvas.height = video.videoHeight || 720;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const base64DataUrl = canvas.toDataURL('image/jpeg', 0.95);
+
+      stopLiveCameraScanner();
+      const generatedName = `Biometric_Scan_${Date.now()}.jpg`;
+      processBase64Report(base64DataUrl, generatedName, 'image/jpeg');
+    } catch (err: any) {
+      console.error('Failed to capture frame from video:', err);
+      setUploadStatus('Could not capture photo. Please try uploading a file.');
+    }
+  };
+
+  // Core Processor: Process Base64 image/document and extract parameters
+  const processBase64Report = async (
+    base64DataUrl: string,
+    fileName: string,
+    mimeType: string,
+    overrideDate?: string
+  ) => {
     setIsAnalyzing(true);
-    setUploadStatus('Reading file and running OCR extraction...');
+    setUploadStatus('Analyzing uploaded picture of biometric data with OCR extraction...');
 
     try {
-      // 1. Read file as Base64 data URL
-      const base64DataUrl = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (e) => resolve((e.target?.result as string) || '');
-        reader.onerror = () => resolve('');
-        reader.readAsDataURL(file);
-      });
+      const scanDateToUse = overrideDate || customScanDate || new Date().toLocaleDateString('en-GB');
 
-      setUploadStatus('Analyzing body-composition parameters with intelligent extraction...');
-
-      // 2. Call backend OCR + extraction endpoint
+      // Call backend extraction endpoint
       let extractedResult: any = null;
       try {
         const res = await fetch('/api/biometrics/extract-scan', {
@@ -277,9 +364,10 @@ export const BodyCompositionTrackerSection: React.FC<BodyCompositionTrackerSecti
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             fileBase64: base64DataUrl,
-            mimeType: file.type || 'application/pdf',
-            fileName: file.name,
-            patientName: patientName,
+            mimeType,
+            fileName,
+            patientName,
+            scanDate: scanDateToUse,
           }),
         });
 
@@ -287,96 +375,68 @@ export const BodyCompositionTrackerSection: React.FC<BodyCompositionTrackerSecti
           const json = await res.json();
           if (json.success && json.extractedData) {
             extractedResult = json.extractedData;
+          } else {
+            setUploadStatus(json.error || 'No physical biometric values detected on this image or document. Random values are strictly prevented.');
+            setIsAnalyzing(false);
+            return;
           }
+        } else {
+          setUploadStatus('Biometric extraction server error. Please try uploading the image or document again.');
+          setIsAnalyzing(false);
+          return;
         }
-      } catch (networkErr) {
-        console.warn('Backend extraction network error, using fallback:', networkErr);
+      } catch (networkErr: any) {
+        console.warn('Backend extraction network error:', networkErr);
+        setUploadStatus('Could not communicate with extraction server. Please check your connection.');
+        setIsAnalyzing(false);
+        return;
       }
 
-      // 3. Robust fallback if offline or service unavailable
+      // If no valid biometric result was extracted from the image/document, do NOT fabricate random values
       if (!extractedResult) {
-        const todayStr = new Date().toLocaleDateString('en-GB');
-        const isTanita = /tanita/i.test(file.name);
-        const isInBody = /inbody/i.test(file.name);
-        extractedResult = {
-          patientName: patientName,
-          scanDate: todayStr,
-          scanTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          scanType: isTanita ? 'Tanita PRO' : isInBody ? 'InBody' : 'Body Composition Analyzer',
-          age: 38,
-          sex: 'Female',
-          height: '162 cm',
-          weight: 77.4,
-          weightUnit: 'kg',
-          bmi: 29.5,
-          bodyFatPct: 41.6,
-          fatMass: 32.2,
-          ffm: 45.2,
-          muscleMass: 42.6,
-          skeletalMuscleMass: 23.8,
-          boneMass: 2.7,
-          protein: 8.7,
-          tbw: 34.2,
-          ecw: 15.6,
-          icw: 18.6,
-          ecwOverTbw: 0.456,
-          visceralFat: 11,
-          bmr: 1405,
-          metabolicAge: 43,
-          sarcopenicIndex: '6.7 kg/m²',
-          bodyProfile: 'Adiposity Reduction & Skeletal Muscle Accretion',
-          segmentalMuscle: {
-            rightArm: '2.3 kg',
-            leftArm: '2.2 kg',
-            trunk: '21.5 kg',
-            rightLeg: '6.6 kg',
-            leftLeg: '6.5 kg',
-          },
-          segmentalFat: {
-            rightArm: '2.4 kg',
-            leftArm: '2.5 kg',
-            trunk: '16.2 kg',
-            rightLeg: '5.3 kg',
-            leftLeg: '5.2 kg',
-          },
-          otherParameters: [
-            { name: 'Phase Angle (50kHz)', value: '5.7', unit: '°' },
-          ],
-        };
+        setUploadStatus('No biometric values detected in this image. Please upload a clear photo or document of the body composition analyzer report.');
+        setIsAnalyzing(false);
+        return;
       }
 
       const uniqueDocId = `DOC-${Date.now().toString(36).toUpperCase()}`;
       const newScanRecord: ExtractedBiometricScan = {
         id: `scan-${Date.now()}`,
         patientName: extractedResult.patientName || patientName,
-        scanDate: extractedResult.scanDate || new Date().toLocaleDateString('en-GB'),
+        scanDate: extractedResult.scanDate || scanDateToUse,
         scanTime: extractedResult.scanTime || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        uploadDateTime: new Date().toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-        scanType: extractedResult.scanType || 'Body Composition Analyzer',
+        uploadDateTime: new Date().toLocaleString('en-GB', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+        scanType: extractedResult.scanType || extractedResult.deviceModel || 'Body Composition Analyzer',
         documentId: uniqueDocId,
-        originalFileName: file.name,
+        originalFileName: fileName,
         originalFileUrl: base64DataUrl,
-        originalFileMime: file.type || (file.name.endsWith('.pdf') ? 'application/pdf' : 'image/jpeg'),
+        originalFileMime: mimeType,
         age: extractedResult.age ?? null,
         sex: extractedResult.sex ?? null,
         height: extractedResult.height ?? null,
-        weight: extractedResult.weight ?? null,
+        weight: extractedResult.weight ?? extractedResult.parameters?.weightKg ?? null,
         weightUnit: extractedResult.weightUnit || 'kg',
         bmi: extractedResult.bmi ?? null,
-        bodyFatPct: extractedResult.bodyFatPct ?? null,
-        fatMass: extractedResult.fatMass ?? null,
+        bodyFatPct: extractedResult.bodyFatPct ?? extractedResult.parameters?.bodyFatPercentage ?? null,
+        fatMass: extractedResult.fatMass ?? extractedResult.parameters?.fatMassKg ?? null,
         ffm: extractedResult.ffm ?? null,
         muscleMass: extractedResult.muscleMass ?? null,
-        skeletalMuscleMass: extractedResult.skeletalMuscleMass ?? null,
-        boneMass: extractedResult.boneMass ?? null,
+        skeletalMuscleMass: extractedResult.skeletalMuscleMass ?? extractedResult.parameters?.skeletalMuscleMassKg ?? null,
+        boneMass: extractedResult.boneMass ?? extractedResult.parameters?.boneMassKg ?? null,
         protein: extractedResult.protein ?? null,
-        tbw: extractedResult.tbw ?? null,
+        tbw: extractedResult.tbw ?? extractedResult.parameters?.bodyWaterPercentage ?? null,
         ecw: extractedResult.ecw ?? null,
         icw: extractedResult.icw ?? null,
         ecwOverTbw: extractedResult.ecwOverTbw ?? null,
-        visceralFat: extractedResult.visceralFat ?? null,
-        bmr: extractedResult.bmr ?? null,
-        metabolicAge: extractedResult.metabolicAge ?? null,
+        visceralFat: extractedResult.visceralFat ?? extractedResult.parameters?.visceralFatLevel ?? null,
+        bmr: extractedResult.bmr ?? extractedResult.parameters?.bmrKcal ?? null,
+        metabolicAge: extractedResult.metabolicAge ?? extractedResult.parameters?.metabolicAge ?? null,
         sarcopenicIndex: extractedResult.sarcopenicIndex ?? null,
         bodyProfile: extractedResult.bodyProfile ?? null,
         segmentalMuscle: extractedResult.segmentalMuscle ?? null,
@@ -386,7 +446,7 @@ export const BodyCompositionTrackerSection: React.FC<BodyCompositionTrackerSecti
 
       setLastExtractedScan(newScanRecord);
 
-      // Check for patient name mismatch
+      // Name check
       if (
         extractedResult.patientName &&
         patientName &&
@@ -402,7 +462,6 @@ export const BodyCompositionTrackerSection: React.FC<BodyCompositionTrackerSecti
         return;
       }
 
-      // Automatically Save to Progress
       commitScanToProgress(newScanRecord);
     } catch (err: any) {
       console.error('Scan processing error:', err);
@@ -412,193 +471,93 @@ export const BodyCompositionTrackerSection: React.FC<BodyCompositionTrackerSecti
     }
   };
 
+  // Handle file input upload
+  const handleFileUpload = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64 = (e.target?.result as string) || '';
+      processBase64Report(base64, file.name, file.type || 'image/jpeg');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Commit scan permanently to progress history and auto-open in progress
   const commitScanToProgress = (scan: ExtractedBiometricScan) => {
     setScans((prev) => {
-      // Do not overwrite previous scans; prepend or append
-      const updated = [...prev, scan];
-      return updated;
+      // Avoid duplicate by id
+      const existsIndex = prev.findIndex((s) => s.id === scan.id);
+      if (existsIndex >= 0) {
+        const copy = [...prev];
+        copy[existsIndex] = scan;
+        return copy;
+      }
+      return [...prev, scan];
     });
 
     if (onSyncCurrentStatsToProfile && scan.weight) {
       onSyncCurrentStatsToProfile(scan);
     }
 
-    setUploadStatus(`Scan analyzed & automatically saved to PROGRESS! (Scan ID: ${scan.documentId})`);
-    setTimeout(() => setUploadStatus(null), 5000);
+    setUploadStatus(`✓ Verified biometric parameters extracted from document & automatically saved into PROGRESS! (Date: ${scan.scanDate})`);
+    // Automatically switch to PROGRESS subfolder & open this date's report!
+    setActiveSubfolder('progress');
+    setOpenedDateScan(scan);
   };
 
-  // Sample Scans for instant testing
-  const handleLoadSample = (type: 'tanita' | 'inbody' | 'dexa') => {
-    setIsAnalyzing(true);
-    setUploadStatus(`Loading sample ${type.toUpperCase()} report & extracting clinical parameters...`);
-
-    setTimeout(() => {
-      const todayStr = new Date().toLocaleDateString('en-GB');
-      let sample: ExtractedBiometricScan;
-
-      if (type === 'tanita') {
-        sample = {
-          id: `scan-${Date.now()}`,
-          patientName: patientName,
-          scanDate: todayStr,
-          scanTime: '11:00 AM',
-          uploadDateTime: new Date().toLocaleString('en-GB'),
-          scanType: 'Tanita PRO',
-          documentId: `DOC-TANITA-${Date.now().toString().slice(-4)}`,
-          originalFileName: 'Sample_Tanita_PRO_Report.pdf',
-          originalFileMime: 'application/pdf',
-          age: 38,
-          sex: 'Female',
-          height: '162 cm',
-          weight: 76.9,
-          weightUnit: 'kg',
-          bmi: 29.3,
-          bodyFatPct: 41.2,
-          fatMass: 31.7,
-          ffm: 45.2,
-          muscleMass: 42.6,
-          skeletalMuscleMass: 24.0,
-          boneMass: 2.7,
-          protein: 8.8,
-          tbw: 34.5,
-          ecw: 15.5,
-          icw: 19.0,
-          ecwOverTbw: 0.449,
-          visceralFat: 11,
-          bmr: 1412,
-          metabolicAge: 42,
-          sarcopenicIndex: '6.8 kg/m²',
-          bodyProfile: 'Metabolic Recalibration / Positive FFM Gain',
-          segmentalMuscle: {
-            rightArm: '2.3 kg',
-            leftArm: '2.2 kg',
-            trunk: '21.7 kg',
-            rightLeg: '6.7 kg',
-            leftLeg: '6.6 kg',
-          },
-          segmentalFat: {
-            rightArm: '2.3 kg',
-            leftArm: '2.4 kg',
-            trunk: '15.8 kg',
-            rightLeg: '5.1 kg',
-            leftLeg: '5.0 kg',
-          },
-          otherParameters: [
-            { name: 'Phase Angle (50kHz)', value: '5.8', unit: '°' },
-          ],
-        };
-      } else if (type === 'inbody') {
-        sample = {
-          id: `scan-${Date.now()}`,
-          patientName: patientName,
-          scanDate: todayStr,
-          scanTime: '02:15 PM',
-          uploadDateTime: new Date().toLocaleString('en-GB'),
-          scanType: 'InBody 770',
-          documentId: `DOC-INBODY-${Date.now().toString().slice(-4)}`,
-          originalFileName: 'Sample_InBody_770_Report.pdf',
-          originalFileMime: 'application/pdf',
-          age: 38,
-          sex: 'Female',
-          height: '162 cm',
-          weight: 76.5,
-          weightUnit: 'kg',
-          bmi: 29.1,
-          bodyFatPct: 40.5,
-          fatMass: 31.0,
-          ffm: 45.5,
-          muscleMass: 43.0,
-          skeletalMuscleMass: 24.3,
-          boneMass: 2.8,
-          protein: 8.9,
-          tbw: 34.8,
-          ecw: 15.4,
-          icw: 19.4,
-          ecwOverTbw: 0.442,
-          visceralFat: 10,
-          bmr: 1420,
-          metabolicAge: 41,
-          sarcopenicIndex: '6.9 kg/m²',
-          bodyProfile: 'InBody Comprehensive Multi-Frequency Analysis',
-          segmentalMuscle: {
-            rightArm: '2.4 kg',
-            leftArm: '2.3 kg',
-            trunk: '22.0 kg',
-            rightLeg: '6.8 kg',
-            leftLeg: '6.7 kg',
-          },
-          segmentalFat: {
-            rightArm: '2.2 kg',
-            leftArm: '2.3 kg',
-            trunk: '15.2 kg',
-            rightLeg: '4.9 kg',
-            leftLeg: '4.8 kg',
-          },
-          otherParameters: [
-            { name: 'InBody Score', value: '74', unit: '/100' },
-          ],
-        };
-      } else {
-        sample = {
-          id: `scan-${Date.now()}`,
-          patientName: patientName,
-          scanDate: todayStr,
-          scanTime: '04:00 PM',
-          uploadDateTime: new Date().toLocaleString('en-GB'),
-          scanType: 'DEXA Total Body',
-          documentId: `DOC-DEXA-${Date.now().toString().slice(-4)}`,
-          originalFileName: 'Sample_DEXA_Full_Body_Scan.pdf',
-          originalFileMime: 'application/pdf',
-          age: 38,
-          sex: 'Female',
-          height: '162 cm',
-          weight: 76.2,
-          weightUnit: 'kg',
-          bmi: 29.0,
-          bodyFatPct: 39.8,
-          fatMass: 30.3,
-          ffm: 45.9,
-          muscleMass: 43.3,
-          skeletalMuscleMass: 24.6,
-          boneMass: 2.8,
-          protein: 9.0,
-          tbw: 35.0,
-          ecw: 15.3,
-          icw: 19.7,
-          ecwOverTbw: 0.437,
-          visceralFat: 10,
-          bmr: 1428,
-          metabolicAge: 40,
-          sarcopenicIndex: '7.0 kg/m²',
-          bodyProfile: 'Dual-Energy X-ray Absorptiometry (DEXA) Validated',
-        };
+  // Delete a scan from progress
+  const handleDeleteScan = (scanId: string) => {
+    if (window.confirm('Are you sure you want to delete this biometric scan record from progress?')) {
+      setScans((prev) => prev.filter((s) => s.id !== scanId));
+      if (openedDateScan?.id === scanId) {
+        setOpenedDateScan(null);
       }
-
-      setLastExtractedScan(sample);
-      commitScanToProgress(sample);
-      setIsAnalyzing(false);
-    }, 1200);
+      if (lastExtractedScan?.id === scanId) {
+        setLastExtractedScan(null);
+      }
+      setUploadStatus('Biometric scan record removed from progress timeline.');
+    }
   };
 
-  // Automatic Comparison Logic across Scans
-  // Sort chronologically (oldest to newest)
-  const sortedScans = [...scans].sort((a, b) => {
-    const parseDate = (dStr: string) => {
-      const parts = dStr.split(/[-/]/);
-      if (parts.length === 3) {
-        // Assume DD/MM/YYYY
-        return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`).getTime() || 0;
+  // Reset progress scans to baseline
+  const handleResetScansToBaseline = () => {
+    if (window.confirm('Reset all progress scans back to clinical baseline records? This will clear any uploaded records.')) {
+      setScans(INITIAL_BIOMETRIC_SCANS);
+      setOpenedDateScan(null);
+      setLastExtractedScan(null);
+      setUploadStatus('Progress scans reset to initial baseline.');
+    }
+  };
+
+  // Chronologically sorted scans helper with robust format parsing (DD/MM/YYYY or YYYY-MM-DD)
+  const parseDateToMs = (dStr: string) => {
+    if (!dStr) return 0;
+    const parts = dStr.trim().split(/[-/.]/);
+    if (parts.length === 3) {
+      if (parts[0].length === 4) {
+        // YYYY-MM-DD
+        const y = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10) - 1;
+        const d = parseInt(parts[2], 10);
+        return new Date(y, m, d).getTime() || 0;
       }
-      return 0;
-    };
-    return parseDate(a.scanDate) - parseDate(b.scanDate);
-  });
+      // DD/MM/YYYY
+      const d = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10) - 1;
+      const y = parseInt(parts[2], 10);
+      return new Date(y, m, d).getTime() || 0;
+    }
+    return new Date(dStr).getTime() || 0;
+  };
 
-  const latestScan = sortedScans[sortedScans.length - 1];
-  const previousScan = sortedScans.length >= 2 ? sortedScans[sortedScans.length - 2] : null;
-  const baselineScan = sortedScans[0];
+  // Sort scans strictly date-wise (oldest to newest for delta calculations)
+  const sortedScansAsc = [...scans].sort((a, b) => parseDateToMs(a.scanDate) - parseDateToMs(b.scanDate));
+  
+  // Date-wise latest and baseline
+  const baselineScan = sortedScansAsc[0] || null;
+  const latestScan = sortedScansAsc[sortedScansAsc.length - 1] || null;
+  const previousScan = sortedScansAsc.length >= 2 ? sortedScansAsc[sortedScansAsc.length - 2] : null;
 
-  // Helper to compute change safely
+  // Change calculator helper
   const calculateChange = (current?: number | null, prev?: number | null, unit: string = '') => {
     if (current === undefined || current === null || prev === undefined || prev === null) {
       return null;
@@ -614,6 +573,11 @@ export const BodyCompositionTrackerSection: React.FC<BodyCompositionTrackerSecti
       isNeutral: Math.abs(diff) < 0.05,
     };
   };
+
+  // Find scan index in sorted list for next/prev navigation in modal
+  const currentModalIndex = openedDateScan ? sortedScansAsc.findIndex((s) => s.id === openedDateScan.id) : -1;
+  const prevDateScan = currentModalIndex > 0 ? sortedScansAsc[currentModalIndex - 1] : null;
+  const nextDateScan = currentModalIndex >= 0 && currentModalIndex < sortedScansAsc.length - 1 ? sortedScansAsc[currentModalIndex + 1] : null;
 
   return (
     <div className="w-full space-y-4 animate-in fade-in duration-300">
@@ -646,31 +610,35 @@ export const BodyCompositionTrackerSection: React.FC<BodyCompositionTrackerSecti
               BIOMETRIC FOLDER
             </h1>
             <p className="text-xs text-gray-500 font-medium">
-              Body Composition Analyzer, Tanita PRO & InBody Automatic Scanner → Progress System • Patient: <strong className="text-gray-900">{patientName}</strong>
+              Body Composition Analyzer, Tanita PRO & InBody Automatic Scanner → Date-Wise Progress System • Patient: <strong className="text-gray-900">{patientName}</strong>
             </p>
           </div>
         </div>
 
-        {/* ========================================================================= */}
-        {/* COMPACT NAVIGATION: ONLY TWO SUBFOLDERS (SCANNER & PROGRESS)              */}
-        {/* ========================================================================= */}
+        {/* Compact Navigation: 1. SCANNER, 2. PROGRESS */}
         <div className="flex items-center gap-1.5 p-1 bg-purple-50/80 border border-purple-200 rounded-xl">
           <button
             type="button"
-            onClick={() => setActiveSubfolder('scanner')}
+            onClick={() => {
+              setActiveSubfolder('scanner');
+              stopLiveCameraScanner();
+            }}
             className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
               activeSubfolder === 'scanner'
                 ? 'bg-[#7E22CE] text-white shadow-xs'
                 : 'text-gray-700 hover:text-[#7E22CE] hover:bg-white'
             }`}
           >
-            <Upload className="w-3.5 h-3.5" />
+            <Scan className="w-3.5 h-3.5" />
             <span>1. SCANNER</span>
           </button>
 
           <button
             type="button"
-            onClick={() => setActiveSubfolder('progress')}
+            onClick={() => {
+              setActiveSubfolder('progress');
+              stopLiveCameraScanner();
+            }}
             className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
               activeSubfolder === 'progress'
                 ? 'bg-[#7E22CE] text-white shadow-xs'
@@ -679,9 +647,11 @@ export const BodyCompositionTrackerSection: React.FC<BodyCompositionTrackerSecti
           >
             <BarChart3 className="w-3.5 h-3.5" />
             <span>2. PROGRESS</span>
-            <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${
-              activeSubfolder === 'progress' ? 'bg-white text-[#7E22CE]' : 'bg-purple-200 text-purple-900'
-            }`}>
+            <span
+              className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${
+                activeSubfolder === 'progress' ? 'bg-white text-[#7E22CE]' : 'bg-purple-200 text-purple-900'
+              }`}
+            >
               {scans.length}
             </span>
           </button>
@@ -689,14 +659,14 @@ export const BodyCompositionTrackerSection: React.FC<BodyCompositionTrackerSecti
       </div>
 
       {/* ========================================================================= */}
-      {/* THE ONLY TWO SUBFOLDERS INSIDE BIOMETRIC (CRITICAL UI REQUIREMENT)         */}
+      {/* 2 SUBFOLDERS SELECTOR CARDS                                                */}
       {/* ========================================================================= */}
       <div className="w-full bg-white border border-purple-200 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-[#7E22CE]" />
             <h2 className="text-xs font-black uppercase tracking-widest text-[#7E22CE]">
-              BIOMETRIC SUBFOLDERS (EXACTLY 2 SUBFOLDERS)
+              BIOMETRIC SUBFOLDERS (SCANNER & DATE-WISE PROGRESS)
             </h2>
           </div>
           <span className="text-[11px] text-gray-500 font-medium">
@@ -709,7 +679,10 @@ export const BodyCompositionTrackerSection: React.FC<BodyCompositionTrackerSecti
           <button
             type="button"
             id="subfolder-btn-scanner"
-            onClick={() => setActiveSubfolder('scanner')}
+            onClick={() => {
+              setActiveSubfolder('scanner');
+              stopLiveCameraScanner();
+            }}
             className={`p-4 sm:p-5 rounded-xl border-2 text-left transition-all cursor-pointer flex items-center justify-between gap-4 group ${
               activeSubfolder === 'scanner'
                 ? 'border-[#7E22CE] bg-purple-50/50 shadow-sm ring-2 ring-[#7E22CE]/20'
@@ -724,19 +697,22 @@ export const BodyCompositionTrackerSection: React.FC<BodyCompositionTrackerSecti
                     : 'bg-purple-100 text-[#7E22CE] group-hover:bg-[#7E22CE] group-hover:text-white'
                 }`}
               >
-                <Upload className="w-6 h-6" />
+                <Scan className="w-6 h-6" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
                   <span className="px-2 py-0.5 rounded bg-purple-100 text-[#7E22CE] font-mono text-[9px] font-black uppercase">
                     SUBFOLDER 01
                   </span>
+                  <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
+                    <Camera className="w-3 h-3" /> Camera Activated
+                  </span>
                 </div>
                 <h3 className="text-base font-black text-[#0F172A] uppercase tracking-wide mt-0.5">
                   [ SCANNER ]
                 </h3>
                 <p className="text-xs text-gray-600 font-medium mt-0.5">
-                  Upload and analyze body-composition reports
+                  Active camera scanner & picture report upload
                 </p>
               </div>
             </div>
@@ -758,7 +734,10 @@ export const BodyCompositionTrackerSection: React.FC<BodyCompositionTrackerSecti
           <button
             type="button"
             id="subfolder-btn-progress"
-            onClick={() => setActiveSubfolder('progress')}
+            onClick={() => {
+              setActiveSubfolder('progress');
+              stopLiveCameraScanner();
+            }}
             className={`p-4 sm:p-5 rounded-xl border-2 text-left transition-all cursor-pointer flex items-center justify-between gap-4 group ${
               activeSubfolder === 'progress'
                 ? 'border-[#7E22CE] bg-purple-50/50 shadow-sm ring-2 ring-[#7E22CE]/20'
@@ -773,7 +752,7 @@ export const BodyCompositionTrackerSection: React.FC<BodyCompositionTrackerSecti
                     : 'bg-purple-100 text-[#7E22CE] group-hover:bg-[#7E22CE] group-hover:text-white'
                 }`}
               >
-                <BarChart3 className="w-6 h-6" />
+                <Calendar className="w-6 h-6" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
@@ -781,14 +760,14 @@ export const BodyCompositionTrackerSection: React.FC<BodyCompositionTrackerSecti
                     SUBFOLDER 02
                   </span>
                   <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-purple-200 text-purple-900">
-                    {scans.length} Saved Scans
+                    {scans.length} Saved Dates
                   </span>
                 </div>
                 <h3 className="text-base font-black text-[#0F172A] uppercase tracking-wide mt-0.5">
                   [ PROGRESS ]
                 </h3>
                 <p className="text-xs text-gray-600 font-medium mt-0.5">
-                  View saved scans, history and biometric changes
+                  Open patient's biometric data & pictures date-wise
                 </p>
               </div>
             </div>
@@ -801,7 +780,7 @@ export const BodyCompositionTrackerSection: React.FC<BodyCompositionTrackerSecti
                     : 'bg-purple-50 text-[#7E22CE] group-hover:bg-purple-100'
                 }`}
               >
-                {activeSubfolder === 'progress' ? 'Active Workspace' : 'Open Workspace →'}
+                {activeSubfolder === 'progress' ? 'Active Workspace' : 'Open Date-Wise →'}
               </span>
             </div>
           </button>
@@ -819,13 +798,16 @@ export const BodyCompositionTrackerSection: React.FC<BodyCompositionTrackerSecti
             )}
             <span>{uploadStatus}</span>
           </div>
-          {lastExtractedScan && activeSubfolder === 'scanner' && (
+          {lastExtractedScan && (
             <button
               type="button"
-              onClick={() => setActiveSubfolder('progress')}
-              className="text-[11px] font-black uppercase tracking-wider underline hover:text-[#5b1896] cursor-pointer ml-3 shrink-0"
+              onClick={() => {
+                setActiveSubfolder('progress');
+                setOpenedDateScan(lastExtractedScan);
+              }}
+              className="px-3 py-1 rounded bg-[#7E22CE] text-white text-[11px] font-black uppercase tracking-wider hover:bg-[#6b1dae] cursor-pointer ml-3 shrink-0 shadow-2xs"
             >
-              View in Progress →
+              Open Date-Wise in Progress →
             </button>
           )}
         </div>
@@ -881,64 +863,117 @@ export const BodyCompositionTrackerSection: React.FC<BodyCompositionTrackerSecti
       )}
 
       {/* ========================================================================= */}
-      {/* 1. SUBFOLDER: SCANNER (Upload & Automatic Extraction Workspace)             */}
+      {/* 1. SUBFOLDER: SCANNER WORKSPACE                                           */}
       {/* ========================================================================= */}
       {activeSubfolder === 'scanner' && (
         <div className="w-full space-y-5">
-          {/* Upload Dropzone Card */}
-          <div className="w-full bg-white border border-purple-200 rounded-2xl p-6 sm:p-8 shadow-xs space-y-5">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 pb-4">
+          {/* Header & Controls Strip */}
+          <div className="w-full bg-white border border-purple-200 rounded-2xl p-6 sm:p-7 shadow-xs space-y-5">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 pb-4">
               <div>
                 <span className="text-[10px] font-mono font-black uppercase tracking-widest text-[#7E22CE]">
-                  BIOMETRIC → SCANNER
+                  BIOMETRIC → SCANNER ACTIVATION
                 </span>
-                <h2 className="text-lg sm:text-xl font-black text-gray-900 uppercase tracking-tight">
-                  Upload & Analyze Body-Composition Reports
+                <h2 className="text-lg sm:text-xl font-black text-gray-900 uppercase tracking-tight flex items-center gap-2">
+                  <span>Activate Scanner & Upload Biometric Reports</span>
+                  <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                    Live Ready
+                  </span>
                 </h2>
                 <p className="text-xs text-gray-500">
-                  Upload Tanita, Tanita PRO, InBody, DEXA, or valid BCA reports (Images & PDFs). Data is automatically extracted via OCR and saved to Progress.
+                  Use the active camera scanner or upload pictures/PDFs of Tanita PRO, InBody, DEXA, or BCA sheets. Scanned records are auto-saved to Progress date-wise.
                 </p>
               </div>
 
-              {/* Sample Scans Bar for Instant Testing */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[10px] font-black uppercase tracking-wider text-gray-400">
-                  Sample Reports:
-                </span>
-                <button
-                  type="button"
-                  onClick={() => handleLoadSample('tanita')}
-                  disabled={isAnalyzing}
-                  className="px-3 py-1.5 rounded-lg border border-purple-200 bg-purple-50 hover:bg-purple-100 text-[#7E22CE] text-xs font-bold transition-all cursor-pointer shadow-2xs"
-                  title="Load sample Tanita PRO scan"
-                >
-                  <Sparkles className="w-3 h-3 inline mr-1" />
-                  Tanita PRO
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleLoadSample('inbody')}
-                  disabled={isAnalyzing}
-                  className="px-3 py-1.5 rounded-lg border border-purple-200 bg-purple-50 hover:bg-purple-100 text-[#7E22CE] text-xs font-bold transition-all cursor-pointer shadow-2xs"
-                  title="Load sample InBody scan"
-                >
-                  <Sparkles className="w-3 h-3 inline mr-1" />
-                  InBody 770
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleLoadSample('dexa')}
-                  disabled={isAnalyzing}
-                  className="px-3 py-1.5 rounded-lg border border-purple-200 bg-purple-50 hover:bg-purple-100 text-[#7E22CE] text-xs font-bold transition-all cursor-pointer shadow-2xs"
-                  title="Load sample DEXA scan"
-                >
-                  <Sparkles className="w-3 h-3 inline mr-1" />
-                  DEXA Report
-                </button>
+              {/* Date Input for Report Record */}
+              <div className="flex items-center gap-2 bg-purple-50/70 border border-purple-200 rounded-xl px-3 py-2">
+                <Calendar className="w-4 h-4 text-[#7E22CE]" />
+                <span className="text-[11px] font-black uppercase text-gray-600">Report Date:</span>
+                <input
+                  type="text"
+                  value={customScanDate}
+                  onChange={(e) => setCustomScanDate(e.target.value)}
+                  placeholder="DD/MM/YYYY"
+                  className="w-28 bg-white border border-purple-200 rounded-lg px-2 py-1 text-xs font-mono font-bold text-gray-900 focus:outline-none focus:border-[#7E22CE]"
+                />
               </div>
             </div>
 
-            {/* Hidden Input */}
+            {/* SCANNER CONTROLS: 1) Activate Live Camera Scanner, 2) Snap Photo, 3) Upload Picture */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Button A: Live Camera Scanner */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (isCameraActive) {
+                    stopLiveCameraScanner();
+                  } else {
+                    startLiveCameraScanner();
+                  }
+                }}
+                className={`p-4 rounded-xl border-2 flex items-center gap-3 transition-all cursor-pointer ${
+                  isCameraActive
+                    ? 'border-rose-500 bg-rose-50 text-rose-800'
+                    : 'border-[#7E22CE] bg-purple-50/60 hover:bg-purple-100 text-[#7E22CE] shadow-2xs'
+                }`}
+              >
+                <div
+                  className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
+                    isCameraActive ? 'bg-rose-600 text-white' : 'bg-[#7E22CE] text-white'
+                  }`}
+                >
+                  {isCameraActive ? <CameraOff className="w-5 h-5" /> : <Camera className="w-5 h-5" />}
+                </div>
+                <div className="text-left">
+                  <div className="text-xs font-black uppercase tracking-wider">
+                    {isCameraActive ? 'Deactivate Camera' : 'Activate Live Camera Scanner'}
+                  </div>
+                  <div className="text-[10px] text-gray-500">
+                    {isCameraActive ? 'Click to stop viewfinder' : 'Real-time webcam / device sensor'}
+                  </div>
+                </div>
+              </button>
+
+              {/* Button B: Direct Device Camera Snapshot (Mobile Friendly) */}
+              <button
+                type="button"
+                onClick={() => cameraCaptureInputRef.current?.click()}
+                className="p-4 rounded-xl border-2 border-purple-200 hover:border-[#7E22CE] bg-white hover:bg-purple-50/40 text-gray-800 flex items-center gap-3 transition-all cursor-pointer shadow-2xs"
+              >
+                <div className="w-10 h-10 rounded-lg bg-purple-100 text-[#7E22CE] flex items-center justify-center shrink-0">
+                  <Scan className="w-5 h-5" />
+                </div>
+                <div className="text-left">
+                  <div className="text-xs font-black uppercase tracking-wider text-gray-900">
+                    Snap Photo of Report
+                  </div>
+                  <div className="text-[10px] text-gray-500">
+                    Take photo directly with phone / tablet
+                  </div>
+                </div>
+              </button>
+
+              {/* Button C: Choose Picture or PDF File */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="p-4 rounded-xl border-2 border-purple-200 hover:border-[#7E22CE] bg-white hover:bg-purple-50/40 text-gray-800 flex items-center gap-3 transition-all cursor-pointer shadow-2xs"
+              >
+                <div className="w-10 h-10 rounded-lg bg-purple-100 text-[#7E22CE] flex items-center justify-center shrink-0">
+                  <Upload className="w-5 h-5" />
+                </div>
+                <div className="text-left">
+                  <div className="text-xs font-black uppercase tracking-wider text-gray-900">
+                    Upload Picture / PDF
+                  </div>
+                  <div className="text-[10px] text-gray-500">
+                    JPG, PNG, WEBP, or scanned PDF
+                  </div>
+                </div>
+              </button>
+            </div>
+
+            {/* Hidden Input Elements */}
             <input
               ref={fileInputRef}
               type="file"
@@ -946,55 +981,142 @@ export const BodyCompositionTrackerSection: React.FC<BodyCompositionTrackerSecti
               className="hidden"
               onChange={(e) => {
                 if (e.target.files && e.target.files[0]) {
-                  processReportFile(e.target.files[0]);
+                  handleFileUpload(e.target.files[0]);
                 }
               }}
             />
 
-            {/* Interactive Drag & Drop Box */}
+            <input
+              ref={cameraCaptureInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files && e.target.files[0]) {
+                  handleFileUpload(e.target.files[0]);
+                }
+              }}
+            />
+
+            {/* LIVE CAMERA VIEWFINDER OVERLAY WHEN ACTIVE */}
+            {isCameraActive && (
+              <div className="w-full bg-black rounded-2xl p-4 sm:p-6 text-white space-y-4 border-2 border-[#7E22CE] shadow-xl animate-in zoom-in-95">
+                <div className="flex items-center justify-between border-b border-gray-800 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-rose-500 animate-ping" />
+                    <span className="text-xs font-mono font-bold uppercase tracking-wider text-purple-300">
+                      LIVE BIOMETRIC SCANNER VIEWFINDER • ALIGN DOCUMENT
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={stopLiveCameraScanner}
+                    className="p-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Viewfinder Window */}
+                <div className="relative w-full max-w-2xl mx-auto h-[320px] sm:h-[400px] bg-gray-900 rounded-xl overflow-hidden flex items-center justify-center border border-purple-500/40">
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="w-full h-full object-cover"
+                  />
+
+                  {/* High-tech Viewfinder Alignment Rectangles */}
+                  <div className="absolute inset-6 border-2 border-dashed border-[#A855F7]/80 rounded-lg pointer-events-none flex flex-col justify-between p-3">
+                    <div className="flex justify-between text-[10px] font-mono text-[#A855F7] uppercase tracking-widest bg-black/60 px-2 py-0.5 rounded self-start">
+                      [ + ALIGN REPORT HERE + ]
+                    </div>
+                    {/* Animated Scanning Bar */}
+                    <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-purple-400 to-transparent animate-pulse shadow-[0_0_15px_#C084FC]" />
+                    <div className="text-[10px] font-mono text-gray-400 text-center bg-black/60 px-2 py-0.5 rounded">
+                      Hold still for sharp text extraction
+                    </div>
+                  </div>
+                </div>
+
+                {/* Capture Trigger Bar */}
+                <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={captureFrameFromScanner}
+                    disabled={isAnalyzing}
+                    className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#7E22CE] to-[#9333EA] hover:from-[#6b1dae] hover:to-[#7E22CE] text-white text-xs font-black uppercase tracking-widest flex items-center gap-2 cursor-pointer shadow-lg active:scale-95 transition-all"
+                  >
+                    <Camera className="w-4 h-4" />
+                    <span>CAPTURE & EXTRACT BIOMETRIC DATA</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={stopLiveCameraScanner}
+                    className="px-4 py-3 rounded-xl border border-gray-700 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-bold uppercase tracking-wider cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {cameraError && !isCameraActive && (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-center justify-between">
+                <span>{cameraError} You can take a snapshot directly with the button above or upload any image.</span>
+                <button
+                  type="button"
+                  onClick={() => cameraCaptureInputRef.current?.click()}
+                  className="px-2.5 py-1 bg-amber-600 text-white rounded text-[11px] font-bold uppercase"
+                >
+                  Snap Photo
+                </button>
+              </div>
+            )}
+
+            {/* Drag & Drop Box */}
             <div
               onClick={() => fileInputRef.current?.click()}
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
                 e.preventDefault();
                 if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                  processReportFile(e.dataTransfer.files[0]);
+                  handleFileUpload(e.dataTransfer.files[0]);
                 }
               }}
-              className={`w-full border-2 border-dashed rounded-2xl p-8 sm:p-12 text-center transition-all cursor-pointer flex flex-col items-center justify-center space-y-3 ${
+              className={`w-full border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer flex flex-col items-center justify-center space-y-3 ${
                 isAnalyzing
                   ? 'border-[#7E22CE] bg-purple-50/40 pointer-events-none'
                   : 'border-purple-300 hover:border-[#7E22CE] bg-purple-50/20 hover:bg-purple-50/50'
               }`}
             >
-              <div className="w-16 h-16 rounded-2xl bg-purple-100 text-[#7E22CE] flex items-center justify-center shadow-xs">
+              <div className="w-14 h-14 rounded-2xl bg-purple-100 text-[#7E22CE] flex items-center justify-center shadow-xs">
                 {isAnalyzing ? (
-                  <RefreshCw className="w-8 h-8 animate-spin" />
+                  <RefreshCw className="w-7 h-7 animate-spin" />
                 ) : (
-                  <Upload className="w-8 h-8" />
+                  <Upload className="w-7 h-7" />
                 )}
               </div>
 
               <div>
-                <h3 className="text-base font-black text-gray-900 uppercase tracking-tight">
+                <h3 className="text-sm font-black text-gray-900 uppercase tracking-tight">
                   {isAnalyzing
-                    ? 'Processing Body Composition Report...'
-                    : 'Click to Upload Report or Drag & Drop File'}
+                    ? 'Extracting Body Composition Parameters...'
+                    : 'Drag & Drop Picture of Biometric Data or Click to Browse'}
                 </h3>
-                <p className="text-xs text-gray-500 max-w-md mx-auto mt-1">
-                  Supports Tanita PRO, InBody, DEXA, or any body composition analyzer report. PDF and High-Resolution Images accepted.
+                <p className="text-xs text-gray-500 max-w-md mx-auto mt-0.5">
+                  Accepts Tanita PRO, InBody, DEXA, BCA printouts (PNG, JPG, JPEG, WEBP, PDF). Automatically extracted and linked date-wise.
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 pt-2">
-                <span className="px-3 py-1 rounded-full bg-white border border-purple-200 text-[10px] font-mono font-bold text-gray-600">
-                  PDF
-                </span>
-                <span className="px-3 py-1 rounded-full bg-white border border-purple-200 text-[10px] font-mono font-bold text-gray-600">
-                  PNG / JPG
-                </span>
-                <span className="px-3 py-1 rounded-full bg-white border border-purple-200 text-[10px] font-mono font-bold text-[#7E22CE]">
-                  Automatic OCR + Extraction
+              {/* Verification & Anti-Random Data Guarantee Banner */}
+              <div className="flex items-center gap-2 pt-2 flex-wrap justify-center">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-100 text-[#7E22CE] text-[11px] font-bold border border-purple-200 shadow-2xs">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Real Biometric OCR Engine Active • Physical Values Only (No Random Numbers)</span>
                 </span>
               </div>
             </div>
@@ -1002,8 +1124,8 @@ export const BodyCompositionTrackerSection: React.FC<BodyCompositionTrackerSecti
 
           {/* Recently Extracted Scan Card */}
           {lastExtractedScan && (
-            <div className="w-full bg-white border border-purple-200 rounded-2xl p-6 shadow-xs space-y-5 animate-in slide-in-from-bottom-2">
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 pb-4">
+            <div className="w-full bg-white border-2 border-purple-300 rounded-2xl p-6 shadow-md space-y-4 animate-in slide-in-from-bottom-2">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 pb-3">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
                     <FileCheck className="w-5 h-5" />
@@ -1011,14 +1133,14 @@ export const BodyCompositionTrackerSection: React.FC<BodyCompositionTrackerSecti
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-mono text-[9px] font-black uppercase">
-                        ✓ AUTOMATICALLY SAVED TO PROGRESS
+                        ✓ SAVED TO PATIENT PROGRESS (DATE-WISE)
                       </span>
                       <span className="text-xs font-mono font-bold text-gray-500">
-                        {lastExtractedScan.documentId}
+                        Date: {lastExtractedScan.scanDate}
                       </span>
                     </div>
                     <h3 className="text-base font-black text-gray-900 uppercase">
-                      Extracted Parameters: {lastExtractedScan.scanType}
+                      {lastExtractedScan.scanType} • {lastExtractedScan.patientName}
                     </h3>
                   </div>
                 </div>
@@ -1026,171 +1148,125 @@ export const BodyCompositionTrackerSection: React.FC<BodyCompositionTrackerSecti
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() =>
-                      setViewingDocument({
-                        title: `${lastExtractedScan.scanType} Original Report`,
-                        url: lastExtractedScan.originalFileUrl,
-                        fileName: lastExtractedScan.originalFileName,
-                        mime: lastExtractedScan.originalFileMime,
-                        scan: lastExtractedScan,
-                      })
-                    }
-                    className="px-3 py-1.5 rounded-lg border border-purple-200 hover:border-[#7E22CE] bg-white text-xs font-bold text-gray-800 flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                    onClick={() => {
+                      setActiveSubfolder('progress');
+                      setOpenedDateScan(lastExtractedScan);
+                    }}
+                    className="px-4 py-2 rounded-xl bg-[#7E22CE] hover:bg-[#6b1dae] text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-sm"
                   >
-                    <Eye className="w-3.5 h-3.5 text-[#7E22CE]" />
-                    <span>View Original Report</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setActiveSubfolder('progress')}
-                    className="px-4 py-1.5 rounded-lg bg-[#7E22CE] hover:bg-[#6b1dae] text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-sm"
-                  >
-                    <span>Open Progress Workspace →</span>
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>Open in Progress Date-Wise →</span>
                   </button>
                 </div>
               </div>
 
-              {/* Clean Grid of Detected Parameters (Only displaying detected fields; missing fields marked as Not available) */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                <div className="p-3 rounded-xl bg-purple-50/40 border border-purple-100">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 block">Weight</span>
-                  <span className="text-lg font-black text-gray-900">
-                    {lastExtractedScan.weight !== null ? `${lastExtractedScan.weight} kg` : <span className="text-gray-400 text-xs font-normal">Not available</span>}
-                  </span>
+              {/* Thumbnail of Uploaded Picture & Extracted Values Side-by-Side */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+                {/* Uploaded picture thumbnail */}
+                <div className="p-2 border border-purple-200 rounded-xl bg-purple-50/30 flex flex-col items-center justify-center text-center">
+                  {lastExtractedScan.originalFileUrl ? (
+                    <img
+                      src={lastExtractedScan.originalFileUrl}
+                      alt={lastExtractedScan.originalFileName}
+                      className="max-h-28 rounded-lg object-contain border"
+                    />
+                  ) : (
+                    <div className="p-4 text-purple-700">
+                      <FileText className="w-8 h-8 mx-auto mb-1 opacity-70" />
+                      <span className="text-[10px] font-mono font-bold">{lastExtractedScan.originalFileName}</span>
+                    </div>
+                  )}
+                  <span className="text-[10px] font-mono text-gray-500 mt-1">Uploaded Biometric Picture</span>
                 </div>
 
-                <div className="p-3 rounded-xl bg-purple-50/40 border border-purple-100">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 block">Body Fat %</span>
-                  <span className="text-lg font-black text-[#7E22CE]">
-                    {lastExtractedScan.bodyFatPct !== null ? `${lastExtractedScan.bodyFatPct} %` : <span className="text-gray-400 text-xs font-normal">Not available</span>}
-                  </span>
-                </div>
-
-                <div className="p-3 rounded-xl bg-purple-50/40 border border-purple-100">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 block">Fat Mass</span>
-                  <span className="text-lg font-black text-gray-900">
-                    {lastExtractedScan.fatMass !== null ? `${lastExtractedScan.fatMass} kg` : <span className="text-gray-400 text-xs font-normal">Not available</span>}
-                  </span>
-                </div>
-
-                <div className="p-3 rounded-xl bg-purple-50/40 border border-purple-100">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 block">Muscle Mass</span>
-                  <span className="text-lg font-black text-emerald-700">
-                    {lastExtractedScan.muscleMass !== null ? `${lastExtractedScan.muscleMass} kg` : <span className="text-gray-400 text-xs font-normal">Not available</span>}
-                  </span>
-                </div>
-
-                <div className="p-3 rounded-xl bg-purple-50/40 border border-purple-100">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 block">FFM (Fat-Free Mass)</span>
-                  <span className="text-lg font-black text-gray-900">
-                    {lastExtractedScan.ffm !== null ? `${lastExtractedScan.ffm} kg` : <span className="text-gray-400 text-xs font-normal">Not available</span>}
-                  </span>
-                </div>
-
-                <div className="p-3 rounded-xl bg-purple-50/40 border border-purple-100">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 block">BMI</span>
-                  <span className="text-lg font-black text-gray-900">
-                    {lastExtractedScan.bmi !== null ? lastExtractedScan.bmi : <span className="text-gray-400 text-xs font-normal">Not available</span>}
-                  </span>
-                </div>
-
-                <div className="p-3 rounded-xl bg-purple-50/40 border border-purple-100">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 block">Visceral Fat</span>
-                  <span className="text-lg font-black text-amber-700">
-                    {lastExtractedScan.visceralFat !== null ? lastExtractedScan.visceralFat : <span className="text-gray-400 text-xs font-normal">Not available</span>}
-                  </span>
-                </div>
-
-                <div className="p-3 rounded-xl bg-purple-50/40 border border-purple-100">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 block">BMR</span>
-                  <span className="text-lg font-black text-gray-900">
-                    {lastExtractedScan.bmr !== null ? `${lastExtractedScan.bmr} kcal` : <span className="text-gray-400 text-xs font-normal">Not available</span>}
-                  </span>
-                </div>
-
-                <div className="p-3 rounded-xl bg-purple-50/40 border border-purple-100">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 block">Total Body Water (TBW)</span>
-                  <span className="text-lg font-black text-blue-700">
-                    {lastExtractedScan.tbw !== null ? `${lastExtractedScan.tbw} kg` : <span className="text-gray-400 text-xs font-normal">Not available</span>}
-                  </span>
-                </div>
-
-                <div className="p-3 rounded-xl bg-purple-50/40 border border-purple-100">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 block">ECW / ICW</span>
-                  <span className="text-sm font-black text-gray-900">
-                    {lastExtractedScan.ecw ? `${lastExtractedScan.ecw} kg` : '—'} / {lastExtractedScan.icw ? `${lastExtractedScan.icw} kg` : '—'}
-                  </span>
-                </div>
-
-                <div className="p-3 rounded-xl bg-purple-50/40 border border-purple-100">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 block">SMM (Skeletal Muscle)</span>
-                  <span className="text-lg font-black text-gray-900">
-                    {lastExtractedScan.skeletalMuscleMass !== null ? `${lastExtractedScan.skeletalMuscleMass} kg` : <span className="text-gray-400 text-xs font-normal">Not available</span>}
-                  </span>
-                </div>
-
-                <div className="p-3 rounded-xl bg-purple-50/40 border border-purple-100">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 block">Metabolic Age</span>
-                  <span className="text-lg font-black text-gray-900">
-                    {lastExtractedScan.metabolicAge !== null ? `${lastExtractedScan.metabolicAge} yrs` : <span className="text-gray-400 text-xs font-normal">Not available</span>}
-                  </span>
-                </div>
-              </div>
-
-              {/* Segmental Muscle / Fat Summary if detected */}
-              {lastExtractedScan.segmentalMuscle && (
-                <div className="pt-2 border-t border-gray-100">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#7E22CE] block mb-2">
-                    Detected Segmental Muscle Analysis:
-                  </span>
-                  <div className="grid grid-cols-5 gap-2 text-xs">
-                    {Object.entries(lastExtractedScan.segmentalMuscle).map(([limb, val]) => (
-                      <div key={limb} className="p-2 rounded-lg bg-gray-50 border border-gray-200 text-center">
-                        <span className="text-[9px] uppercase font-bold text-gray-400 block">{limb}</span>
-                        <span className="font-black text-gray-900">{val || '—'}</span>
-                      </div>
-                    ))}
+                {/* Key Metrics Quick Summary */}
+                <div className="md:col-span-3 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  <div className="p-2.5 rounded-xl bg-purple-50/50 border border-purple-100">
+                    <span className="text-[9px] uppercase font-bold text-gray-400 block">Weight</span>
+                    <span className="font-black text-base text-gray-900">{lastExtractedScan.weight !== null ? `${lastExtractedScan.weight} kg` : '—'}</span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-purple-50/50 border border-purple-100">
+                    <span className="text-[9px] uppercase font-bold text-gray-400 block">Body Fat %</span>
+                    <span className="font-black text-base text-[#7E22CE]">{lastExtractedScan.bodyFatPct !== null ? `${lastExtractedScan.bodyFatPct}%` : '—'}</span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-purple-50/50 border border-purple-100">
+                    <span className="text-[9px] uppercase font-bold text-gray-400 block">Muscle Mass</span>
+                    <span className="font-black text-base text-emerald-700">{lastExtractedScan.muscleMass !== null ? `${lastExtractedScan.muscleMass} kg` : '—'}</span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-purple-50/50 border border-purple-100">
+                    <span className="text-[9px] uppercase font-bold text-gray-400 block">Fat Mass</span>
+                    <span className="font-black text-base text-gray-900">{lastExtractedScan.fatMass !== null ? `${lastExtractedScan.fatMass} kg` : '—'}</span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-purple-50/50 border border-purple-100">
+                    <span className="text-[9px] uppercase font-bold text-gray-400 block">BMI</span>
+                    <span className="font-black text-base text-gray-900">{lastExtractedScan.bmi ?? '—'}</span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-purple-50/50 border border-purple-100">
+                    <span className="text-[9px] uppercase font-bold text-gray-400 block">Visceral Fat</span>
+                    <span className="font-black text-base text-amber-700">{lastExtractedScan.visceralFat ?? '—'}</span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-purple-50/50 border border-purple-100">
+                    <span className="text-[9px] uppercase font-bold text-gray-400 block">Total Water (TBW)</span>
+                    <span className="font-black text-base text-blue-700">{lastExtractedScan.tbw !== null ? `${lastExtractedScan.tbw} kg` : '—'}</span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-purple-50/50 border border-purple-100">
+                    <span className="text-[9px] uppercase font-bold text-gray-400 block">BMR</span>
+                    <span className="font-black text-base text-gray-900">{lastExtractedScan.bmr !== null ? `${lastExtractedScan.bmr} kcal` : '—'}</span>
                   </div>
                 </div>
-              )}
+              </div>
             </div>
           )}
         </div>
       )}
 
       {/* ========================================================================= */}
-      {/* 2. SUBFOLDER: PROGRESS (Saved Historical Scans & Automatic Comparison)     */}
+      {/* 2. SUBFOLDER: PROGRESS WORKSPACE (OPEN DATE-WISE BIOMETRIC DATA & PICTURES) */}
       {/* ========================================================================= */}
       {activeSubfolder === 'progress' && (
-        <div className="w-full space-y-6">
-          {/* Header & Quick Action */}
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-white border border-purple-200 rounded-2xl p-5 shadow-xs">
+        <div className="w-full space-y-5">
+          {/* Progress Header Strip */}
+          <div className="w-full bg-white border border-purple-200 rounded-2xl p-6 shadow-xs flex flex-wrap items-center justify-between gap-4">
             <div>
-              <span className="text-[10px] font-mono font-black uppercase tracking-widest text-[#7E22CE]">
-                BIOMETRIC → PROGRESS
-              </span>
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="text-[10px] font-mono font-black uppercase tracking-widest text-[#7E22CE]">
+                  BIOMETRIC → DATE-WISE PROGRESS
+                </span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-purple-100 text-[#7E22CE]">
+                  {scans.length} Recorded Dates
+                </span>
+              </div>
               <h2 className="text-lg sm:text-xl font-black text-gray-900 uppercase tracking-tight">
-                Saved Scans, History & Biometric Progression
+                Patient Biometric Records (Date-Wise Progression)
               </h2>
-              <p className="text-xs text-gray-500">
-                Permanently preserved body composition records with automated chronological comparison • Total Scans: <strong>{scans.length}</strong>
+              <p className="text-xs text-gray-500 font-medium">
+                Click any date card to open the patient's uploaded picture of biometric data and full clinical analysis.
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setActiveSubfolder('scanner')}
-              className="px-4 py-2 rounded-xl bg-[#7E22CE] hover:bg-[#6b1dae] text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-sm"
-            >
-              <Upload className="w-4 h-4" />
-              <span>+ Upload New Scan</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleResetScansToBaseline}
+                className="px-3 py-2 rounded-xl border border-gray-300 hover:border-gray-400 bg-white hover:bg-gray-50 text-gray-700 text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                title="Reset progress records to initial baseline"
+              >
+                <RefreshCw className="w-3.5 h-3.5 text-gray-500" />
+                <span>Reset Baseline</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveSubfolder('scanner')}
+                className="px-4 py-2 rounded-xl bg-[#7E22CE] hover:bg-[#6b1dae] text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-sm"
+              >
+                <Scan className="w-4 h-4" />
+                <span>+ Scan / Upload Another Date</span>
+              </button>
+            </div>
           </div>
 
-          {/* ========================================================================= */}
-          {/* AUTOMATIC PROGRESS COMPARISON (When ≥ 2 scans exist)                      */}
-          {/* ========================================================================= */}
+          {/* AUTOMATIC PROGRESS COMPARISON (Across Dates) */}
           {previousScan && latestScan && (
             <div className="w-full bg-white border border-purple-200 rounded-2xl p-6 shadow-xs space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 pb-3">
@@ -1198,21 +1274,21 @@ export const BodyCompositionTrackerSection: React.FC<BodyCompositionTrackerSecti
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                     <span className="text-[10px] font-black uppercase tracking-widest text-[#7E22CE]">
-                      AUTOMATIC PROGRESS COMPARISON
+                      DATE-WISE BIOMETRIC PROGRESS COMPARISON
                     </span>
                   </div>
                   <h3 className="text-base font-black text-gray-900 uppercase">
-                    Biometric Changes: {previousScan.scanDate} → {latestScan.scanDate}
+                    Changes from {previousScan.scanDate} → {latestScan.scanDate}
                   </h3>
                 </div>
 
                 <div className="text-[11px] font-mono text-gray-500">
-                  Scan 1: <strong className="text-gray-900">{previousScan.scanDate} ({previousScan.scanType})</strong> → Scan 2: <strong className="text-gray-900">{latestScan.scanDate} ({latestScan.scanType})</strong>
+                  Baseline: <strong className="text-gray-900">{baselineScan?.scanDate}</strong> | Latest: <strong className="text-purple-900">{latestScan.scanDate}</strong>
                 </div>
               </div>
 
-              {/* Comparison Parameters Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-3">
+              {/* Delta Parameters Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
                 {[
                   { label: 'Weight', cur: latestScan.weight, prev: previousScan.weight, unit: 'kg', lowerIsBetter: true },
                   { label: 'Body Fat %', cur: latestScan.bodyFatPct, prev: previousScan.bodyFatPct, unit: '%', lowerIsBetter: true },
@@ -1230,18 +1306,18 @@ export const BodyCompositionTrackerSection: React.FC<BodyCompositionTrackerSecti
                   return (
                     <div
                       key={idx}
-                      className="p-3 rounded-xl border border-gray-200 bg-gray-50/50 flex flex-col justify-between space-y-2"
+                      className="p-3 rounded-xl border border-gray-200 bg-gray-50/60 flex flex-col justify-between space-y-1.5"
                     >
-                      <span className="text-[10px] font-black uppercase tracking-wider text-gray-500">
+                      <span className="text-[9px] font-black uppercase tracking-wider text-gray-500">
                         {item.label}
                       </span>
 
                       <div className="space-y-0.5">
-                        <div className="text-[10px] text-gray-400 font-mono">
-                          {comp.prev} → <strong className="text-gray-800">{comp.current}</strong>
+                        <div className="text-[10px] text-gray-500 font-mono">
+                          {comp.prev} → <strong className="text-gray-900">{comp.current}</strong>
                         </div>
                         <div
-                          className={`text-xs font-black flex items-center gap-1 ${
+                          className={`text-xs font-black flex items-center gap-0.5 ${
                             comp.isNeutral
                               ? 'text-gray-500'
                               : isGood
@@ -1259,277 +1335,575 @@ export const BodyCompositionTrackerSection: React.FC<BodyCompositionTrackerSecti
                   );
                 })}
               </div>
-
-              <div className="pt-2 text-[10px] text-gray-400 flex items-center justify-between">
-                <span>* Comparison strictly uses detected values from the patient's uploaded reports.</span>
-                <span className="font-mono text-[#7E22CE] font-bold">Ziathlon Clinical Audit Verified</span>
-              </div>
             </div>
           )}
 
           {/* ========================================================================= */}
-          {/* CHRONOLOGICAL PROGRESS HISTORY: SEPARATE PERMANENT SCAN RECORDS           */}
+          {/* PROPER ALIGNMENT: MULTI-DATE BIOMETRIC PROGRESSION MATRIX                 */}
           {/* ========================================================================= */}
+          <div className="w-full bg-white border border-purple-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-purple-100 text-[#7E22CE] flex items-center justify-center font-bold">
+                  <Scale className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-gray-900 uppercase tracking-tight">
+                    Chronological Biometric Progression Table
+                  </h3>
+                  <p className="text-[11px] text-gray-500 font-medium">
+                    Strict clinical alignment across all recorded dates • Click any date header to open original picture & data
+                  </p>
+                </div>
+              </div>
+              <span className="text-[10px] font-mono text-[#7E22CE] bg-purple-50 px-2.5 py-1 rounded-full font-bold">
+                {sortedScansAsc.length} Dates Tracked
+              </span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left border-collapse border border-gray-200">
+                <thead>
+                  <tr className="bg-[#1e1b4b] text-white font-mono text-[11px]">
+                    <th className="p-3 border border-purple-900 uppercase font-black tracking-wider min-w-[170px]">
+                      Biometric Parameter
+                    </th>
+                    {sortedScansAsc.map((scan) => (
+                      <th
+                        key={scan.id}
+                        onClick={() => setOpenedDateScan(scan)}
+                        className="p-3 border border-purple-900 text-center uppercase tracking-wider min-w-[125px] cursor-pointer hover:bg-purple-900 transition-colors"
+                        title="Click to inspect this date's report and picture"
+                      >
+                        <div className="font-bold text-amber-300">📅 {scan.scanDate}</div>
+                        <div className="text-[9px] text-purple-200 font-normal truncate max-w-[115px] mx-auto">
+                          {scan.scanType}
+                        </div>
+                      </th>
+                    ))}
+                    {sortedScansAsc.length >= 2 && (
+                      <th className="p-3 border border-purple-900 text-center uppercase font-black tracking-wider min-w-[130px] bg-[#0f0c36] text-purple-200">
+                        Total Net Delta
+                      </th>
+                    )}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 font-mono text-gray-800">
+                  {[
+                    { label: 'Weight', key: 'weight', unit: 'kg', lowerIsBetter: true },
+                    { label: 'BMI (Body Mass Index)', key: 'bmi', unit: '', lowerIsBetter: true },
+                    { label: 'Body Fat %', key: 'bodyFatPct', unit: '%', lowerIsBetter: true },
+                    { label: 'Fat Mass', key: 'fatMass', unit: 'kg', lowerIsBetter: true },
+                    { label: 'Muscle Mass', key: 'muscleMass', unit: 'kg', lowerIsBetter: false },
+                    { label: 'Skeletal Muscle Mass (SMM)', key: 'skeletalMuscleMass', unit: 'kg', lowerIsBetter: false },
+                    { label: 'Fat-Free Mass (FFM)', key: 'ffm', unit: 'kg', lowerIsBetter: false },
+                    { label: 'Visceral Fat Rating', key: 'visceralFat', unit: '', lowerIsBetter: true },
+                    { label: 'Total Body Water (TBW)', key: 'tbw', unit: 'kg', lowerIsBetter: false },
+                    { label: 'BMR (Basal Metabolism)', key: 'bmr', unit: 'kcal', lowerIsBetter: false },
+                    { label: 'Metabolic Age', key: 'metabolicAge', unit: 'yrs', lowerIsBetter: true },
+                  ].map((param, rowIdx) => {
+                    const baselineVal = (baselineScan as any)?.[param.key];
+                    const latestVal = (latestScan as any)?.[param.key];
+                    const netComp = calculateChange(latestVal, baselineVal, param.unit);
+
+                    return (
+                      <tr key={param.key} className={rowIdx % 2 === 0 ? 'bg-white' : 'bg-purple-50/20 hover:bg-purple-50/40'}>
+                        <td className="p-2.5 font-bold text-gray-900 border border-gray-200">
+                          {param.label}
+                        </td>
+                        {sortedScansAsc.map((scan) => {
+                          const val = (scan as any)?.[param.key];
+                          return (
+                            <td key={scan.id} className="p-2.5 text-center border border-gray-200">
+                              {val !== null && val !== undefined ? (
+                                <span className="font-black text-gray-900">
+                                  {val} {param.unit}
+                                </span>
+                              ) : (
+                                <span className="text-gray-400 font-normal">—</span>
+                              )}
+                            </td>
+                          );
+                        })}
+                        {sortedScansAsc.length >= 2 && (
+                          <td className="p-2.5 text-center font-bold border border-gray-200 bg-purple-50/50">
+                            {netComp ? (
+                              <span
+                                className={`inline-flex items-center gap-1 ${
+                                  netComp.isNeutral
+                                    ? 'text-gray-500'
+                                    : (param.lowerIsBetter ? netComp.diff <= 0 : netComp.diff >= 0)
+                                    ? 'text-emerald-700'
+                                    : 'text-rose-600'
+                                }`}
+                              >
+                                {netComp.formattedDiff}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400 font-normal">—</span>
+                            )}
+                          </td>
+                        )}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* DATE-WISE RECORD CARDS (Click to Open Full Picture & Biometrics) */}
           <div className="space-y-4">
             <div className="flex items-center justify-between px-1">
               <h3 className="text-xs font-black uppercase tracking-widest text-[#7E22CE] flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
-                <span>Chronological Scan History ({scans.length} Scans Saved)</span>
+                <span>Patient Biometric Timeline (Date-Wise Records)</span>
               </h3>
-              <span className="text-[11px] text-gray-400">
-                All uploaded scans permanently preserved with original file links
+              <span className="text-[11px] text-gray-500 font-medium">
+                Click any date card to open full uploaded picture & parameters
               </span>
             </div>
 
-            {/* List of Scans */}
-            <div className="space-y-4">
-              {sortedScans
+            {/* List of Date Cards in Reverse Chronological Order (Newest Date First) */}
+            <div className="grid grid-cols-1 gap-4">
+              {sortedScansAsc
                 .slice()
                 .reverse()
-                .map((scan, index) => (
-                  <div
-                    key={scan.id}
-                    className="w-full bg-white border border-purple-200 hover:border-[#7E22CE] rounded-2xl p-5 sm:p-6 shadow-xs transition-all space-y-4"
-                  >
-                    {/* Scan Header Strip */}
-                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 pb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-purple-100 text-[#7E22CE] flex items-center justify-center font-black text-xs font-mono">
-                          #{sortedScans.length - index}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="text-sm font-black text-gray-900 uppercase">
-                              {scan.scanType}
-                            </h4>
-                            <span className="px-2 py-0.5 rounded bg-purple-100 text-[#7E22CE] font-mono text-[10px] font-black">
-                              {scan.scanDate}
-                            </span>
-                            {scan.scanTime && (
-                              <span className="text-[10px] text-gray-400 font-mono">
-                                • {scan.scanTime}
-                              </span>
-                            )}
+                .map((scan, index) => {
+                  const isLatest = index === 0;
+                  const isBaseline = scan.id === baselineScan?.id;
+
+                  return (
+                    <div
+                      key={scan.id}
+                      onClick={() => setOpenedDateScan(scan)}
+                      className={`w-full bg-white border-2 rounded-2xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all cursor-pointer group space-y-4 ${
+                        isLatest
+                          ? 'border-[#7E22CE] ring-1 ring-[#7E22CE]/20'
+                          : 'border-purple-100 hover:border-[#7E22CE]'
+                      }`}
+                    >
+                      {/* Top Date Header Strip */}
+                      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 pb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-xl bg-purple-100 text-[#7E22CE] flex flex-col items-center justify-center font-black text-xs font-mono">
+                            <span className="text-[9px] uppercase text-purple-700">DATE</span>
+                            <span className="text-sm">{scan.scanDate.split('/')[0]}</span>
                           </div>
-                          <p className="text-[11px] text-gray-500">
-                            Patient: <strong className="text-gray-900">{scan.patientName}</strong> • Uploaded: {scan.uploadDateTime} • ID: <span className="font-mono text-xs">{scan.documentId}</span>
-                          </p>
+
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="text-base font-black text-gray-900 uppercase">
+                                📅 {scan.scanDate}
+                              </h4>
+                              {isLatest && (
+                                <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider">
+                                  Latest Recorded Date
+                                </span>
+                              )}
+                              {isBaseline && !isLatest && (
+                                <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-[10px] font-black uppercase tracking-wider">
+                                  Baseline Audit
+                                </span>
+                              )}
+                              <span className="px-2 py-0.5 rounded bg-purple-50 text-[#7E22CE] font-mono text-[10px] font-bold">
+                                {scan.scanType}
+                              </span>
+                            </div>
+
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              Patient: <strong className="text-gray-900">{scan.patientName}</strong> • Recorded Time: {scan.scanTime || 'Standard Intake'} • Document ID: <span className="font-mono">{scan.documentId}</span>
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Action Buttons: Open & Delete */}
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenedDateScan(scan);
+                            }}
+                            className="px-4 py-2 rounded-xl bg-[#7E22CE] hover:bg-[#6b1dae] text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-xs transition-all"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>Open Biometric Data ({scan.scanDate}) →</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteScan(scan.id);
+                            }}
+                            className="p-2 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition-all cursor-pointer shadow-2xs"
+                            title="Delete this scan record"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                       </div>
 
-                      {/* View Original Report Action */}
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setViewingDocument({
-                              title: `${scan.scanType} - ${scan.scanDate}`,
-                              url: scan.originalFileUrl,
-                              fileName: scan.originalFileName,
-                              mime: scan.originalFileMime,
-                              scan,
-                            })
-                          }
-                          className="px-3 py-1.5 rounded-lg border border-purple-200 hover:border-[#7E22CE] bg-white text-xs font-bold text-[#7E22CE] hover:bg-purple-50 flex items-center gap-1.5 cursor-pointer shadow-2xs transition-all"
-                        >
-                          <FileText className="w-3.5 h-3.5" />
-                          <span>View Original Report</span>
-                        </button>
+                      {/* Content Grid: Uploaded Picture Thumbnail + Extracted Metrics */}
+                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                        {/* Picture Thumbnail */}
+                        <div className="p-2 rounded-xl bg-purple-50/50 border border-purple-200 flex flex-col items-center justify-center text-center h-32 relative overflow-hidden group-hover:border-[#7E22CE] transition-all">
+                          {scan.originalFileUrl ? (
+                            <img
+                              src={scan.originalFileUrl}
+                              alt={scan.originalFileName}
+                              className="w-full h-full object-contain rounded-lg"
+                            />
+                          ) : (
+                            <div className="flex flex-col items-center justify-center text-purple-700 space-y-1">
+                              <ImageIcon className="w-7 h-7 opacity-60" />
+                              <span className="text-[9px] font-mono font-bold truncate max-w-[120px]">{scan.originalFileName}</span>
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white text-[10px] font-bold">
+                            <ZoomIn className="w-4 h-4 mr-1" /> Click to Expand
+                          </div>
+                        </div>
+
+                        {/* Extracted Biometric Parameters for this date (8-metric clean clinical grid) */}
+                        <div className="md:col-span-4 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                          <div className="p-2.5 rounded-xl bg-gray-50 border border-gray-200">
+                            <span className="text-[9px] uppercase font-bold text-gray-400 block">Weight</span>
+                            <span className="font-black text-sm text-gray-900">{scan.weight !== null ? `${scan.weight} kg` : '—'}</span>
+                          </div>
+
+                          <div className="p-2.5 rounded-xl bg-gray-50 border border-gray-200">
+                            <span className="text-[9px] uppercase font-bold text-gray-400 block">Body Fat %</span>
+                            <span className="font-black text-sm text-[#7E22CE]">{scan.bodyFatPct !== null ? `${scan.bodyFatPct}%` : '—'}</span>
+                          </div>
+
+                          <div className="p-2.5 rounded-xl bg-gray-50 border border-gray-200">
+                            <span className="text-[9px] uppercase font-bold text-gray-400 block">Muscle Mass</span>
+                            <span className="font-black text-sm text-emerald-700">{scan.muscleMass !== null ? `${scan.muscleMass} kg` : '—'}</span>
+                          </div>
+
+                          <div className="p-2.5 rounded-xl bg-gray-50 border border-gray-200">
+                            <span className="text-[9px] uppercase font-bold text-gray-400 block">Fat Mass</span>
+                            <span className="font-black text-sm text-gray-900">{scan.fatMass !== null ? `${scan.fatMass} kg` : '—'}</span>
+                          </div>
+
+                          <div className="p-2.5 rounded-xl bg-gray-50 border border-gray-200">
+                            <span className="text-[9px] uppercase font-bold text-gray-400 block">BMI</span>
+                            <span className="font-black text-sm text-gray-900">{scan.bmi ?? '—'}</span>
+                          </div>
+
+                          <div className="p-2.5 rounded-xl bg-gray-50 border border-gray-200">
+                            <span className="text-[9px] uppercase font-bold text-gray-400 block">Visceral Fat</span>
+                            <span className="font-black text-sm text-amber-700">{scan.visceralFat ?? '—'}</span>
+                          </div>
+
+                          <div className="p-2.5 rounded-xl bg-gray-50 border border-gray-200">
+                            <span className="text-[9px] uppercase font-bold text-gray-400 block">Total Water (TBW)</span>
+                            <span className="font-black text-sm text-blue-700">{scan.tbw !== null ? `${scan.tbw} kg` : '—'}</span>
+                          </div>
+
+                          <div className="p-2.5 rounded-xl bg-gray-50 border border-gray-200">
+                            <span className="text-[9px] uppercase font-bold text-gray-400 block">BMR</span>
+                            <span className="font-black text-sm text-gray-900">{scan.bmr !== null ? `${scan.bmr} kcal` : (scan.skeletalMuscleMass !== null ? `${scan.skeletalMuscleMass} kg (SMM)` : '—')}</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
-
-                    {/* Detected Biometric Parameters Grid */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 text-xs">
-                      <div className="p-2.5 rounded-xl bg-purple-50/30 border border-purple-100">
-                        <span className="text-[9px] uppercase font-bold text-gray-400 block">Weight</span>
-                        <span className="font-black text-sm text-gray-900">
-                          {scan.weight !== null ? `${scan.weight} kg` : <span className="text-gray-400 text-xs font-normal">Not available</span>}
-                        </span>
-                      </div>
-
-                      <div className="p-2.5 rounded-xl bg-purple-50/30 border border-purple-100">
-                        <span className="text-[9px] uppercase font-bold text-gray-400 block">Body Fat %</span>
-                        <span className="font-black text-sm text-[#7E22CE]">
-                          {scan.bodyFatPct !== null ? `${scan.bodyFatPct} %` : <span className="text-gray-400 text-xs font-normal">Not available</span>}
-                        </span>
-                      </div>
-
-                      <div className="p-2.5 rounded-xl bg-purple-50/30 border border-purple-100">
-                        <span className="text-[9px] uppercase font-bold text-gray-400 block">Fat Mass</span>
-                        <span className="font-black text-sm text-gray-900">
-                          {scan.fatMass !== null ? `${scan.fatMass} kg` : <span className="text-gray-400 text-xs font-normal">Not available</span>}
-                        </span>
-                      </div>
-
-                      <div className="p-2.5 rounded-xl bg-purple-50/30 border border-purple-100">
-                        <span className="text-[9px] uppercase font-bold text-gray-400 block">Muscle Mass</span>
-                        <span className="font-black text-sm text-emerald-700">
-                          {scan.muscleMass !== null ? `${scan.muscleMass} kg` : <span className="text-gray-400 text-xs font-normal">Not available</span>}
-                        </span>
-                      </div>
-
-                      <div className="p-2.5 rounded-xl bg-purple-50/30 border border-purple-100">
-                        <span className="text-[9px] uppercase font-bold text-gray-400 block">FFM</span>
-                        <span className="font-black text-sm text-gray-900">
-                          {scan.ffm !== null ? `${scan.ffm} kg` : <span className="text-gray-400 text-xs font-normal">Not available</span>}
-                        </span>
-                      </div>
-
-                      <div className="p-2.5 rounded-xl bg-purple-50/30 border border-purple-100">
-                        <span className="text-[9px] uppercase font-bold text-gray-400 block">BMI</span>
-                        <span className="font-black text-sm text-gray-900">
-                          {scan.bmi !== null ? scan.bmi : <span className="text-gray-400 text-xs font-normal">Not available</span>}
-                        </span>
-                      </div>
-
-                      <div className="p-2.5 rounded-xl bg-purple-50/30 border border-purple-100">
-                        <span className="text-[9px] uppercase font-bold text-gray-400 block">Visceral Fat Rating</span>
-                        <span className="font-black text-sm text-amber-700">
-                          {scan.visceralFat !== null ? scan.visceralFat : <span className="text-gray-400 text-xs font-normal">Not available</span>}
-                        </span>
-                      </div>
-
-                      <div className="p-2.5 rounded-xl bg-purple-50/30 border border-purple-100">
-                        <span className="text-[9px] uppercase font-bold text-gray-400 block">BMR</span>
-                        <span className="font-black text-sm text-gray-900">
-                          {scan.bmr !== null ? `${scan.bmr} kcal` : <span className="text-gray-400 text-xs font-normal">Not available</span>}
-                        </span>
-                      </div>
-
-                      <div className="p-2.5 rounded-xl bg-purple-50/30 border border-purple-100">
-                        <span className="text-[9px] uppercase font-bold text-gray-400 block">Total Body Water (TBW)</span>
-                        <span className="font-black text-sm text-blue-700">
-                          {scan.tbw !== null ? `${scan.tbw} kg` : <span className="text-gray-400 text-xs font-normal">Not available</span>}
-                        </span>
-                      </div>
-
-                      <div className="p-2.5 rounded-xl bg-purple-50/30 border border-purple-100">
-                        <span className="text-[9px] uppercase font-bold text-gray-400 block">ECW / ICW</span>
-                        <span className="font-black text-xs text-gray-900">
-                          {scan.ecw ? `${scan.ecw} kg` : '—'} / {scan.icw ? `${scan.icw} kg` : '—'}
-                        </span>
-                      </div>
-
-                      <div className="p-2.5 rounded-xl bg-purple-50/30 border border-purple-100">
-                        <span className="text-[9px] uppercase font-bold text-gray-400 block">SMM (Skeletal Muscle)</span>
-                        <span className="font-black text-sm text-gray-900">
-                          {scan.skeletalMuscleMass !== null ? `${scan.skeletalMuscleMass} kg` : <span className="text-gray-400 text-xs font-normal">Not available</span>}
-                        </span>
-                      </div>
-
-                      <div className="p-2.5 rounded-xl bg-purple-50/30 border border-purple-100">
-                        <span className="text-[9px] uppercase font-bold text-gray-400 block">Metabolic Age</span>
-                        <span className="font-black text-sm text-gray-900">
-                          {scan.metabolicAge !== null ? `${scan.metabolicAge} yrs` : <span className="text-gray-400 text-xs font-normal">Not available</span>}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Segmental Muscle Analysis row if present */}
-                    {scan.segmentalMuscle && (
-                      <div className="pt-1 flex flex-wrap items-center gap-2 text-[11px] text-gray-600 bg-gray-50/60 p-2 rounded-xl">
-                        <span className="font-bold text-gray-700">Segmental Muscle:</span>
-                        {Object.entries(scan.segmentalMuscle).map(([k, v]) => (
-                          <span key={k} className="px-2 py-0.5 rounded bg-white border border-gray-200 font-mono text-[10px]">
-                            {k}: <strong>{v}</strong>
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
             </div>
           </div>
         </div>
       )}
 
       {/* ========================================================================= */}
-      {/* ORIGINAL REPORT VIEWER MODAL                                              */}
+      {/* DATE-WISE FULL BIOMETRIC DATA & PICTURE INSPECTION MODAL                   */}
       {/* ========================================================================= */}
-      {viewingDocument && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in">
-          <div className="w-full max-w-4xl bg-white rounded-2xl border-2 border-[#7E22CE] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      {openedDateScan && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 animate-in fade-in">
+          <div className="w-full max-w-5xl bg-white rounded-2xl border-2 border-[#7E22CE] shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
             {/* Modal Header */}
-            <div className="p-4 bg-[#7E22CE] text-white flex items-center justify-between">
-              <div>
-                <h3 className="font-black text-sm uppercase tracking-wide">
-                  {viewingDocument.title}
-                </h3>
-                <p className="text-[11px] text-purple-200 font-mono">
-                  File: {viewingDocument.fileName} • ID: {viewingDocument.scan.documentId}
-                </p>
+            <div className="p-4 sm:p-5 bg-gradient-to-r from-[#601188] via-[#781CA8] to-[#9228C9] text-white flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center font-black">
+                  <Calendar className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded bg-white text-[#781CA8] text-xs font-black uppercase tracking-wider">
+                      📅 DATE: {openedDateScan.scanDate}
+                    </span>
+                    <span className="text-xs text-purple-200 font-mono font-bold">
+                      {openedDateScan.scanType}
+                    </span>
+                  </div>
+                  <h3 className="text-base sm:text-lg font-black tracking-tight mt-0.5">
+                    Biometric Record • Patient: {openedDateScan.patientName}
+                  </h3>
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setViewingDocument(null)}
-                className="p-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
 
-            {/* Modal Content */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4">
-              {viewingDocument.url ? (
-                viewingDocument.mime?.startsWith('image/') || viewingDocument.url.startsWith('data:image') ? (
-                  <div className="flex justify-center bg-gray-900 rounded-xl p-2">
-                    <img
-                      src={viewingDocument.url}
-                      alt={viewingDocument.fileName}
-                      className="max-h-[60vh] object-contain rounded-lg"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-full h-[55vh] bg-gray-100 rounded-xl overflow-hidden border">
-                    <iframe
-                      src={viewingDocument.url}
-                      className="w-full h-full"
-                      title={viewingDocument.fileName}
-                    />
-                  </div>
-                )
-              ) : (
-                <div className="p-8 text-center bg-purple-50 rounded-xl border border-purple-200 space-y-2">
-                  <FileText className="w-12 h-12 text-[#7E22CE] mx-auto opacity-70" />
-                  <h4 className="font-black text-gray-900 text-sm">
-                    Original Report Reference Preserved
-                  </h4>
-                  <p className="text-xs text-gray-500">
-                    Document <strong className="font-mono">{viewingDocument.fileName}</strong> is securely anchored in the patient's encrypted dossier.
-                  </p>
-                </div>
-              )}
-
-              {/* Extracted Biometric Summary Table in Modal */}
-              <div className="border border-purple-200 rounded-xl p-4 bg-purple-50/30 space-y-2">
-                <span className="text-[10px] font-black uppercase tracking-wider text-[#7E22CE]">
-                  Extracted Body Composition Summary:
-                </span>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-                  <div>Weight: <strong>{viewingDocument.scan.weight} kg</strong></div>
-                  <div>Body Fat: <strong>{viewingDocument.scan.bodyFatPct}%</strong></div>
-                  <div>Muscle Mass: <strong>{viewingDocument.scan.muscleMass} kg</strong></div>
-                  <div>Fat Mass: <strong>{viewingDocument.scan.fatMass} kg</strong></div>
-                  <div>BMI: <strong>{viewingDocument.scan.bmi}</strong></div>
-                  <div>BMR: <strong>{viewingDocument.scan.bmr} kcal</strong></div>
-                  <div>Visceral Fat: <strong>{viewingDocument.scan.visceralFat}</strong></div>
-                  <div>TBW: <strong>{viewingDocument.scan.tbw} kg</strong></div>
-                </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setOpenedDateScan(null)}
+                  className="p-2 rounded-xl bg-white/20 hover:bg-white/30 text-white cursor-pointer transition-colors"
+                  title="Close inspection view"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
             </div>
 
-            {/* Modal Footer */}
-            <div className="p-3 border-t bg-gray-50 flex items-center justify-between text-xs">
-              <span className="text-gray-500 font-mono text-[11px]">
-                Scan Date: {viewingDocument.scan.scanDate}
-              </span>
-              <button
-                type="button"
-                onClick={() => setViewingDocument(null)}
-                className="px-4 py-2 rounded-lg bg-gray-800 text-white text-xs font-bold hover:bg-gray-700 cursor-pointer"
-              >
-                Close Viewer
-              </button>
+            {/* Modal Body: Split Screen (Left: Uploaded Picture, Right: Date-wise Parameters) */}
+            <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                {/* LEFT: Uploaded Picture of Biometric Data */}
+                <div className="lg:col-span-5 bg-gray-50 border border-purple-200 rounded-2xl p-4 space-y-3">
+                  <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+                    <span className="text-[11px] font-black uppercase tracking-wider text-[#7E22CE] flex items-center gap-1.5">
+                      <ImageIcon className="w-4 h-4" /> Uploaded Biometric Picture
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {openedDateScan.originalFileUrl && (
+                        <a
+                          href={openedDateScan.originalFileUrl}
+                          download={openedDateScan.originalFileName || `Biometric_${openedDateScan.scanDate.replace(/\//g, '-')}.jpg`}
+                          className="px-2 py-1 rounded bg-white border border-gray-200 text-[10px] font-bold text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center gap-1 shadow-2xs"
+                          title="Download original uploaded file"
+                        >
+                          <Download className="w-3 h-3 text-[#7E22CE]" />
+                          <span>Download</span>
+                        </a>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setImageZoomLevel((prev) => (prev >= 2 ? 1 : prev + 0.5))}
+                        className="px-2 py-1 rounded bg-white border border-gray-200 text-[10px] font-bold text-gray-700 hover:bg-gray-100 cursor-pointer"
+                        title="Toggle zoom"
+                      >
+                        {imageZoomLevel > 1 ? 'Reset' : 'Zoom +'}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="w-full min-h-[260px] max-h-[380px] bg-gray-900 rounded-xl overflow-hidden flex items-center justify-center border p-2">
+                    {openedDateScan.originalFileUrl ? (
+                      openedDateScan.originalFileMime?.startsWith('image/') || openedDateScan.originalFileUrl.startsWith('data:image') ? (
+                        <img
+                          src={openedDateScan.originalFileUrl}
+                          alt={openedDateScan.originalFileName}
+                          style={{ transform: `scale(${imageZoomLevel})`, transformOrigin: 'center center' }}
+                          className="max-h-[360px] object-contain rounded-lg transition-transform duration-200"
+                        />
+                      ) : (
+                        <iframe
+                          src={openedDateScan.originalFileUrl}
+                          className="w-full h-[340px] rounded-lg"
+                          title="Biometric Document"
+                        />
+                      )
+                    ) : (
+                      <div className="p-8 text-center text-gray-400 space-y-2">
+                        <FileText className="w-12 h-12 mx-auto text-purple-400 opacity-70" />
+                        <h4 className="text-xs font-black text-white uppercase">
+                          Standard Biometric Document
+                        </h4>
+                        <p className="text-[11px] text-gray-400 font-mono">
+                          {openedDateScan.originalFileName}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="text-[11px] text-gray-500 font-mono flex items-center justify-between pt-1">
+                    <span>Document: {openedDateScan.documentId}</span>
+                    <span>Format: {openedDateScan.originalFileMime || 'Image/Data'}</span>
+                  </div>
+                </div>
+
+                {/* RIGHT: Complete Extracted Biometric Parameters Table for this Date */}
+                <div className="lg:col-span-7 space-y-4">
+                  <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+                    <span className="text-xs font-black uppercase tracking-wider text-gray-900 flex items-center gap-1.5">
+                      <Scale className="w-4 h-4 text-[#7E22CE]" /> Extracted Biometrics ({openedDateScan.scanDate})
+                    </span>
+                    <span className="text-[11px] font-mono text-[#7E22CE] font-bold">
+                      {openedDateScan.scanType}
+                    </span>
+                  </div>
+
+                  {/* Primary Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                    <div className="p-3 rounded-xl bg-purple-50/50 border border-purple-200">
+                      <span className="text-[10px] font-black uppercase text-gray-400 block">Weight</span>
+                      <span className="text-lg font-black text-gray-900">
+                        {openedDateScan.weight ? `${openedDateScan.weight} kg` : '—'}
+                      </span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-purple-50/50 border border-purple-200">
+                      <span className="text-[10px] font-black uppercase text-gray-400 block">Body Fat %</span>
+                      <span className="text-lg font-black text-[#7E22CE]">
+                        {openedDateScan.bodyFatPct ? `${openedDateScan.bodyFatPct}%` : '—'}
+                      </span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-purple-50/50 border border-purple-200">
+                      <span className="text-[10px] font-black uppercase text-gray-400 block">Muscle Mass</span>
+                      <span className="text-lg font-black text-emerald-700">
+                        {openedDateScan.muscleMass ? `${openedDateScan.muscleMass} kg` : '—'}
+                      </span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-purple-50/50 border border-purple-200">
+                      <span className="text-[10px] font-black uppercase text-gray-400 block">Fat Mass</span>
+                      <span className="text-lg font-black text-gray-900">
+                        {openedDateScan.fatMass ? `${openedDateScan.fatMass} kg` : '—'}
+                      </span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-purple-50/50 border border-purple-200">
+                      <span className="text-[10px] font-black uppercase text-gray-400 block">FFM (Fat-Free)</span>
+                      <span className="text-lg font-black text-gray-900">
+                        {openedDateScan.ffm ? `${openedDateScan.ffm} kg` : '—'}
+                      </span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-purple-50/50 border border-purple-200">
+                      <span className="text-[10px] font-black uppercase text-gray-400 block">BMI</span>
+                      <span className="text-lg font-black text-gray-900">
+                        {openedDateScan.bmi ?? '—'}
+                      </span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-purple-50/50 border border-purple-200">
+                      <span className="text-[10px] font-black uppercase text-gray-400 block">Visceral Fat Level</span>
+                      <span className="text-lg font-black text-amber-700">
+                        {openedDateScan.visceralFat ?? '—'}
+                      </span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-purple-50/50 border border-purple-200">
+                      <span className="text-[10px] font-black uppercase text-gray-400 block">BMR</span>
+                      <span className="text-lg font-black text-gray-900">
+                        {openedDateScan.bmr ? `${openedDateScan.bmr} kcal` : '—'}
+                      </span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-purple-50/50 border border-purple-200">
+                      <span className="text-[10px] font-black uppercase text-gray-400 block">TBW (Total Water)</span>
+                      <span className="text-lg font-black text-blue-700">
+                        {openedDateScan.tbw ? `${openedDateScan.tbw} kg` : '—'}
+                      </span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-purple-50/50 border border-purple-200">
+                      <span className="text-[10px] font-black uppercase text-gray-400 block">ECW / ICW</span>
+                      <span className="text-base font-black text-gray-900">
+                        {openedDateScan.ecw ? `${openedDateScan.ecw}` : '—'} / {openedDateScan.icw ? `${openedDateScan.icw}` : '—'} kg
+                      </span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-purple-50/50 border border-purple-200">
+                      <span className="text-[10px] font-black uppercase text-gray-400 block">SMM (Skeletal Muscle)</span>
+                      <span className="text-lg font-black text-emerald-800">
+                        {openedDateScan.skeletalMuscleMass ? `${openedDateScan.skeletalMuscleMass} kg` : '—'}
+                      </span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-purple-50/50 border border-purple-200">
+                      <span className="text-[10px] font-black uppercase text-gray-400 block">Metabolic Age</span>
+                      <span className="text-lg font-black text-gray-900">
+                        {openedDateScan.metabolicAge ? `${openedDateScan.metabolicAge} yrs` : '—'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Segmental Muscle Partitioning if present */}
+                  {openedDateScan.segmentalMuscle && (
+                    <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200 space-y-2">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-gray-500 block">
+                        Segmental Muscle Distribution ({openedDateScan.scanDate}):
+                      </span>
+                      <div className="grid grid-cols-5 gap-2 text-center text-xs">
+                        {Object.entries(openedDateScan.segmentalMuscle).map(([k, v]) => (
+                          <div key={k} className="p-2 rounded-lg bg-white border border-gray-200">
+                            <span className="text-[9px] text-gray-400 uppercase font-mono block">{k}</span>
+                            <span className="font-black text-emerald-800">{v}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Clinical Profile Evaluation */}
+                  <div className="p-3 rounded-xl bg-purple-50/70 border border-purple-200 text-xs text-purple-950 font-medium">
+                    <span className="font-black uppercase tracking-wide text-[#7E22CE] block text-[10px]">
+                      Clinical Interpretation:
+                    </span>
+                    <span>{openedDateScan.bodyProfile || 'Validated Body Composition Record stored in patient vault.'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer: Date switcher & Close */}
+            <div className="p-4 border-t bg-gray-50 flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2">
+                {prevDateScan && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpenedDateScan(prevDateScan);
+                      setImageZoomLevel(1);
+                    }}
+                    className="px-3 py-1.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 font-bold flex items-center gap-1 cursor-pointer"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>Prev Date ({prevDateScan.scanDate})</span>
+                  </button>
+                )}
+
+                {nextDateScan && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpenedDateScan(nextDateScan);
+                      setImageZoomLevel(1);
+                    }}
+                    className="px-3 py-1.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 font-bold flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>Next Date ({nextDateScan.scanDate})</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (openedDateScan) {
+                      handleDeleteScan(openedDateScan.id);
+                    }
+                  }}
+                  className="px-3.5 py-2 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                  title="Delete this date record"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete Record</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setOpenedDateScan(null)}
+                  className="px-5 py-2 rounded-xl bg-gray-900 hover:bg-black text-white text-xs font-black uppercase tracking-wider cursor-pointer"
+                >
+                  Close Date View
+                </button>
+              </div>
             </div>
           </div>
         </div>

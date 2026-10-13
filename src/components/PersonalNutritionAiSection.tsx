@@ -71,7 +71,7 @@ export const PersonalNutritionAiSection: React.FC<PersonalNutritionAiSectionProp
     {
       id: 'msg-welcome',
       sender: 'ai',
-      text: `Hello **${generalInfo.name || 'Kiruthika'}**! I am your **ELSHA Personal Nutrition AI** from ŽIATHLON Sports Medicine Clinic.\n\nI am calibrated to your profile:\n- **Metabolic Goal**: 1,500 kcal target deficit (TDEE: ${calculations.tdee} kcal)\n- **Clinical Focus**: ${selectedCategory || 'Type 2 Diabetes Mellitus'} & Glycemic Stability\n- **Active Protocol**: Metformin 500mg (BD with meals) + 2.8L hydration target\n\nHow can I support your nutrition right now? You can ask about managing cravings, check glycemic index of your favorite foods, or scan your meal plate for instant feedback!`,
+      text: `Hello **${generalInfo.name || 'Kiruthika'}**! I am your **ZIATHLON Personal Nutrition AI** from ŽIATHLON Sports Medicine Clinic.\n\nI am calibrated to your profile:\n- **Metabolic Goal**: 1,500 kcal target deficit (TDEE: ${calculations.tdee} kcal)\n- **Clinical Focus**: ${selectedCategory || 'Type 2 Diabetes Mellitus'} & Glycemic Stability\n- **Active Protocol**: Metformin 500mg (BD with meals) + 2.8L hydration target\n\nHow can I support your nutrition right now? You can ask about managing cravings, check glycemic index of your favorite foods, or scan your meal plate for instant feedback!`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       glycemicImpact: 'Balanced',
       suggestedActions: [
@@ -181,7 +181,7 @@ export const PersonalNutritionAiSection: React.FC<PersonalNutritionAiSectionProp
       id: `note-ai-${Date.now()}`,
       sessionDate: new Date().toISOString().split('T')[0],
       sessionTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      clinicianName: 'ELSHA Personal Nutrition AI (Automated Patient Consultation)',
+      clinicianName: 'ZIATHLON Personal Nutrition AI (Automated Patient Consultation)',
       consultationType: 'Follow-up Consultation',
       categoryTag: 'Dietary Adjustment',
       patientAdherence: 'High (80-100%)',
@@ -576,7 +576,7 @@ Provide a warm, personalized 2-paragraph clinical evaluation and actionable guid
                 </div>
                 <div>
                   <div className="text-xs font-bold text-[#f7d88c] uppercase tracking-wider font-mono">
-                    ELSHA Nutrition Bot • Personalized Consultation
+                    ZIATHLON Nutrition Bot • Personalized Consultation
                   </div>
                   <div className="text-[10px] text-gray-400">
                     Grounded in ADA & RSSDI Clinical Guidelines • Metformin-aware
@@ -617,7 +617,7 @@ Provide a warm, personalized 2-paragraph clinical evaluation and actionable guid
                   >
                     {/* Sender label & Timestamp */}
                     <div className="flex items-center gap-2 mb-1 text-[10px] text-gray-400 font-mono px-1">
-                      <span>{isUser ? generalInfo.name || 'You' : 'ELSHA Personal Nutrition AI'}</span>
+                      <span>{isUser ? generalInfo.name || 'You' : 'ZIATHLON Personal Nutrition AI'}</span>
                       <span>•</span>
                       <span>{msg.timestamp}</span>
                       {!isUser && msg.glycemicImpact && (
@@ -726,7 +726,7 @@ Provide a warm, personalized 2-paragraph clinical evaluation and actionable guid
                 <div className="flex items-center gap-3 p-4 rounded-2xl bg-[#141a16] border border-[#C5A028]/30 w-fit">
                   <div className="w-2 h-2 rounded-full bg-[#C5A028] animate-ping" />
                   <div className="text-xs text-[#f7d88c] font-mono flex items-center gap-2">
-                    <span>ELSHA Nutrition AI is analyzing your metabolic profile...</span>
+                    <span>ZIATHLON Nutrition AI is analyzing your metabolic profile...</span>
                   </div>
                 </div>
               )}
@@ -1040,7 +1040,7 @@ Provide a warm, personalized 2-paragraph clinical evaluation and actionable guid
                   <div className="h-64 rounded-2xl bg-black/50 border border-white/10 flex flex-col items-center justify-center space-y-3">
                     <div className="w-8 h-8 rounded-full border-2 border-[#C5A028] border-t-transparent animate-spin" />
                     <div className="text-xs font-mono text-[#f7d88c]">
-                      ELSHA Vision AI is segmenting foods and computing Glycemic Score...
+                      ZIATHLON Vision AI is segmenting foods and computing Glycemic Score...
                     </div>
                   </div>
                 ) : plateAnalysis ? (

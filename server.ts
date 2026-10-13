@@ -906,27 +906,172 @@ app.post('/api/medical-research-chat', (req: Request, res: Response) => {
 });
 
 // POST /api/biometrics/extract-scan - OCR / Biometrics body composition extraction
-app.post('/api/biometrics/extract-scan', (req: Request, res: Response) => {
-  const { fileName, patientName } = req.body;
+app.post('/api/biometrics/extract-scan', async (req: Request, res: Response) => {
+  const { fileName = '', patientName = 'Kiruthika', fileBase64 = '', mimeType = 'image/jpeg', scanDate } = req.body || {};
+  const todayStr = scanDate || new Date().toLocaleDateString('en-GB');
+  const genAI = getGenAI();
+
+  if (genAI && fileBase64) {
+    try {
+      const pureBase64 = fileBase64.replace(/^data:[^;]+;base64,/, '');
+      const cleanMime = mimeType && mimeType.includes('/') ? mimeType : (fileBase64.startsWith('data:image/png') ? 'image/png' : fileBase64.startsWith('data:application/pdf') ? 'application/pdf' : 'image/jpeg');
+
+      const promptText = `You are a clinical OCR and body composition data extraction engine for medical and sports medicine devices (such as Tanita, Tanita PRO MC-780, InBody 270/570/770, DEXA Hologic/GE, Omron, Bod Pod, Seca, or clinical lab printouts).
+
+ANALYZE THIS UPLOADED DOCUMENT OR IMAGE CAREFULLY.
+CRITICAL MANDATE:
+1. Extract ONLY actual numbers, dates, patient names, and device labels physically printed or legible in this image.
+2. DO NOT FABRICATE, DO NOT GUESS, AND DO NOT GENERATE RANDOM VALUES.
+3. If a specific biometric metric (such as Visceral Fat, Skeletal Muscle Mass, ECW, TBW, etc.) is NOT present or not legible in this document, you MUST set its value to null.
+4. If weight is printed in pounds (lb), convert to kg (divide by 2.20462) rounded to 1 decimal place.
+
+Return a SINGLE JSON object with the following fields:
+{
+  "patientName": string | null,
+  "scanDate": string | null,
+  "scanTime": string | null,
+  "deviceModel": string | null,
+  "scanType": string | null,
+  "age": number | null,
+  "sex": string | null,
+  "height": string | number | null,
+  "weight": number | null,
+  "weightUnit": "kg",
+  "bmi": number | null,
+  "bodyFatPct": number | null,
+  "fatMass": number | null,
+  "ffm": number | null,
+  "muscleMass": number | null,
+  "skeletalMuscleMass": number | null,
+  "boneMass": number | null,
+  "protein": number | null,
+  "tbw": number | null,
+  "ecw": number | null,
+  "icw": number | null,
+  "ecwOverTbw": number | null,
+  "visceralFat": number | null,
+  "bmr": number | null,
+  "metabolicAge": number | null,
+  "sarcopenicIndex": string | null,
+  "bodyProfile": string | null,
+  "segmentalMuscle": {
+    "rightArm": string | null,
+    "leftArm": string | null,
+    "trunk": string | null,
+    "rightLeg": string | null,
+    "leftLeg": string | null
+  } | null,
+  "segmentalFat": {
+    "rightArm": string | null,
+    "leftArm": string | null,
+    "trunk": string | null,
+    "rightLeg": string | null,
+    "leftLeg": string | null
+  } | null
+}`;
+
+      const aiResponse = await genAI.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                inlineData: {
+                  mimeType: cleanMime,
+                  data: pureBase64,
+                },
+              },
+              {
+                text: promptText,
+              },
+            ],
+          },
+        ],
+        config: {
+          responseMimeType: 'application/json',
+        },
+      });
+
+      const responseText = aiResponse.text || '';
+      const match = responseText.match(/\{[\s\S]*\}/);
+      if (match) {
+        const parsed = JSON.parse(match[0]);
+
+        // Verify if any real biometric data was actually physically extracted from the image
+        const hasAnyBiometric =
+          (typeof parsed.weight === 'number' && parsed.weight > 0) ||
+          (typeof parsed.bodyFatPct === 'number' && parsed.bodyFatPct > 0) ||
+          (typeof parsed.muscleMass === 'number' && parsed.muscleMass > 0) ||
+          (typeof parsed.skeletalMuscleMass === 'number' && parsed.skeletalMuscleMass > 0) ||
+          (typeof parsed.bmi === 'number' && parsed.bmi > 0) ||
+          (typeof parsed.visceralFat === 'number' && parsed.visceralFat > 0) ||
+          (typeof parsed.tbw === 'number' && parsed.tbw > 0) ||
+          (typeof parsed.fatMass === 'number' && parsed.fatMass > 0);
+
+        if (hasAnyBiometric) {
+          // Normalize extracted date if present
+          let finalDate = todayStr;
+          if (parsed.scanDate && typeof parsed.scanDate === 'string') {
+            const rawDate = parsed.scanDate.trim();
+            // Try normalizing ISO YYYY-MM-DD to DD/MM/YYYY
+            const isoMatch = rawDate.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+            if (isoMatch) {
+              const yyyy = isoMatch[1];
+              const mm = isoMatch[2].padStart(2, '0');
+              const dd = isoMatch[3].padStart(2, '0');
+              finalDate = `${dd}/${mm}/${yyyy}`;
+            } else {
+              const dmyMatch = rawDate.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})/);
+              if (dmyMatch) {
+                const dd = dmyMatch[1].padStart(2, '0');
+                const mm = dmyMatch[2].padStart(2, '0');
+                const yyyy = dmyMatch[3].length === 2 ? `20${dmyMatch[3]}` : dmyMatch[3];
+                finalDate = `${dd}/${mm}/${yyyy}`;
+              } else {
+                finalDate = rawDate;
+              }
+            }
+          }
+
+          const finalName = (parsed.patientName && parsed.patientName.trim()) ? parsed.patientName.trim() : patientName;
+          const finalScanType = parsed.scanType || parsed.deviceModel || (/tanita/i.test(fileName) ? 'Tanita PRO' : /inbody/i.test(fileName) ? 'InBody 770' : 'Body Composition Analyzer');
+
+          return res.json({
+            success: true,
+            extractedData: {
+              ...parsed,
+              patientName: finalName,
+              scanDate: finalDate,
+              scanType: finalScanType,
+              deviceModel: parsed.deviceModel || finalScanType,
+              weightUnit: parsed.weightUnit || 'kg',
+              parameters: {
+                weightKg: parsed.weight,
+                bodyFatPercentage: parsed.bodyFatPct,
+                fatMassKg: parsed.fatMass,
+                skeletalMuscleMassKg: parsed.skeletalMuscleMass,
+                visceralFatLevel: parsed.visceralFat,
+                bmrKcal: parsed.bmr,
+                bodyWaterPercentage: parsed.tbw,
+                boneMassKg: parsed.boneMass,
+                metabolicAge: parsed.metabolicAge,
+              },
+              evaluation: parsed.bodyProfile || 'Verified biometric clinical values extracted directly from the uploaded document without fabrication.',
+            },
+          });
+        }
+      }
+    } catch (aiErr: any) {
+      console.warn('[Biometric OCR AI] Gemini extraction notice:', aiErr?.message);
+    }
+  }
+
+  // Strictly refuse to return random/fake values when document cannot be extracted
   return res.json({
-    success: true,
-    extractedData: {
-      patientName: patientName || 'Kiruthika Sundar',
-      scanDate: new Date().toLocaleDateString('en-GB'),
-      deviceModel: /tanita/i.test(fileName || '') ? 'Tanita MC-780' : 'InBody 270 Multifrequency BIA',
-      parameters: {
-        weightKg: 62.4,
-        bodyFatPercentage: 27.2,
-        fatMassKg: 16.9,
-        skeletalMuscleMassKg: 24.1,
-        visceralFatLevel: 6,
-        bmrKcal: 1380,
-        bodyWaterPercentage: 53.4,
-        boneMassKg: 2.3,
-        metabolicAge: 31,
-      },
-      evaluation: 'Body composition within healthy normative athletic range. Preserved skeletal muscle mass.',
-    },
+    success: false,
+    error: 'No biometric values could be identified on this document or picture. Please make sure the body composition report is clear, legible, and contains numbers for weight, body fat %, or muscle mass. Random values are strictly prevented.',
+    extractedData: null,
   });
 });
 

@@ -696,7 +696,7 @@ export default function App() {
         <div className="text-center space-y-3">
           <div className="w-10 h-10 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto" />
           <div className="text-xs uppercase tracking-widest text-purple-300 font-bold">
-            Verifying ELSHA Security Credentials...
+            Verifying ZIATHLON Security Credentials...
           </div>
         </div>
       </div>
@@ -791,7 +791,7 @@ export default function App() {
                       ? 'bg-[#7016B7] text-white border-[#7016B7]'
                       : 'bg-purple-50 text-[#7016B7] border-purple-200 hover:bg-purple-100'
                   }`}
-                  title="ELSHA Security Settings & Password Studio"
+                  title="ZIATHLON Security Settings & Password Studio"
                 >
                   <ShieldCheck className="w-3.5 h-3.5" />
                   <span className="hidden md:inline">Security</span>
@@ -803,7 +803,7 @@ export default function App() {
                   id="btn-app-logout"
                   onClick={() => setShowLogoutConfirm(true)}
                   className="py-1.5 px-2.5 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-xs transition-all"
-                  title="Logout from ELSHA"
+                  title="Logout from ZIATHLON"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                   <span className="hidden md:inline">Logout</span>

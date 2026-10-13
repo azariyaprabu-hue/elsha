@@ -505,7 +505,7 @@ export const InAppPdfRenderer: React.FC<InAppPdfRendererProps> = ({
         {isLoading ? (
           <div className="flex flex-col items-center justify-center p-8 text-center space-y-3 my-auto">
             <RefreshCw className="w-7 h-7 text-[#A855F7] animate-spin" />
-            <p className="text-xs font-bold text-gray-300">Rendering document inside ELSHA In-App Viewer...</p>
+            <p className="text-xs font-bold text-gray-300">Rendering document inside ZIATHLON In-App Viewer...</p>
             <p className="text-[10px] text-gray-500 font-mono">Parsing PDF vector streams...</p>
           </div>
         ) : loadError ? (

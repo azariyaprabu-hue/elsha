@@ -463,7 +463,7 @@ export const MedicalRecordsSubfolder: React.FC<MedicalRecordsSubfolderProps> = (
                         key={doc.id}
                         onClick={() => setActiveViewerDoc(doc)}
                         className="p-3.5 sm:p-4 rounded-xl border border-purple-950 hover:border-[#7E22CE] bg-black/50 hover:bg-purple-950/20 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md cursor-pointer group"
-                        title="Click to open full document in ELSHA"
+                        title="Click to open full document in ZIATHLON"
                       >
                         <div className="flex items-start gap-3 min-w-0">
                           <div className="p-2 rounded-lg bg-purple-950/80 border border-purple-800 shrink-0 group-hover:scale-105 transition-transform">
@@ -500,7 +500,7 @@ export const MedicalRecordsSubfolder: React.FC<MedicalRecordsSubfolderProps> = (
                               setActiveViewerDoc(doc);
                             }}
                             className="px-3.5 py-1.5 rounded-lg bg-[#7E22CE] hover:bg-[#9333EA] text-white text-xs font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-all shadow-sm active:scale-95"
-                            title="Open full document inside ELSHA"
+                            title="Open full document inside ZIATHLON"
                           >
                             <Eye className="w-3.5 h-3.5" />
                             <span>VIEW</span>
@@ -535,7 +535,7 @@ export const MedicalRecordsSubfolder: React.FC<MedicalRecordsSubfolderProps> = (
         )}
       </div>
 
-      {/* FULL IN-APP DOCUMENT VIEWER MODAL (OPENS ACTUAL PDF / IMAGE / TEXT / SPREADSHEET INSIDE ELSHA) */}
+      {/* FULL IN-APP DOCUMENT VIEWER MODAL (OPENS ACTUAL PDF / IMAGE / TEXT / SPREADSHEET INSIDE ZIATHLON) */}
       {activeViewerDoc && (
         <DocumentViewerModal
           document={{

@@ -33,7 +33,7 @@ export class ErrorBoundary extends Component<Props, State> {
               <AlertCircle className="w-6 h-6" />
             </div>
             <h2 className="text-xl font-black text-slate-900 tracking-tight">
-              Something went wrong loading ELSHA
+              Something went wrong loading ZIATHLON
             </h2>
             <p className="text-xs text-slate-600 font-medium">
               {this.state.error?.message || 'An unexpected rendering error occurred.'}

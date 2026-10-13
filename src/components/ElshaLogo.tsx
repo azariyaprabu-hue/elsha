@@ -104,7 +104,7 @@ export const ElshaLogo: React.FC<ElshaLogoProps> = ({
       {/* Brand Text */}
       <div className="flex flex-col">
         <span className={`text-white uppercase leading-none font-sans ${current.title}`}>
-          ELSHA
+          ZIATHLON
         </span>
         {showSubtitle && (
           <span className={`text-sky-300 font-sans leading-tight mt-0.5 ${current.sub}`}>

@@ -104,7 +104,7 @@ export const SecuritySettingsView: React.FC<SecuritySettingsViewProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-black text-slate-900 tracking-tight">
-                ELSHA Security & Entrance Access Settings
+                ZIATHLON Security & Entrance Access Settings
               </h1>
               <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider">
                 Entrance Only Protected
@@ -141,7 +141,7 @@ export const SecuritySettingsView: React.FC<SecuritySettingsViewProps> = ({
                 Application Entrance Password
               </h2>
               <p className="text-[11px] text-slate-500">
-                The single password required to log into ELSHA
+                The single password required to log into ZIATHLON
               </p>
             </div>
           </div>

@@ -303,7 +303,7 @@ export const NutritionalGapSection: React.FC<NutritionalGapSectionProps> = ({
         </div>
       </div>
 
-      {/* ELSHA CALCULATION SYSTEM CARD */}
+      {/* ZIATHLON CALCULATION SYSTEM CARD */}
       <div className="p-4 bg-[#0a0d14] border-2 border-[#C5A028]/60 rounded-sm space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#C5A028]/30 pb-2.5">
           <div className="flex items-center gap-2.5">
@@ -703,7 +703,7 @@ export const NutritionalGapSection: React.FC<NutritionalGapSectionProps> = ({
         </div>
       )}
 
-      {/* ELSHA CALCULATION SYSTEM INTERACTIVE MODAL */}
+      {/* ZIATHLON CALCULATION SYSTEM INTERACTIVE MODAL */}
       <ElshaIfctCalculatorModal
         isOpen={showElshaCalculator}
         onClose={() => setShowElshaCalculator(false)}
