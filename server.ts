@@ -459,7 +459,7 @@ app.post('/api/extract-patient-data', async (req: Request, res: Response) => {
   if (genAI && fileBase64) {
     try {
       const response = await genAI.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.8-flash',
         contents: [
           {
             role: 'user',
@@ -524,7 +524,7 @@ app.post('/api/analyze-blood-report', async (req: Request, res: Response) => {
   if (genAI) {
     try {
       const response = await genAI.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.8-flash',
         contents: [
           {
             role: 'user',
@@ -573,7 +573,7 @@ app.post('/api/generate-clinical-summary', async (req: Request, res: Response) =
   if (genAI) {
     try {
       const response = await genAI.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.8-flash',
         contents: [
           {
             role: 'user',
@@ -703,7 +703,7 @@ app.post('/api/generate-dynamic-diet-plan', (req: Request, res: Response) => {
   return res.json({
     success: true,
     plans,
-    modelUsed: 'gemini-2.5-flash',
+    modelUsed: 'gemini-3.8-flash',
     rationale: `Calibrated for ${conditionName || 'Metabolic Optimization'} via ICMR-NIN & IFCT 2024 Standards.`,
   });
 });
@@ -815,7 +815,7 @@ app.post('/api/nutrition-chat', async (req: Request, res: Response) => {
   if (genAI && userMsg) {
     try {
       const response = await genAI.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.8-flash',
         contents: [
           {
             role: 'user',
@@ -971,7 +971,7 @@ Return a SINGLE JSON object with the following fields:
 }`;
 
       const aiResponse = await genAI.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.8-flash',
         contents: [
           {
             role: 'user',
