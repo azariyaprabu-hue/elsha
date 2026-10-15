@@ -85,17 +85,67 @@ export function generateZiathlonDocumentPdf(data: ZiathlonDocumentPdfData): Gene
   const COLOR_MUTED_BG = [241, 245, 249]; // #F1F5F9
 
   // =========================================================================
-  // OFFICIAL DOCUMENT BORDER: ONE BLACK AND PURPLE LINE FRAMING THE PAGE
+  // OFFICIAL DOCUMENT BORDER: ORNATE CERTIFICATE DOSSIER LAYOUT (MATCHING REFERENCE)
   // =========================================================================
-  // 1. Outer Black Border Line
-  doc.setDrawColor(0, 0, 0);
-  doc.setLineWidth(0.5);
-  doc.rect(2.5, 2.5, pageWidth - 5.0, pageHeight - 5.0);
+  // Background Warm Parchment Paper
+  doc.setFillColor(250, 248, 245); // #FAF8F5
+  doc.rect(0, 0, pageWidth, pageHeight, 'F');
 
-  // 2. Inner Purple Border Line
-  doc.setDrawColor(COLOR_PURPLE[0], COLOR_PURPLE[1], COLOR_PURPLE[2]);
-  doc.setLineWidth(0.5);
-  doc.rect(3.6, 3.6, pageWidth - 7.2, pageHeight - 7.2);
+  // 1. Outer Solid Black Border Line
+  doc.setDrawColor(17, 17, 17);
+  doc.setLineWidth(0.7);
+  doc.rect(3.5, 3.5, pageWidth - 7.0, pageHeight - 7.0);
+
+  // 2. Inner Parallel Border Line with corner breaks (5.2mm inset)
+  doc.setDrawColor(17, 17, 17);
+  doc.setLineWidth(0.35);
+  // Top Inner Rail
+  doc.line(24, 5.2, pageWidth - 24, 5.2);
+  doc.circle(24, 5.2, 0.45, 'F');
+  doc.circle(pageWidth - 24, 5.2, 0.45, 'F');
+
+  // Bottom Inner Rail
+  doc.line(24, pageHeight - 5.2, pageWidth - 24, pageHeight - 5.2);
+  doc.circle(24, pageHeight - 5.2, 0.45, 'F');
+  doc.circle(pageWidth - 24, pageHeight - 5.2, 0.45, 'F');
+
+  // Left Inner Rail
+  doc.line(5.2, 24, 5.2, pageHeight - 24);
+  doc.circle(5.2, 24, 0.45, 'F');
+  doc.circle(5.2, pageHeight - 24, 0.45, 'F');
+
+  // Right Inner Rail
+  doc.line(pageWidth - 5.2, 24, pageWidth - 5.2, pageHeight - 24);
+  doc.circle(pageWidth - 5.2, 24, 0.45, 'F');
+  doc.circle(pageWidth - 5.2, pageHeight - 24, 0.45, 'F');
+
+  // 3. Ornate Corner Filigree Vector Accents at all 4 Corners
+  const drawCornerFiligree = (cx: number, cy: number, flipX: number, flipY: number) => {
+    doc.setDrawColor(17, 17, 17);
+    doc.setFillColor(17, 17, 17);
+    // Central corner rosette node
+    doc.circle(cx + 7.5 * flipX, cy + 7.5 * flipY, 0.9, 'F');
+    doc.circle(cx + 7.5 * flipX, cy + 7.5 * flipY, 1.6, 'S');
+
+    // Diagonal vine curves
+    doc.setLineWidth(0.4);
+    doc.line(cx + 3.8 * flipX, cy + 16 * flipY, cx + 16 * flipX, cy + 3.8 * flipY);
+    doc.line(cx + 6 * flipX, cy + 13 * flipY, cx + 13 * flipX, cy + 6 * flipY);
+
+    // Decorative buds
+    doc.circle(cx + 12 * flipX, cy + 12 * flipY, 0.6, 'F');
+    doc.circle(cx + 5.5 * flipX, cy + 18 * flipY, 0.5, 'F');
+    doc.circle(cx + 18 * flipX, cy + 5.5 * flipY, 0.5, 'F');
+  };
+
+  // Top-Left
+  drawCornerFiligree(3.5, 3.5, 1, 1);
+  // Top-Right
+  drawCornerFiligree(pageWidth - 3.5, 3.5, -1, 1);
+  // Bottom-Left
+  drawCornerFiligree(3.5, pageHeight - 3.5, 1, -1);
+  // Bottom-Right
+  drawCornerFiligree(pageWidth - 3.5, pageHeight - 3.5, -1, -1);
 
   // =========================================================================
   // 1. TOP HEADER: ZIATHLON OFFICIAL LOGO & TITLE (SIDE-BY-SIDE LOCKUP)

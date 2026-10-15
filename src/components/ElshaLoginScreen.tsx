@@ -162,30 +162,72 @@ export const ElshaLoginScreen: React.FC<ElshaLoginScreenProps> = ({
               )}
             </button>
 
-            {/* Quick Demo Access */}
-            <div className="pt-2 flex items-center justify-between text-xs">
-              <button
-                type="button"
-                onClick={() => setPassword('ziathlon@2026')}
-                className="text-[11px] text-purple-700 hover:text-purple-900 font-semibold underline cursor-pointer"
-              >
-                Fill Password: ziathlon@2026
-              </button>
-              <button
-                type="button"
-                onClick={async () => {
-                  setPassword('ziathlon@2026');
-                  setIsLoading(true);
-                  const result = await onLogin('ziathlon@2026');
-                  setIsLoading(false);
-                  if (result.success) {
-                    onLoginSuccess();
-                  }
-                }}
-                className="px-2.5 py-1 bg-purple-100 hover:bg-purple-200 text-[#7016B7] rounded-lg text-[10px] font-bold uppercase tracking-wider cursor-pointer transition-colors"
-              >
-                1-Click Demo Login
-              </button>
+            {/* 4 Role Quick Demo Access */}
+            <div className="pt-3 border-t border-slate-100 space-y-2">
+              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                <span>4 Role Logins & Passwords:</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setPassword('Ziathlon@2026');
+                    setIsLoading(true);
+                    const res = await onLogin('Ziathlon@2026');
+                    setIsLoading(false);
+                    if (res.success) onLoginSuccess();
+                  }}
+                  className="p-2 rounded-xl bg-purple-50 hover:bg-purple-100 border border-purple-200 text-left cursor-pointer transition-all"
+                >
+                  <div className="font-black text-purple-900 text-[11px]">ADMIN</div>
+                  <div className="text-[9px] font-mono text-slate-600">Ziathlon@2026</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setPassword('nutri@2026');
+                    setIsLoading(true);
+                    const res = await onLogin('nutri@2026');
+                    setIsLoading(false);
+                    if (res.success) onLoginSuccess();
+                  }}
+                  className="p-2 rounded-xl bg-purple-50 hover:bg-purple-100 border border-purple-200 text-left cursor-pointer transition-all"
+                >
+                  <div className="font-black text-purple-900 text-[11px]">NUTRITIONIST</div>
+                  <div className="text-[9px] font-mono text-slate-600">nutri@2026</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setPassword('medifit@2026');
+                    setIsLoading(true);
+                    const res = await onLogin('medifit@2026');
+                    setIsLoading(false);
+                    if (res.success) onLoginSuccess();
+                  }}
+                  className="p-2 rounded-xl bg-purple-50 hover:bg-purple-100 border border-purple-200 text-left cursor-pointer transition-all"
+                >
+                  <div className="font-black text-purple-900 text-[11px]">DOCTOR</div>
+                  <div className="text-[9px] font-mono text-slate-600">medifit@2026</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setPassword('fitness@2026');
+                    setIsLoading(true);
+                    const res = await onLogin('fitness@2026');
+                    setIsLoading(false);
+                    if (res.success) onLoginSuccess();
+                  }}
+                  className="p-2 rounded-xl bg-purple-50 hover:bg-purple-100 border border-purple-200 text-left cursor-pointer transition-all"
+                >
+                  <div className="font-black text-purple-900 text-[11px]">EXERCISE TEAM</div>
+                  <div className="text-[9px] font-mono text-slate-600">fitness@2026</div>
+                </button>
+              </div>
             </div>
           </form>
 

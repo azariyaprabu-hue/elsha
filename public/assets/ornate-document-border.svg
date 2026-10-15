@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1131" width="800" height="1131">
+  <defs>
+    <!-- Detailed Victorian / Certificate Corner Filigree Ornament matching reference -->
+    <g id="ornate-corner">
+      <!-- Main corner root and scroll spirals -->
+      <!-- Corner floral spiral node -->
+      <circle cx="28" cy="28" r="3.2" fill="#111" />
+      <circle cx="28" cy="28" r="6" fill="none" stroke="#111" stroke-width="1.4" />
+      
+      <!-- Outer flourish curves into corner -->
+      <path d="M 14 62 C 14 38, 38 14, 62 14 C 44 16, 22 28, 18 48 C 16 54, 15 58, 14 62 Z" fill="#111" />
+      <path d="M 62 14 C 38 14, 14 38, 14 62 C 16 44, 28 22, 48 18 C 54 16, 58 15, 62 14 Z" fill="#111" />
+      
+      <!-- Inner scroll leaf flourishes -->
+      <path d="M 28 28 C 34 20, 48 18, 58 20 C 48 24, 38 30, 34 38 C 30 34, 28 30, 28 28 Z" fill="#111" />
+      <path d="M 28 28 C 20 34, 18 48, 20 58 C 24 48, 30 38, 38 34 C 34 30, 30 28, 28 28 Z" fill="#111" />
+      
+      <!-- Acanthus leaf wings extending along horizontal bar -->
+      <path d="M 52 14 C 60 14, 68 12, 74 8 C 70 12, 68 18, 62 20 C 58 17, 55 15, 52 14 Z" fill="#111" />
+      <path d="M 70 14 C 78 14, 85 10, 88 6 C 85 10, 82 15, 76 16 C 73 15, 71 14, 70 14 Z" fill="#111" />
+      <circle cx="91" cy="6" r="1.8" fill="#111" />
+      
+      <!-- Acanthus leaf wings extending along vertical bar -->
+      <path d="M 14 52 C 14 60, 12 68, 8 74 C 12 70, 18 68, 20 62 C 17 58, 15 55, 14 52 Z" fill="#111" />
+      <path d="M 14 70 C 14 78, 10 85, 6 88 C 10 85, 15 82, 16 76 C 15 73, 14 71, 14 70 Z" fill="#111" />
+      <circle cx="6" cy="91" r="1.8" fill="#111" />
+      
+      <!-- Heart/tendril curl in the inner corner (pointing toward page content) -->
+      <path d="M 36 36 C 42 42, 46 50, 44 56 C 42 60, 36 60, 34 54 C 32 48, 38 42, 42 40 C 44 38, 48 38, 50 40 C 54 44, 48 50, 44 48" fill="none" stroke="#111" stroke-width="1.5" stroke-linecap="round" />
+      <path d="M 36 36 C 42 42, 50 46, 56 44 C 60 42, 60 36, 54 34 C 48 32, 42 38, 40 42 C 38 44, 38 48, 40 50 C 44 54, 50 48, 48 44" fill="none" stroke="#111" stroke-width="1.5" stroke-linecap="round" />
+      <circle cx="44" cy="44" r="2.2" fill="#111" />
+
+      <!-- Small decorative satellite buds -->
+      <circle cx="22" cy="46" r="1.6" fill="#111" />
+      <circle cx="46" cy="22" r="1.6" fill="#111" />
+      <circle cx="32" cy="18" r="1.4" fill="#111" />
+      <circle cx="18" cy="32" r="1.4" fill="#111" />
+    </g>
+  </defs>
+
+  <!-- Parchment/Ivory Background Paper -->
+  <rect width="800" height="1131" fill="#FAF8F5" />
+  
+  <!-- Subtle Vintage Texture Simulation -->
+  <rect width="800" height="1131" fill="none" stroke="#EAE5DC" stroke-width="0.5" />
+
+  <!-- ================= OUTER DOUBLE BORDER SYSTEM ================= -->
+  <!-- 1. Outer Solid Primary Border (2.5px) -->
+  <rect x="14" y="14" width="772" height="1103" rx="0" fill="none" stroke="#111111" stroke-width="2.6" />
+
+  <!-- 2. Inner Secondary Line (Parallel gap of 4px) -->
+  <!-- Top Rail with corner breaks -->
+  <line x1="94" y1="21" x2="706" y2="21" stroke="#111111" stroke-width="1.3" />
+  <circle cx="94" cy="21" r="1.5" fill="#111" />
+  <circle cx="706" cy="21" r="1.5" fill="#111" />
+
+  <!-- Bottom Rail with corner breaks -->
+  <line x1="94" y1="1110" x2="706" y2="1110" stroke="#111111" stroke-width="1.3" />
+  <circle cx="94" cy="1110" r="1.5" fill="#111" />
+  <circle cx="706" cy="1110" r="1.5" fill="#111" />
+
+  <!-- Left Rail with corner breaks -->
+  <line x1="21" y1="94" x2="21" y2="1037" stroke="#111111" stroke-width="1.3" />
+  <circle cx="21" cy="94" r="1.5" fill="#111" />
+  <circle cx="21" cy="1037" r="1.5" fill="#111" />
+
+  <!-- Right Rail with corner breaks -->
+  <line x1="779" y1="94" x2="779" y2="1037" stroke="#111111" stroke-width="1.3" />
+  <circle cx="779" cy="94" r="1.5" fill="#111" />
+  <circle cx="779" cy="1037" r="1.5" fill="#111" />
+
+  <!-- ================= 4 ORNATE CORNER FLOURISHES ================= -->
+  <!-- Top-Left Corner -->
+  <g transform="translate(14, 14)">
+    <use href="#ornate-corner" />
+  </g>
+
+  <!-- Top-Right Corner (Flipped horizontally) -->
+  <g transform="translate(786, 14) scale(-1, 1)">
+    <use href="#ornate-corner" />
+  </g>
+
+  <!-- Bottom-Left Corner (Flipped vertically) -->
+  <g transform="translate(14, 1117) scale(1, -1)">
+    <use href="#ornate-corner" />
+  </g>
+
+  <!-- Bottom-Right Corner (Flipped both horizontally & vertically) -->
+  <g transform="translate(786, 1117) scale(-1, -1)">
+    <use href="#ornate-corner" />
+  </g>
+</svg>

@@ -400,6 +400,17 @@ export default function App() {
     setTimeout(() => setSaveSuccessNotification(false), 3500);
   };
 
+  const getCurrentFolderId = (): string => {
+    if (activeTab === 'workspace' || activeTab === 'overview' || activeTab === 'profile' || activeTab === 'general' || activeTab === 'symptoms' || activeTab === 'medical-history' || activeTab === 'parent-history' || activeTab === 'upload-files') return 'workspace';
+    if (activeTab.startsWith('biometric')) return 'biometrics';
+    if (activeTab === 'medicinal') return 'medicinal';
+    if (activeTab === 'fitness' || activeTab === 'exercise' || activeTab === 'anthropometry') return 'fitness';
+    return 'nutrition';
+  };
+
+  const currentCanEdit = elshaSecurity.canEditFolder(getCurrentFolderId());
+  const currentRoleName = elshaSecurity.getRoleName() || 'ADMIN';
+
   // --- 7 FOLDERS NAVIGATION AS SPECIFIED BY USER ---
   const navTabs = [
     { id: 'zion', label: '💜 ZION AI APP', short: 'ZION AI' },
@@ -781,6 +792,11 @@ export default function App() {
                   📁
                 </button>
 
+                {/* Role Badge */}
+                <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 border border-purple-300 text-purple-900 rounded-lg text-xs font-black uppercase tracking-wider font-mono shadow-2xs">
+                  <span>Role: {elshaSecurity.getRoleName() || 'ADMIN'}</span>
+                </div>
+
                 {/* Security Settings Button */}
                 <button
                   type="button"
@@ -914,6 +930,16 @@ export default function App() {
               : 'flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-6 space-y-8 relative z-10'
           }
         >
+          {activeTab !== 'overview' && !currentCanEdit && (
+            <div className="w-full bg-amber-50 border-2 border-amber-300 rounded-xl p-3.5 mb-4 text-xs font-bold text-amber-900 flex items-center justify-between shadow-xs">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
+                <span>🔒 Read-Only Mode: Role <strong>{currentRoleName}</strong> has view access only for this folder. Editing or modifying records is restricted.</span>
+              </div>
+              <span className="text-[10px] font-mono bg-amber-200/80 text-amber-900 px-2 py-0.5 rounded">View Only</span>
+            </div>
+          )}
+
               {/* 00. FRONT PAGE: ONLY LOGO ZIATHLON SPORT MEDICINE CLINIC & ENTER BUTTON */}
               {activeTab === 'overview' && (
                 <FrontPageZiathlon

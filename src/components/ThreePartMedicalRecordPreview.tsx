@@ -157,6 +157,9 @@ export const ThreePartMedicalRecordPreview: React.FC<ThreePartMedicalRecordPrevi
   const [customDiagnosticsOverride, setCustomDiagnosticsOverride] = useState<string>('');
   const [customPrescriptionsOverride, setCustomPrescriptionsOverride] = useState<string>('');
 
+  // Multi-page document layout mode ('both' = 2-Page Complete Dossier, 'page1', 'page2', 'single')
+  const [dossierPageMode, setDossierPageMode] = useState<'both' | 'page1' | 'page2' | 'single'>('both');
+
   // 4-Line AI Clinical Summary (for extended view)
   const [aiSummaryLines, setAiSummaryLines] = useState<string[]>([]);
   const [isGeneratingAiSummary, setIsGeneratingAiSummary] = useState<boolean>(false);
@@ -172,6 +175,7 @@ export const ThreePartMedicalRecordPreview: React.FC<ThreePartMedicalRecordPrevi
   const [sendSuccessMessage, setSendSuccessMessage] = useState<string | null>(null);
   const [sendErrorMessage, setSendErrorMessage] = useState<string | null>(null);
   const [activePdfResult, setActivePdfResult] = useState<GeneratedPdfResult | null>(null);
+  const [recipientPhoneInput, setRecipientPhoneInput] = useState<string>('+91 94482 88008');
 
   useEffect(() => {
     const loadAttachedDocuments = () => {
@@ -554,33 +558,13 @@ export const ThreePartMedicalRecordPreview: React.FC<ThreePartMedicalRecordPrevi
 
   // Generates PDF directly matching the Master Preview Canvas (100% pixel-perfect identity across Preview, Download, and Share)
   const capturePreviewCanvasToPdf = async (): Promise<GeneratedPdfResult> => {
-    // 1. Locate the master preview canvas element
-    const canvasElement =
-      (document.querySelector('[data-canvas="ziathlon-fixed-letterhead"]') as HTMLElement) ||
-      (document.getElementById('ziathlon-letterhead-canvas') as HTMLElement);
+    // 1. Locate all master preview canvas elements on the page (supports multi-page ornate layout)
+    const canvasElements = Array.from(
+      document.querySelectorAll('[data-canvas="ziathlon-fixed-letterhead"]')
+    ) as HTMLElement[];
 
-    if (canvasElement) {
-      // Temporarily normalize transform to 1.0 during capture so html2canvas captures unscaled 800px × 1131px canvas
-      const origTransform = canvasElement.style.transform;
-      const origTransformOrigin = canvasElement.style.transformOrigin;
-      canvasElement.style.transform = 'none';
-
+    if (canvasElements.length > 0) {
       try {
-        const canvas = await html2canvas(canvasElement, {
-          scale: 2.5, // 300 DPI high resolution
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: '#ffffff',
-          logging: false,
-          windowWidth: 800,
-          windowHeight: 1131,
-        });
-
-        // Restore active responsive transform
-        canvasElement.style.transform = origTransform;
-        canvasElement.style.transformOrigin = origTransformOrigin;
-
-        const imgData = canvas.toDataURL('image/png', 1.0);
         const doc = new jsPDF({
           orientation: 'portrait',
           unit: 'mm',
@@ -588,8 +572,35 @@ export const ThreePartMedicalRecordPreview: React.FC<ThreePartMedicalRecordPrevi
           compress: true,
         });
 
-        // Exact A4 dimensions: 210mm × 297mm
-        doc.addImage(imgData, 'PNG', 0, 0, 210, 297, undefined, 'FAST');
+        for (let i = 0; i < canvasElements.length; i++) {
+          const el = canvasElements[i];
+          if (i > 0) {
+            doc.addPage('a4', 'portrait');
+          }
+
+          // Temporarily normalize transform to 1.0 during capture so html2canvas captures unscaled 800px × 1131px canvas
+          const origTransform = el.style.transform;
+          const origTransformOrigin = el.style.transformOrigin;
+          el.style.transform = 'none';
+
+          const canvas = await html2canvas(el, {
+            scale: 2.5, // 300 DPI high resolution
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#FAF8F5',
+            logging: false,
+            windowWidth: 800,
+            windowHeight: 1131,
+          });
+
+          // Restore active responsive transform
+          el.style.transform = origTransform;
+          el.style.transformOrigin = origTransformOrigin;
+
+          const imgData = canvas.toDataURL('image/png', 1.0);
+          // Exact A4 dimensions: 210mm × 297mm
+          doc.addImage(imgData, 'PNG', 0, 0, 210, 297, undefined, 'FAST');
+        }
 
         const pdfBlob = doc.output('blob');
         const pdfArrayBuffer = await pdfBlob.arrayBuffer();
@@ -597,7 +608,7 @@ export const ThreePartMedicalRecordPreview: React.FC<ThreePartMedicalRecordPrevi
           new Uint8Array(pdfArrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
         );
         const cleanName = patientDisplayName.replace(/[^a-zA-Z0-9_-]/g, '_');
-        const filename = `${cleanName}_Ziathlon_Medical_Prescription.pdf`;
+        const filename = `${cleanName}_Ziathlon_Medical_Dossier.pdf`;
 
         return {
           doc,
@@ -608,9 +619,7 @@ export const ThreePartMedicalRecordPreview: React.FC<ThreePartMedicalRecordPrevi
           dataUrl: doc.output('datauristring'),
         };
       } catch (err) {
-        console.warn('Canvas capture fallback to generator:', err);
-        canvasElement.style.transform = origTransform;
-        canvasElement.style.transformOrigin = origTransformOrigin;
+        console.warn('Multi-canvas capture fallback to generator:', err);
       }
     }
 
@@ -667,6 +676,7 @@ export const ThreePartMedicalRecordPreview: React.FC<ThreePartMedicalRecordPrevi
     setActivePdfResult(pdfRes);
     setSendSuccessMessage(null);
     setSendErrorMessage(null);
+    setRecipientPhoneInput(patientPhone || '+91 94482 88008');
     setIsSendModalOpen(true);
 
     // Check WhatsApp Business Cloud API connection status
@@ -703,7 +713,7 @@ export const ThreePartMedicalRecordPreview: React.FC<ThreePartMedicalRecordPrevi
       const mediaUrl = uploadData.downloadUrl || uploadData.fileUrl;
 
       // 2. Dispatch real PDF document attachment via Meta WhatsApp Cloud API
-      const cleanPhone = (patientPhone || '').replace(/[^0-9]/g, '');
+      const cleanPhone = (recipientPhoneInput || patientPhone || '').replace(/[^0-9]/g, '');
       const sendRes = await fetch('/api/whatsapp/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -915,158 +925,358 @@ export const ThreePartMedicalRecordPreview: React.FC<ThreePartMedicalRecordPrevi
         </div>
       )}
 
-      {/* THE CLINICAL DOSSIER PAPER (EXACT MATCH TO APPROVED ZIATHLON MASTER TEMPLATE) */}
-      <div ref={dossierPaperRef} id="clinical-dossier-paper" className="print-area w-full max-w-[880px] mx-auto">
-        <ZiathlonLetterheadFrame showZoomControls={false}>
-          <div className="space-y-2.5 text-gray-950 font-sans text-left">
-            {/* ========================================================================= */}
-            {/* 1. PATIENT INFORMATION: COMPACT READABLE LINES (NO TABLES, NO COLUMNS)    */}
-            {/* ========================================================================= */}
-            <div className="border-b border-purple-200/90 pb-2 mb-2.5 text-[11px] leading-relaxed">
-              {/* Line 1: Patient Name, Gender, Age, Phone (with Date & Time on right) */}
-              <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                <div className="flex flex-wrap items-baseline gap-1.5 min-w-0">
-                  <span className="font-black text-[15px] text-[#0B0826] tracking-tight">{patientDisplayName}</span>
-                  <span className="text-slate-400">,</span>
-                  <span className="font-bold text-slate-800 text-[11.5px]">{patientGender}</span>
-                  <span className="text-slate-400">,</span>
-                  <span className="font-bold text-slate-800 text-[11.5px]">{patientAge}</span>
-                  <span className="text-slate-400">,</span>
-                  <span className="text-slate-600 font-semibold text-[11.5px]">Phone:</span>
-                  <span className="font-mono font-bold text-slate-950 text-[11.5px]">{patientPhone}</span>
-                </div>
-                <div className="text-[11px] text-slate-600 font-mono shrink-0">
-                  <span>Date: <strong className="text-slate-950">{consultationDate}</strong></span>
-                  <span className="mx-1.5 text-slate-300">|</span>
-                  <span>Time: <strong className="text-slate-950">{consultationTime}</strong></span>
-                </div>
-              </div>
-
-              {/* Line 2: City | UHID | ABHA Address | Occupation */}
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-[11px] text-slate-700">
-                <span>City: <strong className="text-slate-950 font-semibold">{patientCity}</strong></span>
-                <span className="text-slate-300">|</span>
-                <span>UHID: <strong className="font-mono font-black text-[#7016B7]">{patientUhid}</strong></span>
-                <span className="text-slate-300">|</span>
-                <span>ABHA Address: <strong className="font-mono text-slate-950">{patientAbha}</strong></span>
-                <span className="text-slate-300">|</span>
-                <span>Occupation: <strong className="text-slate-950 font-semibold">{generalInfo.occupation || 'IT Sector'}</strong></span>
-              </div>
-
-              {/* Line 3: Clinical Domain | Address */}
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5 text-[10.5px] text-slate-600">
-                <span>Clinical Domain: <strong className="font-black text-[#7016B7]">{patientTag}</strong></span>
-                <span className="text-slate-300">|</span>
-                <span>Address: <span className="text-slate-800 font-medium">{patientAddress}</span></span>
-              </div>
-            </div>
-
-            {/* ========================================================================= */}
-            {/* 2. VITALS – CONTINUOUS INLINE FORMAT                                      */}
-            {/* ========================================================================= */}
-            <div className="text-[12px] leading-relaxed break-words [overflow-wrap:anywhere]">
-              <span className="font-black text-[#7016B7] uppercase tracking-wide text-[12px]">VITALS: </span>
-              <span className="font-semibold text-slate-900 text-[12px]">{displayVitals}</span>
-            </div>
-
-            {/* ========================================================================= */}
-            {/* 3. SYMPTOMS – CONTINUOUS INLINE FORMAT                                    */}
-            {/* ========================================================================= */}
-            <div className="text-[12px] leading-relaxed break-words [overflow-wrap:anywhere]">
-              <span className="font-black text-[#7016B7] uppercase tracking-wide text-[12px]">SYMPTOMS: </span>
-              <span className="font-semibold text-slate-900 text-[12px]">{displaySymptoms}</span>
-            </div>
-
-            {/* ========================================================================= */}
-            {/* 4. CLINICAL EXAMINATION – CONTINUOUS INLINE FORMAT                        */}
-            {/* ========================================================================= */}
-            <div className="text-[12px] leading-relaxed break-words [overflow-wrap:anywhere]">
-              <span className="font-black text-[#7016B7] uppercase tracking-wide text-[12px]">CLINICAL EXAMINATION: </span>
-              <span className="font-semibold text-slate-900 text-[12px]">{displayClinicalExamination}</span>
-            </div>
-
-            {/* ========================================================================= */}
-            {/* 5. DIAGNOSTICS – PAST HISTORY – CONTINUOUS INLINE FORMAT                  */}
-            {/* ========================================================================= */}
-            <div className="text-[12px] leading-relaxed break-words [overflow-wrap:anywhere]">
-              <span className="font-black text-[#7016B7] uppercase tracking-wide text-[12px]">DIAGNOSTICS – PAST HISTORY: </span>
-              <span className="font-semibold text-slate-900 text-[12px]">{displayDiagnosticsHistory}</span>
-            </div>
-
-            {/* ========================================================================= */}
-            {/* 6. WORKING DIAGNOSES AND RISK FACTORS – CONTINUOUS INLINE FORMAT          */}
-            {/* ========================================================================= */}
-            <div className="text-[12px] leading-relaxed break-words [overflow-wrap:anywhere]">
-              <span className="font-black text-[#7016B7] uppercase tracking-wide text-[12px]">WORKING DIAGNOSES AND RISK FACTORS: </span>
-              <span className="font-semibold text-slate-900 text-[12px]">{displayDiagnoses}</span>
-            </div>
-
-            {/* ========================================================================= */}
-            {/* 7. CLINICAL GOALS – CONTINUOUS INLINE FORMAT                              */}
-            {/* ========================================================================= */}
-            <div className="text-[12px] leading-relaxed break-words [overflow-wrap:anywhere]">
-              <span className="font-black text-[#7016B7] uppercase tracking-wide text-[12px]">CLINICAL GOALS: </span>
-              <span className="font-semibold text-slate-900 text-[12px]">{displayGoals}</span>
-            </div>
-
-            {/* ========================================================================= */}
-            {/* 8. MEDICAL HISTORY – CONTINUOUS INLINE FORMAT                             */}
-            {/* ========================================================================= */}
-            <div className="text-[12px] leading-relaxed break-words [overflow-wrap:anywhere]">
-              <span className="font-black text-[#7016B7] uppercase tracking-wide text-[12px]">MEDICAL HISTORY: </span>
-              <span className="font-semibold text-slate-900 text-[12px]">{displayMedicalHistory}</span>
-            </div>
-
-            {/* ========================================================================= */}
-            {/* 9. NUTRITION ASSESSMENT – CONTINUOUS INLINE FORMAT                        */}
-            {/* ========================================================================= */}
-            <div className="text-[12px] leading-relaxed break-words [overflow-wrap:anywhere]">
-              <span className="font-black text-[#7016B7] uppercase tracking-wide text-[12px]">NUTRITION ASSESSMENT: </span>
-              <span className="font-semibold text-slate-900 text-[12px]">{displayNutritionAssessment}</span>
-            </div>
-
-            {/* ========================================================================= */}
-            {/* 10. NUTRITION PRESCRIPTION – CONTINUOUS INLINE FORMAT                     */}
-            {/* ========================================================================= */}
-            <div className="text-[12px] leading-relaxed break-words [overflow-wrap:anywhere]">
-              <span className="font-black text-[#7016B7] uppercase tracking-wide text-[12px]">NUTRITION PRESCRIPTION: </span>
-              <span className="font-semibold text-slate-900 text-[12px]">{displayNutritionPrescription}</span>
-            </div>
-
-            {/* ========================================================================= */}
-            {/* 11. EXERCISE RECOMMENDATIONS – CONTINUOUS INLINE FORMAT                   */}
-            {/* ========================================================================= */}
-            <div className="text-[12px] leading-relaxed break-words [overflow-wrap:anywhere]">
-              <span className="font-black text-[#7016B7] uppercase tracking-wide text-[12px]">EXERCISE RECOMMENDATIONS: </span>
-              <span className="font-semibold text-slate-900 text-[12px]">{displayExerciseRecs}</span>
-            </div>
-
-            {/* ========================================================================= */}
-            {/* 12. TREATMENT PLAN / PRESCRIPTION (℞) – CONTINUOUS INLINE FORMAT          */}
-            {/* ========================================================================= */}
-            <div className="text-[12px] leading-relaxed break-words [overflow-wrap:anywhere]">
-              <span className="font-black text-[#7016B7] uppercase tracking-wide text-[12px]">TREATMENT PLAN / PRESCRIPTION (℞): </span>
-              <span className="font-semibold text-slate-900 text-[12px]">{displayTreatmentPlan}</span>
-            </div>
-
-            {/* ========================================================================= */}
-            {/* 13. FOLLOW-UP RECOMMENDATIONS – CONTINUOUS INLINE FORMAT                  */}
-            {/* ========================================================================= */}
-            <div className="text-[12px] leading-relaxed break-words [overflow-wrap:anywhere]">
-              <span className="font-black text-[#7016B7] uppercase tracking-wide text-[12px]">FOLLOW-UP RECOMMENDATIONS: </span>
-              <span className="font-semibold text-slate-900 text-[12px]">{displayFollowUp}</span>
-            </div>
-
-            {/* ========================================================================= */}
-            {/* 14. CLINICAL CONSULTATION NOTE                                            */}
-            {/* ========================================================================= */}
-            <div className="pt-2 text-left">
-              <p className="text-[10px] text-gray-500 font-mono font-bold m-0">
-                Clinical Consultation • Electronic EMR Record • Follow up after 30 days or earlier in case of acute symptoms
-              </p>
-            </div>
+      {/* ========================================================================= */}
+      {/* DOCUMENT PAGES CONTROL BAR                                                */}
+      {/* ========================================================================= */}
+      <div className="w-full max-w-[800px] mb-3 px-3 py-2 bg-white/95 border border-purple-200/90 rounded-2xl shadow-xs flex flex-wrap items-center justify-between gap-3 no-print select-none">
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-mono font-black uppercase text-[#7016B7] tracking-wider flex items-center gap-1.5">
+            <Layers className="w-4 h-4 text-[#7016B7]" />
+            Dossier Pages:
+          </span>
+          <div className="flex items-center gap-1 bg-purple-50/80 p-1 rounded-xl border border-purple-200/60 text-xs">
+            <button
+              type="button"
+              onClick={() => setDossierPageMode('both')}
+              className={`px-3 py-1 rounded-lg font-bold text-xs cursor-pointer transition-all ${
+                dossierPageMode === 'both'
+                  ? 'bg-[#7016B7] text-white shadow-xs'
+                  : 'text-purple-950 hover:bg-purple-100'
+              }`}
+              title="View all 2 pages of the dossier in ornate layout"
+            >
+              📑 2-Page Complete Dossier
+            </button>
+            <button
+              type="button"
+              onClick={() => setDossierPageMode('page1')}
+              className={`px-3 py-1 rounded-lg font-bold text-xs cursor-pointer transition-all ${
+                dossierPageMode === 'page1'
+                  ? 'bg-[#7016B7] text-white shadow-xs'
+                  : 'text-purple-950 hover:bg-purple-100'
+              }`}
+              title="View Page 1: Clinical Assessment & Diagnostics"
+            >
+              📄 Page 1
+            </button>
+            <button
+              type="button"
+              onClick={() => setDossierPageMode('page2')}
+              className={`px-3 py-1 rounded-lg font-bold text-xs cursor-pointer transition-all ${
+                dossierPageMode === 'page2'
+                  ? 'bg-[#7016B7] text-white shadow-xs'
+                  : 'text-purple-950 hover:bg-purple-100'
+              }`}
+              title="View Page 2: Treatment Plan, ℞ Medications & Lifestyle"
+            >
+              📄 Page 2
+            </button>
+            <button
+              type="button"
+              onClick={() => setDossierPageMode('single')}
+              className={`px-3 py-1 rounded-lg font-bold text-xs cursor-pointer transition-all ${
+                dossierPageMode === 'single'
+                  ? 'bg-[#7016B7] text-white shadow-xs'
+                  : 'text-purple-950 hover:bg-purple-100'
+              }`}
+              title="View 1-Page Compact Master"
+            >
+              📄 1-Page Compact
+            </button>
           </div>
-        </ZiathlonLetterheadFrame>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="text-[10.5px] font-mono text-purple-900 bg-purple-100/70 px-2.5 py-1 rounded-lg border border-purple-200 font-bold">
+            {dossierPageMode === 'both' ? '📑 Showing Complete 2-Page Dossier' : dossierPageMode === 'page1' ? '📄 Showing Page 1 of 2' : dossierPageMode === 'page2' ? '📄 Showing Page 2 of 2' : '📄 1-Page Master Summary'}
+          </span>
+        </div>
+      </div>
+
+      {/* THE CLINICAL DOSSIER PAPER (EXACT MATCH TO APPROVED ORNATE MASTER TEMPLATE) */}
+      <div ref={dossierPaperRef} id="clinical-dossier-paper" className="print-area w-full max-w-[880px] mx-auto space-y-6">
+        {/* ========================================================================= */}
+        {/* PAGE 1: CLINICAL ASSESSMENT & WORKING DIAGNOSES                           */}
+        {/* ========================================================================= */}
+        {(dossierPageMode === 'both' || dossierPageMode === 'page1') && (
+          <div className="dossier-page-1-wrapper w-full flex justify-center">
+            <ZiathlonLetterheadFrame
+              showZoomControls={false}
+              pageNumber={1}
+              totalPages={2}
+              documentTitle="OFFICIAL CLINICAL RECORD • PART I"
+            >
+              <div className="space-y-2.5 text-gray-950 font-sans text-left">
+                {/* PATIENT INFORMATION */}
+                <div className="border-b border-purple-200/90 pb-2 mb-2 text-[11px] leading-relaxed">
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                    <div className="flex flex-wrap items-baseline gap-1.5 min-w-0">
+                      <span className="font-black text-[15px] text-[#0B0826] tracking-tight">{patientDisplayName}</span>
+                      <span className="text-slate-400">,</span>
+                      <span className="font-bold text-slate-800 text-[11.5px]">{patientGender}</span>
+                      <span className="text-slate-400">,</span>
+                      <span className="font-bold text-slate-800 text-[11.5px]">{patientAge}</span>
+                      <span className="text-slate-400">,</span>
+                      <span className="text-slate-600 font-semibold text-[11.5px]">Phone:</span>
+                      <span className="font-mono font-bold text-slate-950 text-[11.5px]">{patientPhone}</span>
+                    </div>
+                    <div className="text-[11px] text-slate-600 font-mono shrink-0">
+                      <span>Date: <strong className="text-slate-950">{consultationDate}</strong></span>
+                      <span className="mx-1.5 text-slate-300">|</span>
+                      <span>Time: <strong className="text-slate-950">{consultationTime}</strong></span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-[11px] text-slate-700">
+                    <span>City: <strong className="text-slate-950 font-semibold">{patientCity}</strong></span>
+                    <span className="text-slate-300">|</span>
+                    <span>UHID: <strong className="font-mono font-black text-[#7016B7]">{patientUhid}</strong></span>
+                    <span className="text-slate-300">|</span>
+                    <span>ABHA Address: <strong className="font-mono text-slate-950">{patientAbha}</strong></span>
+                    <span className="text-slate-300">|</span>
+                    <span>Occupation: <strong className="text-slate-950 font-semibold">{generalInfo.occupation || 'IT Sector'}</strong></span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5 text-[10.5px] text-slate-600">
+                    <span>Clinical Domain: <strong className="font-black text-[#7016B7]">{patientTag}</strong></span>
+                    <span className="text-slate-300">|</span>
+                    <span>Address: <span className="text-slate-800 font-medium">{patientAddress}</span></span>
+                  </div>
+                </div>
+
+                {/* 1. VITALS */}
+                <div className="text-[11.5px] leading-relaxed break-words [overflow-wrap:anywhere] bg-white/70 p-2 rounded-lg border border-purple-100/80 shadow-2xs">
+                  <span className="font-black text-[#7016B7] uppercase tracking-wide text-[11px] mr-1.5">VITALS:</span>
+                  <span className="font-semibold text-slate-900 text-[11.5px]">{displayVitals}</span>
+                </div>
+
+                {/* 2. SYMPTOMS */}
+                <div className="text-[11.5px] leading-relaxed break-words [overflow-wrap:anywhere] bg-white/70 p-2 rounded-lg border border-purple-100/80 shadow-2xs">
+                  <span className="font-black text-[#7016B7] uppercase tracking-wide text-[11px] mr-1.5">SYMPTOMS:</span>
+                  <span className="font-semibold text-slate-900 text-[11.5px]">{displaySymptoms}</span>
+                </div>
+
+                {/* 3. CLINICAL EXAMINATION */}
+                <div className="text-[11.5px] leading-relaxed break-words [overflow-wrap:anywhere] bg-white/70 p-2 rounded-lg border border-purple-100/80 shadow-2xs">
+                  <span className="font-black text-[#7016B7] uppercase tracking-wide text-[11px] mr-1.5">CLINICAL EXAMINATION:</span>
+                  <span className="font-semibold text-slate-900 text-[11.5px]">{displayClinicalExamination}</span>
+                </div>
+
+                {/* 4. DIAGNOSTICS – PAST HISTORY */}
+                <div className="text-[11.5px] leading-relaxed break-words [overflow-wrap:anywhere] bg-white/70 p-2 rounded-lg border border-purple-100/80 shadow-2xs">
+                  <span className="font-black text-[#7016B7] uppercase tracking-wide text-[11px] mr-1.5">DIAGNOSTICS – PAST HISTORY:</span>
+                  <span className="font-semibold text-slate-900 text-[11.5px]">{displayDiagnosticsHistory}</span>
+                </div>
+
+                {/* 5. WORKING DIAGNOSES AND RISK FACTORS */}
+                <div className="text-[11.5px] leading-relaxed break-words [overflow-wrap:anywhere] bg-white/70 p-2 rounded-lg border border-purple-100/80 shadow-2xs">
+                  <span className="font-black text-[#7016B7] uppercase tracking-wide text-[11px] mr-1.5">WORKING DIAGNOSES AND RISK FACTORS:</span>
+                  <span className="font-semibold text-slate-900 text-[11.5px]">{displayDiagnoses}</span>
+                </div>
+
+                {/* 6. CLINICAL GOALS */}
+                <div className="text-[11.5px] leading-relaxed break-words [overflow-wrap:anywhere] bg-white/70 p-2 rounded-lg border border-purple-100/80 shadow-2xs">
+                  <span className="font-black text-[#7016B7] uppercase tracking-wide text-[11px] mr-1.5">CLINICAL GOALS:</span>
+                  <span className="font-semibold text-slate-900 text-[11.5px]">{displayGoals}</span>
+                </div>
+
+                {/* CONTINUATION NOTICE AT BOTTOM OF PAGE 1 */}
+                <div className="pt-3 border-t border-purple-200/60 mt-3 text-center">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-50 text-purple-900 font-mono text-[10px] font-bold border border-purple-200">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-purple-700" />
+                    <span>Continued on Page 2 • Comprehensive Treatment Plan, ℞ Medications & Lifestyle Guidelines</span>
+                  </span>
+                </div>
+              </div>
+            </ZiathlonLetterheadFrame>
+          </div>
+        )}
+
+        {/* INTER-PAGE DIVIDER (ONLY VISIBLE ON SCREEN IN 2-PAGE VIEW) */}
+        {dossierPageMode === 'both' && (
+          <div className="no-print flex items-center justify-center gap-3 py-2 text-xs font-mono text-purple-700 font-bold">
+            <div className="h-px bg-purple-300 flex-1" />
+            <span className="px-3 py-1 bg-purple-100 rounded-full border border-purple-200 shadow-2xs">
+              PAGE 2 OF 2 • TREATMENT PLAN & PRESCRIPTION (℞)
+            </span>
+            <div className="h-px bg-purple-300 flex-1" />
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* PAGE 2: TREATMENT PLAN, ℞ PRESCRIPTION & LIFESTYLE GUIDANCE               */}
+        {/* ========================================================================= */}
+        {(dossierPageMode === 'both' || dossierPageMode === 'page2') && (
+          <div className="dossier-page-2-wrapper w-full flex justify-center">
+            <ZiathlonLetterheadFrame
+              showZoomControls={false}
+              pageNumber={2}
+              totalPages={2}
+              documentTitle="OFFICIAL CLINICAL RECORD • PART II"
+            >
+              <div className="space-y-2.5 text-gray-950 font-sans text-left">
+                {/* PATIENT CONTINUATION MINI-HEADER */}
+                <div className="border-b border-purple-200/90 pb-2 mb-2 text-[11px] flex flex-wrap items-center justify-between gap-2 bg-purple-50/40 p-2 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <span className="font-black text-[#0B0826] text-xs">Patient: {patientDisplayName}</span>
+                    <span className="text-slate-400">|</span>
+                    <span className="font-mono font-bold text-[#7016B7]">UHID: {patientUhid}</span>
+                  </div>
+                  <div className="text-[10.5px] text-slate-600 font-mono">
+                    <span>Date: <strong className="text-slate-950">{consultationDate}</strong></span>
+                    <span className="mx-1.5 text-slate-300">|</span>
+                    <span>Domain: <strong className="text-[#7016B7]">{patientTag}</strong></span>
+                  </div>
+                </div>
+
+                {/* 7. MEDICAL HISTORY */}
+                <div className="text-[11.5px] leading-relaxed break-words [overflow-wrap:anywhere] bg-white/70 p-2 rounded-lg border border-purple-100/80 shadow-2xs">
+                  <span className="font-black text-[#7016B7] uppercase tracking-wide text-[11px] mr-1.5">MEDICAL HISTORY:</span>
+                  <span className="font-semibold text-slate-900 text-[11.5px]">{displayMedicalHistory}</span>
+                </div>
+
+                {/* 8. NUTRITION ASSESSMENT */}
+                <div className="text-[11.5px] leading-relaxed break-words [overflow-wrap:anywhere] bg-white/70 p-2 rounded-lg border border-purple-100/80 shadow-2xs">
+                  <span className="font-black text-[#7016B7] uppercase tracking-wide text-[11px] mr-1.5">NUTRITION ASSESSMENT:</span>
+                  <span className="font-semibold text-slate-900 text-[11.5px]">{displayNutritionAssessment}</span>
+                </div>
+
+                {/* 9. NUTRITION PRESCRIPTION */}
+                <div className="text-[11.5px] leading-relaxed break-words [overflow-wrap:anywhere] bg-white/70 p-2 rounded-lg border border-purple-100/80 shadow-2xs">
+                  <span className="font-black text-[#7016B7] uppercase tracking-wide text-[11px] mr-1.5">NUTRITION PRESCRIPTION:</span>
+                  <span className="font-semibold text-slate-900 text-[11.5px]">{displayNutritionPrescription}</span>
+                </div>
+
+                {/* 10. EXERCISE RECOMMENDATIONS */}
+                <div className="text-[11.5px] leading-relaxed break-words [overflow-wrap:anywhere] bg-white/70 p-2 rounded-lg border border-purple-100/80 shadow-2xs">
+                  <span className="font-black text-[#7016B7] uppercase tracking-wide text-[11px] mr-1.5">EXERCISE RECOMMENDATIONS:</span>
+                  <span className="font-semibold text-slate-900 text-[11.5px]">{displayExerciseRecs}</span>
+                </div>
+
+                {/* 11. TREATMENT PLAN / PRESCRIPTION (℞) */}
+                <div className="text-[11.5px] leading-relaxed break-words [overflow-wrap:anywhere] bg-white/70 p-2 rounded-lg border border-purple-100/80 shadow-2xs">
+                  <span className="font-black text-[#7016B7] uppercase tracking-wide text-[11px] mr-1.5">TREATMENT PLAN / PRESCRIPTION (℞):</span>
+                  <span className="font-semibold text-slate-900 text-[11.5px]">{displayTreatmentPlan}</span>
+                </div>
+
+                {/* 12. FOLLOW-UP RECOMMENDATIONS */}
+                <div className="text-[11.5px] leading-relaxed break-words [overflow-wrap:anywhere] bg-white/70 p-2 rounded-lg border border-purple-100/80 shadow-2xs">
+                  <span className="font-black text-[#7016B7] uppercase tracking-wide text-[11px] mr-1.5">FOLLOW-UP RECOMMENDATIONS:</span>
+                  <span className="font-semibold text-slate-900 text-[11.5px]">{displayFollowUp}</span>
+                </div>
+
+                {/* 13. CLINICAL CONSULTATION NOTE */}
+                <div className="pt-2 text-left">
+                  <p className="text-[10px] text-gray-500 font-mono font-bold m-0">
+                    Clinical Consultation • Electronic EMR Record • Follow up after 30 days or earlier in case of acute symptoms
+                  </p>
+                </div>
+              </div>
+            </ZiathlonLetterheadFrame>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* SINGLE-PAGE COMPACT MASTER (IF USER CHOOSES SINGLE PAGE MODE)             */}
+        {/* ========================================================================= */}
+        {dossierPageMode === 'single' && (
+          <div className="dossier-single-page-wrapper w-full flex justify-center">
+            <ZiathlonLetterheadFrame
+              showZoomControls={false}
+              pageNumber={1}
+              totalPages={1}
+              documentTitle="OFFICIAL CLINICAL RECORD • MASTER DOSSIER"
+            >
+              <div className="space-y-2 text-gray-950 font-sans text-left">
+                {/* Patient Information */}
+                <div className="border-b border-purple-200/90 pb-1.5 mb-1.5 text-[10.5px] leading-relaxed">
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                    <div className="flex flex-wrap items-baseline gap-1.5 min-w-0">
+                      <span className="font-black text-[14px] text-[#0B0826] tracking-tight">{patientDisplayName}</span>
+                      <span className="text-slate-400">,</span>
+                      <span className="font-bold text-slate-800 text-[11px]">{patientGender}</span>
+                      <span className="text-slate-400">,</span>
+                      <span className="font-bold text-slate-800 text-[11px]">{patientAge}</span>
+                      <span className="text-slate-400">,</span>
+                      <span className="text-slate-600 font-semibold text-[11px]">Phone:</span>
+                      <span className="font-mono font-bold text-slate-950 text-[11px]">{patientPhone}</span>
+                    </div>
+                    <div className="text-[10px] text-slate-600 font-mono shrink-0">
+                      <span>Date: <strong className="text-slate-950">{consultationDate}</strong></span>
+                      <span className="mx-1.5 text-slate-300">|</span>
+                      <span>Time: <strong className="text-slate-950">{consultationTime}</strong></span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5 text-[10px] text-slate-700">
+                    <span>City: <strong className="text-slate-950 font-semibold">{patientCity}</strong></span>
+                    <span className="text-slate-300">|</span>
+                    <span>UHID: <strong className="font-mono font-black text-[#7016B7]">{patientUhid}</strong></span>
+                    <span className="text-slate-300">|</span>
+                    <span>ABHA Address: <strong className="font-mono text-slate-950">{patientAbha}</strong></span>
+                    <span className="text-slate-300">|</span>
+                    <span>Occupation: <strong className="text-slate-950 font-semibold">{generalInfo.occupation || 'IT Sector'}</strong></span>
+                  </div>
+                </div>
+
+                {/* All 13 Sections Condensed */}
+                <div className="text-[11.5px] leading-snug break-words">
+                  <span className="font-black text-[#7016B7] uppercase tracking-wide text-[11.5px]">VITALS: </span>
+                  <span className="font-semibold text-slate-900 text-[11.5px]">{displayVitals}</span>
+                </div>
+                <div className="text-[11.5px] leading-snug break-words">
+                  <span className="font-black text-[#7016B7] uppercase tracking-wide text-[11.5px]">SYMPTOMS: </span>
+                  <span className="font-semibold text-slate-900 text-[11.5px]">{displaySymptoms}</span>
+                </div>
+                <div className="text-[11.5px] leading-snug break-words">
+                  <span className="font-black text-[#7016B7] uppercase tracking-wide text-[11.5px]">CLINICAL EXAMINATION: </span>
+                  <span className="font-semibold text-slate-900 text-[11.5px]">{displayClinicalExamination}</span>
+                </div>
+                <div className="text-[11.5px] leading-snug break-words">
+                  <span className="font-black text-[#7016B7] uppercase tracking-wide text-[11.5px]">DIAGNOSTICS – PAST HISTORY: </span>
+                  <span className="font-semibold text-slate-900 text-[11.5px]">{displayDiagnosticsHistory}</span>
+                </div>
+                <div className="text-[11.5px] leading-snug break-words">
+                  <span className="font-black text-[#7016B7] uppercase tracking-wide text-[11.5px]">WORKING DIAGNOSES AND RISK FACTORS: </span>
+                  <span className="font-semibold text-slate-900 text-[11.5px]">{displayDiagnoses}</span>
+                </div>
+                <div className="text-[11.5px] leading-snug break-words">
+                  <span className="font-black text-[#7016B7] uppercase tracking-wide text-[11.5px]">CLINICAL GOALS: </span>
+                  <span className="font-semibold text-slate-900 text-[11.5px]">{displayGoals}</span>
+                </div>
+                <div className="text-[11.5px] leading-snug break-words">
+                  <span className="font-black text-[#7016B7] uppercase tracking-wide text-[11.5px]">MEDICAL HISTORY: </span>
+                  <span className="font-semibold text-slate-900 text-[11.5px]">{displayMedicalHistory}</span>
+                </div>
+                <div className="text-[11.5px] leading-snug break-words">
+                  <span className="font-black text-[#7016B7] uppercase tracking-wide text-[11.5px]">NUTRITION ASSESSMENT: </span>
+                  <span className="font-semibold text-slate-900 text-[11.5px]">{displayNutritionAssessment}</span>
+                </div>
+                <div className="text-[11.5px] leading-snug break-words">
+                  <span className="font-black text-[#7016B7] uppercase tracking-wide text-[11.5px]">NUTRITION PRESCRIPTION: </span>
+                  <span className="font-semibold text-slate-900 text-[11.5px]">{displayNutritionPrescription}</span>
+                </div>
+                <div className="text-[11.5px] leading-snug break-words">
+                  <span className="font-black text-[#7016B7] uppercase tracking-wide text-[11.5px]">EXERCISE RECOMMENDATIONS: </span>
+                  <span className="font-semibold text-slate-900 text-[11.5px]">{displayExerciseRecs}</span>
+                </div>
+                <div className="text-[11.5px] leading-snug break-words">
+                  <span className="font-black text-[#7016B7] uppercase tracking-wide text-[11.5px]">TREATMENT PLAN / PRESCRIPTION (℞): </span>
+                  <span className="font-semibold text-slate-900 text-[11.5px]">{displayTreatmentPlan}</span>
+                </div>
+                <div className="text-[11.5px] leading-snug break-words">
+                  <span className="font-black text-[#7016B7] uppercase tracking-wide text-[11.5px]">FOLLOW-UP RECOMMENDATIONS: </span>
+                  <span className="font-semibold text-slate-900 text-[11.5px]">{displayFollowUp}</span>
+                </div>
+                <div className="pt-1 text-left">
+                  <p className="text-[9.5px] text-gray-500 font-mono font-bold m-0">
+                    Clinical Consultation • Electronic EMR Record • Follow up after 30 days or earlier in case of acute symptoms
+                  </p>
+                </div>
+              </div>
+            </ZiathlonLetterheadFrame>
+          </div>
+        )}
       </div>
 
       {/* ========================================================================= */}
@@ -1178,39 +1388,96 @@ export const ThreePartMedicalRecordPreview: React.FC<ThreePartMedicalRecordPrevi
               </button>
             </div>
 
-            {/* Document Info Card */}
-            <div className="bg-[#FAF6ED] border border-[#D9C4A5] rounded-xl p-3.5 space-y-2 select-text">
+            {/* Document Info Card with Layout Specs */}
+            <div className="bg-[#FAF8F5] border-2 border-[#111111]/30 rounded-xl p-3.5 space-y-2.5 select-text shadow-2xs">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-[#8C5E28] uppercase font-mono">Recipient:</span>
-                <span className="font-extrabold text-black">{patientDisplayName}</span>
+                <span className="font-bold text-[#7016B7] uppercase font-mono">Recipient Name:</span>
+                <span className="font-extrabold text-black text-sm">{patientDisplayName}</span>
               </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-[#8C5E28] uppercase font-mono">Phone:</span>
-                <span className="font-mono font-bold text-purple-900">{patientPhone || '+91 94482 88008'}</span>
+
+              {/* Editable Recipient Phone Input */}
+              <div>
+                <label className="block text-[10px] font-bold uppercase text-[#7016B7] font-mono mb-1">
+                  Recipient WhatsApp / Phone Number:
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={recipientPhoneInput}
+                    onChange={(e) => setRecipientPhoneInput(e.target.value)}
+                    placeholder="+91 94482 88008"
+                    className="flex-1 px-3 py-1.5 border border-purple-300 rounded-lg bg-white text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setRecipientPhoneInput(patientPhone || '+91 94482 88008')}
+                    className="px-2 py-1.5 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-900 text-[10px] font-bold font-mono transition-colors"
+                    title="Reset to default patient phone"
+                  >
+                    Reset
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-[#8C5E28] uppercase font-mono">Attachment:</span>
+
+              <div className="flex items-center justify-between text-xs pt-1 border-t border-purple-200/60">
+                <span className="font-bold text-[#7016B7] uppercase font-mono">Layout Design:</span>
+                <span className="font-mono font-black text-purple-950 bg-purple-100 px-2.5 py-0.5 rounded text-[11px] border border-purple-300 flex items-center gap-1">
+                  <span>🏛️</span>
+                  <span>Victorian Ornate Border Frame</span>
+                </span>
+              </div>
+
+              {/* Visual Breakdown of Pages Arranged in the Ornate Layout */}
+              <div className="pt-1.5 space-y-1.5">
+                <span className="block text-[10px] font-mono font-bold uppercase text-slate-600 tracking-wide">
+                  Page Contents Formatted in Layout:
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10.5px]">
+                  <div className="bg-white p-2.5 rounded-lg border border-purple-200/80 shadow-2xs space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono font-bold text-[#7016B7]">📄 Page 1</span>
+                      <span className="text-[9px] bg-purple-50 text-purple-700 px-1.5 py-0.2 rounded font-bold border border-purple-100">Assessment</span>
+                    </div>
+                    <ul className="text-[10px] text-slate-700 space-y-0.5 list-disc list-inside">
+                      <li>Patient Info & Vitals</li>
+                      <li>Presenting Symptoms</li>
+                      <li>Clinical Examination</li>
+                      <li>Working Diagnoses & Goals</li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-white p-2.5 rounded-lg border border-purple-200/80 shadow-2xs space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono font-bold text-[#7016B7]">📄 Page 2</span>
+                      <span className="text-[9px] bg-emerald-50 text-emerald-800 px-1.5 py-0.2 rounded font-bold border border-emerald-100">Treatment & ℞</span>
+                    </div>
+                    <ul className="text-[10px] text-slate-700 space-y-0.5 list-disc list-inside">
+                      <li>Medical History & Diagnostics</li>
+                      <li>Nutrition Assessment & Rx</li>
+                      <li>Exercise & Rehab Protocol</li>
+                      <li>Treatment Plan & Follow-up</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-xs pt-1 border-t border-purple-200/60">
+                <span className="font-bold text-[#7016B7] uppercase font-mono">Attachment File:</span>
                 <span className="font-mono font-bold text-gray-900 flex items-center gap-1">
                   <FileText className="w-3.5 h-3.5 text-[#7016B7]" />
                   {activePdfResult.filename}
                 </span>
               </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-[#8C5E28] uppercase font-mono">MIME Type:</span>
-                <span className="font-mono text-emerald-800 font-bold bg-emerald-100/80 px-2 py-0.5 rounded text-[10px]">
-                  application/pdf (Real Vector File)
-                </span>
-              </div>
             </div>
 
-            {/* Notice: No Acrobat / No Web URL */}
-            <div className="p-3 bg-purple-50/80 border border-purple-200 rounded-xl text-xs text-purple-900 space-y-1">
+            {/* Layout Guarantee Notice */}
+            <div className="p-3 bg-purple-50/90 border border-purple-200 rounded-xl text-xs text-purple-900 space-y-1">
               <p className="font-bold flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                Pure Document Delivery Guarantee:
+                Ornate Layout Document Delivery Guarantee:
               </p>
               <p className="text-[11px] text-purple-800 leading-relaxed">
-                The patient receives the actual <span className="font-mono font-bold">.pdf</span> file attachment. No browser web-viewer links, no Adobe Acrobat embedding, and no HTML screenshots are sent.
+                All patient clinical details are laid out cleanly within the official ornate certificate border pages (matching the requested design). The document is exported at 300 DPI high resolution and sent as a real <span className="font-mono font-bold">.pdf</span> file attachment.
               </p>
             </div>
 

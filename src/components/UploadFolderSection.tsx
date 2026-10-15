@@ -67,14 +67,14 @@ export const UploadFolderSection: React.FC<UploadFolderSectionProps> = ({
         </div>
       </div>
 
-      {/* Tab 1: Medical Documents Archive (Save Document Only Mode: Zero Normal Range / Pathophysiology) */}
+      {/* Tab 1: Medical Documents Archive with full Normal Ranges & Pathophysiology */}
       {activeUploadTab === 'medical-documents' && (
         <MedicalRecordsDirectoryAndViewer
           generalInfo={generalInfo}
           calculations={calculations}
           medicalHistory={medicalHistory}
           onBackToMainFolders={onBackToMainFolders}
-          isUploadFolder={true}
+          isUploadFolder={false}
         />
       )}
 

@@ -14,11 +14,15 @@ import {
 
 export const securityRouter = express.Router();
 
+export type UserRole = 'admin' | 'nutritionist' | 'doctor' | 'exercise';
+
 export interface ActiveSession {
   sessionId: string;
   authenticatedAt: number;
   lastActiveAt: number;
   ip: string;
+  role: UserRole;
+  roleName: string;
   unlockedFolders: Set<string>;
 }
 
@@ -43,6 +47,22 @@ export function getSessionFromReq(req: Request): ActiveSession | null {
   // Session remains valid until explicit user logout (logout-only policy)
   session.lastActiveAt = Date.now();
   return session;
+}
+
+export function canEditFolder(role: UserRole, folderId: string): boolean {
+  if (role === 'admin') {
+    return ['workspace', 'biometrics', 'biometrics-scanner', 'biometrics-progress'].includes(folderId);
+  }
+  if (role === 'nutritionist') {
+    return ['nutrition', 'ai-nutrition', 'ingredients', 'whatsapp', 'recipes', 'dietary-recall', 'food-habits'].includes(folderId);
+  }
+  if (role === 'doctor') {
+    return ['medicinal', 'medical-records', 'prescription', 'goals', 'diagnostics'].includes(folderId);
+  }
+  if (role === 'exercise') {
+    return ['fitness', 'anthropometry', 'exercise', 'physiotherapy', 'workout'].includes(folderId);
+  }
+  return false;
 }
 
 // Express middleware to protect routes requiring Main App Login
@@ -88,6 +108,8 @@ securityRouter.get('/status', (req: Request, res: Response) => {
   res.json({
     success: true,
     isAuthenticated: !!session,
+    role: session ? session.role : null,
+    roleName: session ? session.roleName : null,
     mustChangePassword: config.appPassword.mustChangePassword || false,
     unlockedFolders: session ? Array.from(session.unlockedFolders) : [],
     foldersList: CANONICAL_FOLDERS.map((f) => ({
@@ -96,6 +118,7 @@ securityRouter.get('/status', (req: Request, res: Response) => {
       category: f.category,
       isUnlocked: session ? session.unlockedFolders.has(f.id) : false,
       isConfigured: !!config.folders[f.id]?.isConfigured,
+      canEdit: session ? canEditFolder(session.role, f.id) : false,
     })),
   });
 });
@@ -125,16 +148,34 @@ securityRouter.post('/login', (req: Request, res: Response) => {
   }
 
   const config = loadSecurityConfig();
-  let isValid = verifyPassword(password, config.appPassword.salt, config.appPassword.passwordHash);
+  let isValid = false;
+  let assignedRole: UserRole = 'admin';
+  let assignedRoleName = 'ADMIN';
 
-  // Ensure ziathlon@2026 (or Ziathlon@2026) is always accepted and auto-synced
-  if (!isValid && (password === 'ziathlon@2026' || password === 'Ziathlon@2026')) {
+  const cleanPass = password.trim();
+
+  if (cleanPass === 'Ziathlon@2026' || cleanPass.toLowerCase() === 'ziathlon@2026') {
     isValid = true;
-    const newHash = hashPassword('ziathlon@2026');
-    config.appPassword.salt = newHash.salt;
-    config.appPassword.passwordHash = newHash.hash;
-    config.appPassword.updatedAt = new Date().toISOString();
-    saveSecurityConfig(config);
+    assignedRole = 'admin';
+    assignedRoleName = 'ADMIN';
+  } else if (cleanPass === 'nutri@2026') {
+    isValid = true;
+    assignedRole = 'nutritionist';
+    assignedRoleName = 'NUTRITIONIST';
+  } else if (cleanPass === 'medifit@2026') {
+    isValid = true;
+    assignedRole = 'doctor';
+    assignedRoleName = 'DOCTOR';
+  } else if (cleanPass === 'fitness@2026') {
+    isValid = true;
+    assignedRole = 'exercise';
+    assignedRoleName = 'EXERCISE TEAM';
+  } else {
+    isValid = verifyPassword(cleanPass, config.appPassword.salt, config.appPassword.passwordHash);
+    if (isValid) {
+      assignedRole = 'admin';
+      assignedRoleName = 'ADMIN';
+    }
   }
 
   if (!isValid) {
@@ -164,16 +205,20 @@ securityRouter.post('/login', (req: Request, res: Response) => {
     authenticatedAt: Date.now(),
     lastActiveAt: Date.now(),
     ip,
+    role: assignedRole,
+    roleName: assignedRoleName,
     unlockedFolders: new Set<string>(),
   };
 
   activeSessions.set(sessionId, session);
-  addAuditLog('APP_LOGIN_SUCCESS', `Successful main app login session created`, ip);
+  addAuditLog('APP_LOGIN_SUCCESS', `Successful main app login session created for role ${assignedRoleName}`, ip);
 
   res.json({
     success: true,
     sessionId,
-    message: 'Welcome to ZIATHLON. Authentication successful.',
+    role: assignedRole,
+    roleName: assignedRoleName,
+    message: `Welcome to ZIATHLON (${assignedRoleName}). Authentication successful.`,
     mustChangePassword: config.appPassword.mustChangePassword || false,
     unlockedFolders: [],
   });

@@ -12,6 +12,8 @@ export interface FolderSecurityItem {
 export interface SecurityStatusResponse {
   success: boolean;
   isAuthenticated: boolean;
+  role?: string | null;
+  roleName?: string | null;
   mustChangePassword?: boolean;
   unlockedFolders: string[];
   foldersList: FolderSecurityItem[];
@@ -37,17 +39,25 @@ export interface SecuritySettingsData {
 }
 
 const SESSION_STORAGE_KEY = 'ELSHA_AUTH_SESSION_TOKEN';
+const ROLE_STORAGE_KEY = 'ELSHA_USER_ROLE';
+const ROLE_NAME_STORAGE_KEY = 'ELSHA_USER_ROLE_NAME';
 
 class ElshaSecurityClient {
   private sessionToken: string | null = null;
+  private currentRole: string | null = null;
+  private currentRoleName: string | null = null;
   private unlockedFoldersSet = new Set<string>();
 
   constructor() {
     // Restore session from sessionStorage if user merely refreshed the page
     try {
       this.sessionToken = sessionStorage.getItem(SESSION_STORAGE_KEY);
+      this.currentRole = sessionStorage.getItem(ROLE_STORAGE_KEY);
+      this.currentRoleName = sessionStorage.getItem(ROLE_NAME_STORAGE_KEY);
     } catch {
       this.sessionToken = null;
+      this.currentRole = null;
+      this.currentRoleName = null;
     }
   }
 
@@ -57,6 +67,31 @@ class ElshaSecurityClient {
 
   public isAuthenticated(): boolean {
     return !!this.sessionToken;
+  }
+
+  public getRole(): string | null {
+    return this.currentRole;
+  }
+
+  public getRoleName(): string | null {
+    return this.currentRoleName;
+  }
+
+  public canEditFolder(folderId: string): boolean {
+    if (!this.currentRole) return true;
+    if (this.currentRole === 'admin') {
+      return ['workspace', 'biometrics', 'biometrics-scanner', 'biometrics-progress'].includes(folderId);
+    }
+    if (this.currentRole === 'nutritionist') {
+      return ['nutrition', 'ai-nutrition', 'ingredients', 'whatsapp', 'recipes', 'dietary-recall', 'food-habits'].includes(folderId);
+    }
+    if (this.currentRole === 'doctor') {
+      return ['medicinal', 'medical-records', 'prescription', 'goals', 'diagnostics'].includes(folderId);
+    }
+    if (this.currentRole === 'exercise') {
+      return ['fitness', 'anthropometry', 'exercise', 'physiotherapy', 'workout'].includes(folderId);
+    }
+    return true;
   }
 
   public isFolderUnlocked(folderId: string): boolean {
@@ -88,6 +123,14 @@ class ElshaSecurityClient {
         const data: SecurityStatusResponse = await res.json();
         if (data.isAuthenticated) {
           this.unlockedFoldersSet = new Set(data.unlockedFolders || []);
+          if (data.role) {
+            this.currentRole = data.role;
+            try { sessionStorage.setItem(ROLE_STORAGE_KEY, data.role); } catch {}
+          }
+          if (data.roleName) {
+            this.currentRoleName = data.roleName;
+            try { sessionStorage.setItem(ROLE_NAME_STORAGE_KEY, data.roleName); } catch {}
+          }
         } else {
           this.clearSession();
         }
@@ -122,8 +165,12 @@ class ElshaSecurityClient {
       const data = await res.json();
       if (res.ok && data.success && data.sessionId) {
         this.sessionToken = data.sessionId;
+        this.currentRole = data.role || 'admin';
+        this.currentRoleName = data.roleName || 'ADMIN';
         try {
           sessionStorage.setItem(SESSION_STORAGE_KEY, data.sessionId);
+          if (data.role) sessionStorage.setItem(ROLE_STORAGE_KEY, data.role);
+          if (data.roleName) sessionStorage.setItem(ROLE_NAME_STORAGE_KEY, data.roleName);
         } catch {}
         this.unlockedFoldersSet.clear();
         return {
@@ -162,9 +209,13 @@ class ElshaSecurityClient {
 
   public clearSession(): void {
     this.sessionToken = null;
+    this.currentRole = null;
+    this.currentRoleName = null;
     this.unlockedFoldersSet.clear();
     try {
       sessionStorage.removeItem(SESSION_STORAGE_KEY);
+      sessionStorage.removeItem(ROLE_STORAGE_KEY);
+      sessionStorage.removeItem(ROLE_NAME_STORAGE_KEY);
     } catch {}
   }
 
